@@ -33,3 +33,11 @@ else()
 			)
 	endif()
 endif()
+
+file(GLOB aclspv-src ${PROJECT_SOURCE_DIR}/lib/*)
+
+ae2f_CoreLibTentConfigCustom(
+	aclspv ${ae2f_LIBPREFIX}
+	inc ae3f ${PROJECT_SOURCE_DIR}/cfg/aclspv.cmake.in
+	${aclspv-src}
+	)
