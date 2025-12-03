@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
+enable_testing()
+
 project(aclspv)
 
 # Set this source directory as the tree root for project.
@@ -23,7 +25,7 @@ endif()
 ae2f_CoreLibFetchX(ae2f Core	main)
 ae2f_CoreLibFetchX(ae2f Preproc	main)
 
-find_package(LLVM CONFIG)
+find_package(LLVM)
 if(LLVM_FOUND)
 	message(STATUS "LLVM is found")
 else()
@@ -59,6 +61,13 @@ ae2f_CoreLibTentConfigCustom(
 	)
 
 target_link_libraries(${ae3f__aclspvABI__TENT} PUBLIC ae3f::aclspv)
+
+llvm_map_components_to_libnames(LLVM_LIBS LLVMCore)
+target_link_libraries(${ae3f__aclspvABI__TENT} PUBLIC
+	clang	LLVM
+	)
+
+ae2f_CoreTestTentVerbose(${ae3f__aclspvABI__TENT} ./test/lifespan)
 
 add_executable(dummy main.c)
 target_link_libraries(dummy ae3f::aclspvABI)

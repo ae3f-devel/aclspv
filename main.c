@@ -16,10 +16,12 @@ int main(void) {
 	main_c.Length = sizeof(KERNEL);
 	main_c.Contents = KERNEL;
 
+#if 0
 	h_aclspv_obj_t obj = aclspv_compile(&compiler, "main.c", &main_c, 1
 			, NULL, 0);
 
 	aclspv_obj_stop(obj);
+#endif
 
 	aclspv_stop_compiler(&compiler);
 	aclspv_stop_global();

@@ -24,6 +24,8 @@
 )  \
 { \
 	CXTranslationUnit	tu; \
+ \
+ \
 	clang_parseTranslationUnit2( \
 			(c_compiler).mh_idx \
 			, rd_srcpath, rd_argv, c_argc \
@@ -34,8 +36,6 @@
  \
 	CXCursor cursor = clang_getTranslationUnitCursor(tu); \
 	CXModule mod = clang_Cursor_getModule(cursor); \
- \
-	clang_getLLVMModule( \
 }
 
 #endif

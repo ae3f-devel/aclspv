@@ -16,6 +16,8 @@ ae2f_MAC() aclspv_compile_unsaved_imp(
 		) 
 {
 	CXTranslationUnit	tu;
+
+
 	clang_parseTranslationUnit2(
 			(c_compiler).mh_idx
 			, rd_srcpath, rd_argv, c_argc
@@ -26,8 +28,6 @@ ae2f_MAC() aclspv_compile_unsaved_imp(
 
 	CXCursor cursor = clang_getTranslationUnitCursor(tu);
 	CXModule mod = clang_Cursor_getModule(cursor);
-
-	clang_getLLVMModule(
 }
 
 #endif
