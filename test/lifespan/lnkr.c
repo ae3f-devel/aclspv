@@ -22,6 +22,7 @@ int main(void) {
 			, files, 1
 			, ae2f_NIL, 0
 			);
+
 	assert(obj);
 
 	aclspv_free_obj(obj);

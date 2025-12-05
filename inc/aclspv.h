@@ -7,6 +7,8 @@
 #define aclspv_h
 
 #include <ae2f/Keys.h>
+#include <ae2f/cc.h>
+
 #include "./aclspv/abi.h"
 #include <ae2f/c90/StdInt.h>
 
@@ -37,5 +39,22 @@ void	aclspv_stop_global(void);
  * @brief	Word of spir-v as 32-bit unsigned integer.
  * */
 typedef uint32_t aclspv_wrd_t;
+
+#include "./aclspv/obj.h"
+#include <clang-c/Index.h>
+
+/**
+ * @method	aclspv_compile
+ * @brief	compile files and generate an object
+ * @returns	<INIT:aclspv_free_obj>
+ * */
+ae2f_extern ACLSPV_ABI_DECL ae2f_retnew
+h_aclspv_obj_t	aclspv_compile(
+		const char* ae2f_restrict const	rd_srcpath,
+		const  struct CXUnsavedFile* ae2f_restrict const 	rd_unsaved,
+		const size_t						c_unsaved_len,
+		const char* ae2f_restrict const * ae2f_restrict const	rd_argv_opt,
+		const size_t						c_argc
+		);
 
 #endif

@@ -1,20 +1,29 @@
 #ifndef aclspv_compiler_auto_h
 #define aclspv_compiler_auto_h
 
-#include <aclspv/compiler.h>
-#include <aclspv/obj.h>
 #include <ae2f/Macro.h>
+#undef	ON
+#undef	OFF
+
+#include <aclspv/obj.h>
+
+#undef	ON
+#undef	OFF
 
 #include <clang/CodeGen/CodeGenAction.h>
 #include <clang/Lex/PreprocessorOptions.h>
+#include <clang/Frontend/CompilerInvocation.h>
+#include <clang/Frontend/CompilerInstance.h>
 
-ae2f_MAC(()) aclspv_compile_imp(
-		size_t&	 ae2f_restrict				t_sz0,
-		clang::EmitLLVMOnlyAction&			t_cxaction,
+ae2f_MAC((C_vfs, C_fm, C_invoc, C_diagptr, )) aclspv_compile_imp(
+		size_t&	 ae2f_restrict		t_sz0,
+
+		clang::CompilerInstance&	t_cc,
+		clang::DiagnosticOptions&	t_diag_opts,
 
 		h_aclspv_obj_t&					ret,
+		llvm::LLVMContext&				rc_ctx,
 
-		x_aclspv_compiler& ae2f_restrict		h_compiler,
 		const char* ae2f_restrict const	rd_srcpath,
 		const struct CXUnsavedFile* ae2f_restrict	rd_unsaved,
 		const size_t					c_unsaved_len,
@@ -23,44 +32,41 @@ ae2f_MAC(()) aclspv_compile_imp(
 		const size_t		 				c_argc
 		) 
 {
-	do {
-		unless(clang::CompilerInvocation::CreateFromArgs(
-					(h_compiler).m_invoc
-					, clang::ArrayRef<const char*>(rd_argv, rd_argv + c_argc)
-					, *((h_compiler).m_diag_engine.get())
-					))
-		{
-			assert(!"CreateFromArgs has failed.");
-			(ret) = ae2f_NIL;
-			break;
-		}
+	llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>
+		C_vfs(new llvm::vfs::InMemoryFileSystem());
 
-		(h_compiler).m_cc.getFrontendOpts().Inputs[0]
-			= clang::FrontendInputFile(
-					rd_srcpath
-					, clang::InputKind(
-						clang::Language::OpenCL
-						, clang::InputKind::Format::Source
-						)
-					);
+	llvm::IntrusiveRefCntPtr<clang::FileManager> C_fm(
+			new clang::FileManager(clang::FileSystemOptions(), C_vfs));
 
-		for((t_sz0) = (c_unsaved_len); (t_sz0)--; ) {
-			(h_compiler).m_cc
-				.getPreprocessorOpts()
-				.addRemappedFile(
-						(rd_unsaved)[t_sz0].Filename
-						, clang::StringRef((rd_unsaved)[t_sz0].Contents, (rd_unsaved)[t_sz0].Length)
-						);
-		}
+	(t_cc).setFileManager((C_fm.get()));
 
-		unless((h_compiler).m_cc.ExecuteAction(t_cxaction)) {
-			assert(!"Failed to run EmitLLVMOnlyAction");
-			(ret) = ae2f_NIL;
-			break;
-		}
+	llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> C_diagptr 
+		= (t_cc).createDiagnostics(*(C_vfs).get(), t_diag_opts, nullptr, true);
 
-		(ret) = new x_aclspv_obj((t_cxaction).takeModule());
-	} while(0);
+	(t_cc).setDiagnostics(C_diagptr.get());
+
+	clang::CompilerInvocation	C_invoc;
+
+	clang::CompilerInvocation::CreateFromArgs(
+			(C_invoc)
+			, clang::ArrayRef<const char*>((rd_argv), (rd_argv) + (c_argc))
+			, (t_cc).getDiagnostics()
+			);
+
+	(t_cc).getFrontendOpts().Inputs.clear();
+	for((t_sz0) = (c_unsaved_len); (t_sz0)--;) {
+		C_vfs.get()->addFile(
+				(rd_unsaved)->Filename
+				, 0, std::move(llvm::MemoryBuffer::getMemBuffer(
+						clang::StringRef((rd_unsaved)->Contents, (rd_unsaved)->Length)
+						))
+				);
+
+		(t_cc).getFrontendOpts().Inputs.emplace_back((rd_unsaved)->Contents, clang::Language::OpenCL);
+	}
+
+	(t_cc).createSourceManager(*C_fm.get());
+	(ret) = new x_aclspv_obj(std::move(clang::EmitLLVMAction(&rc_ctx).takeModule()));
 }
 
 #endif

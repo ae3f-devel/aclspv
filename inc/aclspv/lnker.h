@@ -11,9 +11,8 @@
 /** 
  * @class	x_aclspv_linker
  * @brief	a class to link the compiled objects
- * @todo	TODO: implement this
  * */
-typedef struct { 
+typedef struct {
 	int u; 
 } x_aclspv_lnker;
 
