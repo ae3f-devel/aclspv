@@ -15,14 +15,14 @@
 #include <clang/Frontend/CompilerInvocation.h>
 #include <clang/Frontend/CompilerInstance.h>
 
-ae2f_MAC((C_vfs, C_fm, C_invoc, C_diagptr, )) aclspv_compile_imp(
+ae2f_MAC((C_vfs, C_fm, C_diagptr, C_action, )) aclspv_compile_imp(
 		size_t&	 ae2f_restrict		t_sz0,
 
 		clang::CompilerInstance&	t_cc,
 		clang::DiagnosticOptions&	t_diag_opts,
 
 		h_aclspv_obj_t&					ret,
-		llvm::LLVMContext&				rc_ctx,
+		std::unique_ptr<llvm::LLVMContext>&		rc_ctx,
 
 		const char* ae2f_restrict const	rd_srcpath,
 		const struct CXUnsavedFile* ae2f_restrict	rd_unsaved,
@@ -45,10 +45,8 @@ ae2f_MAC((C_vfs, C_fm, C_invoc, C_diagptr, )) aclspv_compile_imp(
 
 	(t_cc).setDiagnostics(C_diagptr.get());
 
-	clang::CompilerInvocation	C_invoc;
-
 	clang::CompilerInvocation::CreateFromArgs(
-			(C_invoc)
+			(t_cc).getInvocation()
 			, clang::ArrayRef<const char*>((rd_argv), (rd_argv) + (c_argc))
 			, (t_cc).getDiagnostics()
 			);
@@ -57,16 +55,29 @@ ae2f_MAC((C_vfs, C_fm, C_invoc, C_diagptr, )) aclspv_compile_imp(
 	for((t_sz0) = (c_unsaved_len); (t_sz0)--;) {
 		C_vfs.get()->addFile(
 				(rd_unsaved)->Filename
-				, 0, std::move(llvm::MemoryBuffer::getMemBuffer(
-						clang::StringRef((rd_unsaved)->Contents, (rd_unsaved)->Length)
-						))
+				, 0, (llvm::MemoryBuffer::getMemBuffer(
+					clang::StringRef(
+						(rd_unsaved)->Contents
+						, (rd_unsaved->Length) - !((rd_unsaved)->Contents[(rd_unsaved)->Length - 1])
+						)
+					))
 				);
-
-		(t_cc).getFrontendOpts().Inputs.emplace_back((rd_unsaved)->Contents, clang::Language::OpenCL);
+		(t_cc).getFrontendOpts().Inputs.emplace_back((rd_unsaved)->Filename, clang::Language::OpenCL);
 	}
 
 	(t_cc).createSourceManager(*C_fm.get());
-	(ret) = new x_aclspv_obj(std::move(clang::EmitLLVMAction(&rc_ctx).takeModule()));
+
+	std::unique_ptr<clang::EmitLLVMAction>	C_action(new clang::EmitLLVMAction(rc_ctx.get()));
+	if((t_cc).ExecuteAction(*C_action)) {
+		/** succesful */
+		(ret) = new x_aclspv_obj(
+				std::move(rc_ctx)
+				, std::move(C_action)
+				);
+	} else {
+		assert(!"ExecuteAction has failed");
+		(ret) = ae2f_NIL;
+	}
 }
 
 #endif

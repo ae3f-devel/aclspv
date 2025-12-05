@@ -2,7 +2,7 @@
 
 ae2f_extern ACLSPV_ABI_IMPL ae2f_ccconst
 LLVMModuleRef	aclspv_get_module_from_obj(x_aclspv_obj* ae2f_restrict const hs) {
-	return reinterpret_cast<LLVMModuleRef>(hs->m_module.get());
+	return reinterpret_cast<LLVMModuleRef>(hs->m_act->takeModule().get());
 }
 
 ae2f_extern ACLSPV_ABI_IMPL

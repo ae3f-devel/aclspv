@@ -13,7 +13,7 @@
  * @brief	a class to link the compiled objects
  * */
 typedef struct {
-	int u; 
+	int u;
 } x_aclspv_lnker;
 
 typedef x_aclspv_lnker* ae2f_restrict h_aclspv_lnker_t;
@@ -56,12 +56,23 @@ typedef enum {
 /**
  * @method	aclspv_add_obj_to_lnker
  * @memberof	x_aclspv_lnker
- * @brief	add `hy_tar` on `h_lnk`
- * @param	h_lnk	<HANDLE>
- * @param	hy_tar	<HANDLE> <REFDBY:h_lnk>
+ * @brief	add `rd_hy_tars` on `h_lnk`
+ *
+ * @param	h_lnk		<HANDLE>	\n
+ *	A valid linker
+ *
+ * @param	const h_aclspv_obj_t rd_hy_tars[c_tars_len]	\n
+ * <HANDLE> <[REFDBY]:h_lnk>					\n
+ * 	- Its each element must outlive `h_lnk`.		\n
+ * 	- Its length is `rd_hy_tars`
+ *
+ * @param	c_tars_len	<CONST>	\n
+ * 	Count of `rd_hy_tars`
+ *
  * @return	see `e_aclspv_init_lnker`
  * */
-ae2f_extern ACLSPV_ABI_DECL void
+ae2f_extern ACLSPV_ABI_DECL 
+e_aclspv_add_obj_to_lnker
 aclspv_add_obj_to_lnker(
 		h_aclspv_lnker_t	h_lnk,
 		const h_aclspv_obj_t* ae2f_restrict const	rd_hy_tars,

@@ -8,6 +8,9 @@
 #include <ae2f/Keys.h>
 #include <ae2f/LangVer.h>
 
+#undef ON
+#undef OFF
+
 /** 
  * @struct	x_aclspv_obj
  * @brief	a structure which contains obj's data, not available on C
@@ -16,12 +19,20 @@ typedef struct x_aclspv_obj x_aclspv_obj;
 
 #if ae2f_stdcc_v
 #include <llvm/IR/Module.h>
+#include <clang/CodeGen/CodeGenAction.h>
 #include <memory>
 
 struct x_aclspv_obj {
-	std::unique_ptr<llvm::Module>	m_module;
-	inline x_aclspv_obj(std::unique_ptr<llvm::Module>&& y_module) 
-		: m_module(std::move(y_module)) {}
+	std::unique_ptr<llvm::LLVMContext>	m_modctx;
+	std::unique_ptr<clang::EmitLLVMAction>	m_act;
+
+	inline x_aclspv_obj(
+			std::unique_ptr<llvm::LLVMContext>&& s_modctx,
+			std::unique_ptr<clang::EmitLLVMAction>&& s_act
+			) : 
+		m_modctx(std::move(s_modctx)),
+		m_act(std::move(s_act))
+	{}
 };
 
 #endif

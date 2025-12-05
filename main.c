@@ -10,8 +10,13 @@ int main(void) {
 			"*(b) = *(a);"
 		"}";
 	main_c.Filename = "main.cl";
-	main_c.Length = sizeof(KERNEL);
+	main_c.Length = sizeof(KERNEL) - 1;
 	main_c.Contents = KERNEL;
+
+	aclspv_compile(
+			"main.cl", &main_c, 1
+			, ae2f_NIL, 0
+			);
 
 	aclspv_stop_global();
 	return 0;
