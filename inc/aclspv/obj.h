@@ -20,6 +20,14 @@
  * */
 typedef struct x_aclspv_obj x_aclspv_obj;
 
+/**
+ * @def		ACLSPV_OBJ_DATA_LAYOUT_DEFAULT
+ * @brief	default data layout for spir-vulkan
+ * */
+#define ACLSPV_OBJ_DATA_LAYOUT_DEFAULT						\
+			"e-p:64:64-p1:64:64-p2:64:64-p3:64:64-p4:64:64-"	\
+			"i64:64-i128:128-n8:16:32:64"
+
 #if ae2f_stdcc_v
 #include <llvm/IR/Module.h>
 #include <clang/CodeGen/CodeGenAction.h>
@@ -42,6 +50,11 @@ struct x_aclspv_obj {
 		assert(this->m_modctx);
 		assert(this->m_act);
 		assert(this->m_module);
+
+		LLVMSetDataLayout(
+				ae2f_reinterpret_cast(LLVMModuleRef, (this)->m_module.get())
+				, ACLSPV_OBJ_DATA_LAYOUT_DEFAULT
+				);
 	}
 
 	inline ~x_aclspv_obj() {

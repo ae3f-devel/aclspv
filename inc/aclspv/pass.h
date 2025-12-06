@@ -4,13 +4,16 @@
 #include <llvm-c/Core.h>
 #include <aclspv/abi.h>
 #include <ae2f/Keys.h>
+#include <ae2f/cc.h>
 
 /** 
  * @enum	e_fn_aclspv_pass
  * @brief	results of `fn_aclspv_pass_t` like functions
  * */
 typedef enum {
-	FN_ACLSPV_PASS_OK
+	FN_ACLSPV_PASS_OK,
+	FN_ACLSPV_PASS_MODULE_NIL,
+	FN_ACLSPV_PASS_ALLOC_FAILED
 
 } e_fn_aclspv_pass;
 
@@ -176,7 +179,7 @@ aclspv_pass_spirv_prepare_fn,
 ae2f_extern ACLSPV_ABI_DECL
 size_t	aclspv_runall_module_passes(
 		LLVMModuleRef		h_module, 
-		e_fn_aclspv_pass*	wr_res_opt
+		e_fn_aclspv_pass* ae2f_restrict	wr_res_opt
 		);
 
 #endif

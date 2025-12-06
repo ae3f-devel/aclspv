@@ -26,8 +26,7 @@ aclspv_init_lnker(h_aclspv_lnker_t i_lnk) {
 
 	/** Following clspv */
 	LLVMSetDataLayout((i_lnk)->m_module,
-			"e-p:64:64-p1:64:64-p2:64:64-p3:64:64-p4:64:64-"
-			"i64:64-i128:128-n8:16:32:64"
+			ACLSPV_OBJ_DATA_LAYOUT_DEFAULT
 			);
 
 	return ACLSPV_INIT_LNKER_OK;

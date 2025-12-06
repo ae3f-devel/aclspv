@@ -33,6 +33,8 @@ h_aclspv_obj_t	aclspv_compile(
 		rd_argv[1] = rd_srcpath;
 		rd_argv[2] = compiler_arg0;
 		rd_argv[3] = compiler_arg1;
+		rd_argv[4] = compiler_arg2;
+		rd_argv[5] = compiler_arg3;
 
 		memcpy(rd_argv.data() + compiler_argc + 1, rd_argv_opt, c_argc * sizeof(void*));
 
@@ -49,6 +51,8 @@ h_aclspv_obj_t	aclspv_compile(
 			rd_srcpath,
 			compiler_arg0,
 			compiler_arg1,
+			compiler_arg2,
+			compiler_arg3
 		};
 
 		_aclspv_compile_imp(
