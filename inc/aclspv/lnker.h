@@ -1,4 +1,7 @@
-/** @file lnker.h @brief links compiled objects */
+/** 
+ * @file lnker.h
+ * @brief links compiled objects 
+ * */
 
 #ifndef aclspv_lnker_h
 #define aclspv_lnker_h

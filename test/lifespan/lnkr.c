@@ -56,6 +56,7 @@ int main(void) {
 #endif
 
 	aclspv_stop_lnker(&lnk);
+
 #if 1
 	aclspv_free_obj(obj[0]);
 	aclspv_free_obj(obj[1]);

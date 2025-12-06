@@ -1,4 +1,7 @@
-/** @file obj.h @brief compiled */
+/** 
+ * @file obj.h 
+ * @brief object which is compilerd.
+ * */
 
 #ifndef aclspv_obj_h
 #define aclspv_obj_h

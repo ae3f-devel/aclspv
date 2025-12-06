@@ -24,6 +24,12 @@ aclspv_init_lnker(h_aclspv_lnker_t i_lnk) {
 
 	LLVMSetTarget((i_lnk)->m_module, "spir64-unknown-unknown");
 
+	/** Following clspv */
+	LLVMSetDataLayout((i_lnk)->m_module,
+			"e-p:64:64-p1:64:64-p2:64:64-p3:64:64-p4:64:64-"
+			"i64:64-i128:128-n8:16:32:64"
+			);
+
 	return ACLSPV_INIT_LNKER_OK;
 }
 
@@ -34,7 +40,7 @@ aclspv_stop_lnker(h_aclspv_lnker_t s_lnk) {
 }
 
 ACLSPV_ABI_IMPL
-e_aclspv_add_obj_to_lnker
+	e_aclspv_add_obj_to_lnker
 aclspv_add_obj_to_lnker(
 		h_aclspv_lnker_t	h_lnk,
 		const h_aclspv_obj_t* ae2f_restrict const	rd_hy_tars,

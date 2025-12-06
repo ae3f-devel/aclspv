@@ -5,6 +5,6 @@ include(CMakeFindDependencyMacro)
 include(CMakePackageConfigHelpers)
 include("${CMAKE_CURRENT_LIST_DIR}/aclspvABITargets.cmake")
 
-find_dependency(aclspv REQUIRED)
-link_libraries(ae3f::aclspv)
+find_dependency(aclspvCore REQUIRED)
+link_libraries(ae3f::aclspvCore)
 
