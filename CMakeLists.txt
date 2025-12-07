@@ -9,6 +9,12 @@ set(ae2f_ProjRoot ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "Tree root for projec
 set(ae2f_submod  .submod CACHE STRING "Relative path to submodule (subdirectory)")
 set(ae2f_CoreScript_Wh ${ae2f_ProjRoot}/${ae2f_submod}/ae2f/CoreScript)
 
+option(aclspv_N_RELOAD_ALWAYS	"reloads aclspv always on configuration when set `OFF`" ON)
+
+if(NOT aclspv_RELOADED)
+	set(aclspv_RELOADED OFF)
+endif()
+
 # Execute git to fetch CoreScript when repository does not exist
 if(NOT EXISTS ${ae2f_CoreScript_Wh})
 	execute_process(
@@ -56,13 +62,13 @@ endif()
 file(GLOB aclspv-inc ${PROJECT_SOURCE_DIR}/inc/*)
 
 ae2f_Macro_init(1 30 30)
-ae2f_Macro_Lib_V(
+ae2f_Macro_Lib_V2(
 	ae3f aclspvCore INTERFACE
 	${PROJECT_SOURCE_DIR}/src/ "__NOTHING" 
 	${PROJECT_SOURCE_DIR}/src/ "*.def.c*" 
 	${PROJECT_SOURCE_DIR}/lib/ ".auto.h"
 	${PROJECT_SOURCE_DIR}/cfg/aclspvCore.cmake.in
-	inc
+	inc ${aclspv_RELOADED}
 	)
 
 target_link_libraries(${ae3f__aclspvCore__TENT} INTERFACE
@@ -94,3 +100,5 @@ ae2f_UltraErrWERROR(${ae3f__aclspvABI__TENT} PRIVATE)
 
 add_executable(dummy main.c)
 target_link_libraries(dummy ae3f::aclspvABI)
+
+option(aclspv_RELOADED "aclspv has been reloaded" ${aclspv_N_RELOAD_ALWAYS})
