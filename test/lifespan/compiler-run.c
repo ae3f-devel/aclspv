@@ -8,8 +8,6 @@
 
 int main(void) {
 	struct CXUnsavedFile	files[1];
-	const char* argv[] = { "-x", "cl", "-triple", "spir64-unknown-unkn" };
-
 	h_aclspv_obj_t		obj, obj2;
 
 	aclspv_init_global();
@@ -21,13 +19,13 @@ int main(void) {
 	obj = aclspv_compile(
 			"main.cl"
 			, files, 1
-			, argv, sizeof(argv) / sizeof(argv[0])
+			, ae2f_NIL, 0
 			);
 
 	obj2 = aclspv_compile(
 			"main.cl"
 			, files, 1
-			, argv, sizeof(argv) / sizeof(argv[0])
+			, ae2f_NIL, 0
 			);
 
 	assert(obj);
