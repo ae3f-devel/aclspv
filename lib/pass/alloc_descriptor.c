@@ -1,5 +1,5 @@
 /** 
- * @file 	rewr_kern_fn.c
+ * @file 	alloc_descriptor.c
  * @brief	is an implementation for an interface
  * */
 
@@ -14,7 +14,7 @@
  * @see <aclspv/pass.h> 
  * TODO: implement this 
  * */
-ACLSPV_ABI_IMPL e_fn_aclspv_pass aclspv_pass_rewr_kern_fn(LLVMModuleRef _) {
+ACLSPV_ABI_IMPL e_fn_aclspv_pass aclspv_pass_alloc_descriptor(LLVMModuleRef _) {
 	(void)_;
 	return FN_ACLSPV_PASS_OK;
 }
