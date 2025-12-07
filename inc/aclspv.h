@@ -21,14 +21,14 @@ typedef enum {
 } e_aclspv_init_global;
 
 /**
- * @function	aclspv_init_global
+ * @fn	aclspv_init_global
  * @brief	initialise the library's global state
  * */
 ae2f_extern ACLSPV_ABI_DECL
 e_aclspv_init_global	aclspv_init_global(void);
 
 /**
- * @function	aclspv_stop_global
+ * @fn	aclspv_stop_global
  * @brief	stops the library's globla state
  * */
 ae2f_extern ACLSPV_ABI_DECL
@@ -44,7 +44,7 @@ typedef uint32_t aclspv_wrd_t;
 #include <clang-c/Index.h>
 
 /**
- * @function	aclspv_compile
+ * @fn	aclspv_compile
  * @brief	compile files and generate an object
  * @returns	<INIT:aclspv_free_obj>
  * */

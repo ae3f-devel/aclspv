@@ -9,8 +9,11 @@
 #include <ae2f/Call.auto.h>
 
 /**
- * @def ACLSPV_ABI_IMPL	@brief Implementation as ABI
- * @def ACLSPV_ABI_DECL	@brief Declaration as ABI
+ * @def ACLSPV_ABI_IMPL	
+ * @brief Implementation as ABI
+ *
+ * @def ACLSPV_ABI_DECL	
+ * @brief Declaration as ABI
  * */
 
 #if ae2f_IS_SHARED

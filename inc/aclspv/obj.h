@@ -15,7 +15,7 @@
 #undef OFF
 
 /** 
- * @struct	x_aclspv_obj
+ * @class	x_aclspv_obj
  * @brief	a structure which contains obj's data, not available on C
  * */
 typedef struct x_aclspv_obj x_aclspv_obj;
@@ -73,7 +73,7 @@ struct x_aclspv_obj {
 typedef x_aclspv_obj* h_aclspv_obj_t;
 
 /**
- * @function	aclspv_get_module_from_obj
+ * @fn		aclspv_get_module_from_obj
  * @memberof	h_aclspv_obj_t
  * @brief	get `LLVMModuleRef` from an object
  * @param	h_module	<HANDLE>	an object
@@ -82,7 +82,7 @@ ae2f_extern ACLSPV_ABI_DECL ae2f_ccconst
 LLVMModuleRef	aclspv_get_module_from_obj(x_aclspv_obj* ae2f_restrict const	h_obj);
 
 /** 
- * @function	aclspv_obj_stop 
+ * @fn		aclspv_obj_stop 
  * @memberof	h_aclspv_obj_t
  * @brief	stop the life span of `hs`.
  * @param	hs	<HANDLE> <STOP>

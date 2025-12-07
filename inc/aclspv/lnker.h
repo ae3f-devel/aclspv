@@ -32,7 +32,7 @@ typedef enum {
 } e_aclspv_init_lnker;
 
 /**
- * @function	aclspv_init_lnker
+ * @fn		aclspv_init_lnker
  * @memberof	x_aclspv_lnker
  * @brief	initialise the linker.
  * @param	i_lnk	<INIT:aclspv_stop_lnker>
@@ -42,7 +42,7 @@ e_aclspv_init_lnker
 aclspv_init_lnker(h_aclspv_lnker_t i_lnk);
 
 /**
- * @function	aclspv_stop_lnker
+ * @fn		aclspv_stop_lnker
  * @memberof	x_aclspv_lnker
  * @brief	stops the linker
  * @param	s_lnk	<STOP>
@@ -62,7 +62,7 @@ typedef enum {
 } e_aclspv_add_obj_to_lnker;
 
 /**
- * @function	aclspv_add_obj_to_lnker
+ * @fn		aclspv_add_obj_to_lnker
  * @memberof	x_aclspv_lnker
  * @brief	add `rd_hy_tars` on `h_lnk`
  *
