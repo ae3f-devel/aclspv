@@ -5,7 +5,7 @@
 
 makers=("-GNinja" "")
 lstdc=("90" "99" "11" "17" "23")
-lstdcc=("98" "11" "14" "17" "20" "23")
+lstdcc=("11" "14" "17" "20" "23")
 
 __ae2f_CXX=("ON")
 __ae2f_IS_SHARED=("ON" "OFF")
