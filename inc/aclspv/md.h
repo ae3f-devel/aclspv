@@ -25,4 +25,10 @@
  * */
 #define ACLSPV_MD_PIPELINE_LAYOUT	"aclspv.pipelayout"
 
+/**
+ * @def		ACLSPV_MD_OCL_KERNELS
+ * @brief	opencl kernels, which needs to be removed.
+ * */
+#define ACLSPV_MD_OCL_KERNELS		"opencl.kernels"
+
 #endif

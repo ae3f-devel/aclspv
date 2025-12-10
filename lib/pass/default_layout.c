@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MD_KERNELS "opencl.kernels"
+#define MD_KERNELS ACLSPV_MD_OCL_KERNELS 
 
 IMPL_PASS_RET aclspv_pass_default_layout(
 		const LLVMModuleRef	M,
