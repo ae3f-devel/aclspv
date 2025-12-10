@@ -49,6 +49,16 @@ ae2f_noexcept ACLSPV_ABI_IMPL e_aclspv_passes aclspv_runall_module_passes(
 		goto LBL_RET;
 	}
 
+	if((codepass = aclspv_pass_cluster_pod_args(h_module, &ctx))) {
+		code = ACLSPV_PASSES_CLUSTER_POD_ARGS;
+		goto LBL_RET;
+	}
+
+	if((codepass = aclspv_pass_default_layout(h_module, &ctx))) {
+		code = ACLSPV_PASSES_DEFAULT_LAYOUT;
+		goto LBL_RET;
+	}
+
 LBL_RET:
 	_aclspv_stop_vec(aclspv_free, ctx.m_v0);
 	_aclspv_stop_vec(aclspv_free, ctx.m_v1);

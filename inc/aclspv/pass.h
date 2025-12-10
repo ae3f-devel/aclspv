@@ -88,15 +88,38 @@ ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_cluster_p
 ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_default_layout;
 
 /**
+ * @fn		aclspv_pass_emit_bltin_decl
+ * @brief	Declares OpenCL builtin functions as LLVM intrinsics or calls.
+ * @details	Sets up lowering for OpenCL builtins to Vulkan-compatible ops.
+ * */
+ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_emit_bltin_decl;
+
+/**
  * @enum	e_aclspv_passes
  * @brief	the given number for passes
  * */
 typedef enum {
 	ACLSPV_PASSES_OK,
+	/** @brief error from `aclspv_pass_add_kern_metadata` */
 	ACLSPV_PASSES_ADD_KERN_METADATA,
+
+	/** @brief error from `aclspv_pass_arg_anal` */
 	ACLSPV_PASSES_ARG_ANAL,
+	
+	/** @brief error from `aclspv_pass_assgn_pipelayout` */
 	ACLSPV_PASSES_ASSGN_PIPELAYOUT,
-	ACLSPV_PASSES_CHECK_MEM_ACCESS
+
+	/** @brief error from `aclspv_pass_check_mem_access` */
+	ACLSPV_PASSES_CHECK_MEM_ACCESS,
+
+	/** @brief error from `aclspv_pass_cluster_pod_args` */
+	ACLSPV_PASSES_CLUSTER_POD_ARGS,
+
+	/** @brief error from `aclspv_pass_default_layout` */
+	ACLSPV_PASSES_DEFAULT_LAYOUT,
+
+	/** @brief error from `aclspv_pass_emit_bltin_decl` */
+	ACLSPV_PASSES_EMIT_BLTIN_DECL
 } e_aclspv_passes;
 
 

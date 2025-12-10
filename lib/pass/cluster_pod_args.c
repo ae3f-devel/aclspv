@@ -113,7 +113,7 @@ IMPL_PASS_RET aclspv_pass_cluster_pod_args(
 
 				i += cluster_count;
 			} else {
-				i++;
+				++i;
 			}
 		}
 
