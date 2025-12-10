@@ -98,6 +98,20 @@ ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_default_l
 ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_emit_bltin_decl;
 
 /**
+ * @fn		aclspv_pass_entp_abi_strip
+ * @brief	Strips ABI-specific attributes from entry points to match Vulkan calling conventions.
+ * @details	Cleans up OpenCL ABI for Vulkan compute shader entry points.
+ * */
+ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_entp_abi_strip;
+
+/**
+ * @fn		aclspv_pass_fix_mem_access
+ * @brief	Adjusts memory accesses to use Vulkan storage classes (e.g., converting generic to physical addressing).
+ * @details	Transforms OpenCL pointer accesses to Vulkan's opaque pointer model.
+ * */
+ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_fix_mem_access;
+
+/**
  * @enum	e_aclspv_passes
  * @brief	the given number for passes
  * */
@@ -122,7 +136,13 @@ typedef enum {
 	ACLSPV_PASSES_DEFAULT_LAYOUT,
 
 	/** @brief error from `aclspv_pass_emit_bltin_decl` */
-	ACLSPV_PASSES_EMIT_BLTIN_DECL
+	ACLSPV_PASSES_EMIT_BLTIN_DECL,
+
+	/** @brief error from `aclspv_pass_entp_abi_strip` */
+	ACLSPV_PASSES_ENTP_ABI_STRIP,
+
+	/** @brief error from `aclspv_pass_fix_mem_access` */
+	ACLSPV_PASSES_FIX_MEM_ACCESS
 } e_aclspv_passes;
 
 

@@ -23,6 +23,7 @@ ae2f_noexcept ACLSPV_ABI_IMPL e_aclspv_passes aclspv_runall_module_passes(
 
 	_aclspv_init_vec(ctx.m_v0);
 	_aclspv_init_vec(ctx.m_v1);
+	_aclspv_init_vec(ctx.m_v2);
 
 	unless(h_module) {
 		assert(Z(FN_ACLSPV_PASS_MODULE_NIL));
@@ -66,9 +67,20 @@ ae2f_noexcept ACLSPV_ABI_IMPL e_aclspv_passes aclspv_runall_module_passes(
 		goto LBL_RET;
 	}
 
+	if((codepass = aclspv_pass_entp_abi_strip(h_module, &ctx))) {
+		code = ACLSPV_PASSES_ENTP_ABI_STRIP;
+		goto LBL_RET;
+	}
+
+	if((codepass = aclspv_pass_fix_mem_access(h_module, &ctx))) {
+		code = ACLSPV_PASSES_FIX_MEM_ACCESS;
+		goto LBL_RET;
+	}
+
 LBL_RET:
 	_aclspv_stop_vec(aclspv_free, ctx.m_v0);
 	_aclspv_stop_vec(aclspv_free, ctx.m_v1);
+	_aclspv_stop_vec(aclspv_free, ctx.m_v2);
 
 	if(wr_res_opt) *wr_res_opt = codepass;
 	return code;

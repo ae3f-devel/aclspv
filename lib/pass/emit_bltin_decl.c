@@ -15,15 +15,7 @@
 #include <string.h>
 #include <assert.h>
 
-
-/** 
- * @struct	builtin_map
- * @brief	A struct to map OpenCL mangled names to internal builtin names 
- * */
-typedef struct {
-	const char* ae2f_restrict m_ocl_name;
-	const char* ae2f_restrict m_internal_name;
-} aclspv_ocl_bltin_map;
+#include "./bltin_lowered.h"
 
 #define builtin_map g_aclspv_ocl_bltin_map
 
@@ -31,7 +23,7 @@ typedef struct {
  * A list of builtins to handle.
  * This list can be extended to support more OpenCL builtins.
  * */ 
-static const aclspv_ocl_bltin_map g_aclspv_ocl_bltin_map[] = {
+ACLSPV_ABI_IMPL const aclspv_ocl_bltin_map g_aclspv_ocl_bltin_map[] = {
     /* === Work-item builtins === */
     {"_Z13get_global_idj",      "aclspv.get_global_id"},
     {"get_global_id",           "aclspv.get_global_id"},
@@ -56,9 +48,6 @@ static const aclspv_ocl_bltin_map g_aclspv_ocl_bltin_map[] = {
 
     {"_Z16get_num_groupsj",     "aclspv.get_num_groups"},
     {"get_num_groups",          "aclspv.get_num_groups"},
-
-    {"_Z13get_global_idj",      "aclspv.get_global_id"},
-    {"get_global_id",           "aclspv.get_global_id"},
 
     /* === Barrier === */
     {"_Z7barrierj",             "aclspv.barrier"},

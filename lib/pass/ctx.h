@@ -26,7 +26,7 @@ typedef struct {
 } x_aclspv_vec;
 
 struct x_aclspv_pass_ctx {
-	x_aclspv_vec	m_v0, m_v1;
+	x_aclspv_vec	m_v0, m_v1, m_v2;
 };
 
 #endif
