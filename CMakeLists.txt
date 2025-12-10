@@ -68,13 +68,6 @@ file(GLOB aclspv-inc ${PROJECT_SOURCE_DIR}/inc/*)
 
 ae2f_Macro_init(1 30 30)
 
-if(NOT ${_aclspv_RELOADED})
-	ae2f_Macro_one(
-		${PROJECT_SOURCE_DIR}/src/pass/ctx.c
-		${PROJECT_SOURCE_DIR}/lib/pass/ctx.auto.h
-		)
-endif()
-
 ae2f_Macro_Lib_V2(
 	ae3f aclspvCore INTERFACE
 	${PROJECT_SOURCE_DIR}/src/ "__NOTHING"
@@ -95,6 +88,15 @@ target_link_libraries(${ae3f__aclspvCore__TENT} INTERFACE
 
 file(GLOB aclspv-src ${PROJECT_SOURCE_DIR}/lib/*)
 file(GLOB aclspv-src-pass ${PROJECT_SOURCE_DIR}/lib/pass/*)
+
+ae2f_Macro_LIB_V2(
+	ae3f aclspvABI_Pass	INTERFACE
+	${PROJECT_SOURCE_DIR}/src/	"__NOTHING"
+	${PROJECT_SOURCE_DIR}/src/pass	"*.c"
+	${PROJECT_SOURCE_DIR}/lib/pass	".auto.h"
+	${PROJECT_SOURCE_DIR}/cfg/aclspvABI_Pass.cmake.in
+	lib/pass/	${_aclspv_RELOADED}
+	)
 
 ae2f_CoreLibTentConfigCustom(
 	aclspvABI ${ae2f_LIBPREFIX}

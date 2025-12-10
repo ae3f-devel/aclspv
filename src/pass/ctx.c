@@ -11,12 +11,12 @@
 typedef struct {
 	void* ae2f_restrict 	m_p;
 	size_t	m_sz;
-} aclspv_vec;
+} x_aclspv_vec;
 
-void aclspv_init_vec(aclspv_vec);
-void aclspv_stop_vec(aclspv_vec);
-void aclspv_grow_vec(aclspv_vec, const size_t);
-void aclspv_grow_vec_with_copy(aclspv_vec, const size_t);
+void aclspv_init_vec(x_aclspv_vec);
+void aclspv_stop_vec(x_aclspv_vec);
+void aclspv_grow_vec(x_aclspv_vec, const size_t);
+void aclspv_grow_vec_with_copy(x_aclspv_vec, const size_t);
 
 void f_free(void* ae2f_restrict, size_t);
 ae2f_retnew void*	f_malloc(size_t);
@@ -29,20 +29,20 @@ void*	f_memcpy(void*, const void*, size_t);
 
 #define _aclspv_free(a, b)	free(a)
 #define _aclspv_malloc(a)	malloc(ae2f_static_cast(size_t, a))
-#define _aclspv_memcpy(a, b, c)	memcpy(a, b, ae2f_static_cast(size_t, a))
+#define _aclspv_memcpy(a, b, c)	memcpy(a, b, ae2f_static_cast(size_t, c))
 
 
-ae2f_MAC() aclspv_init_vec(aclspv_vec	i_vec) {
+ae2f_MAC() aclspv_init_vec(x_aclspv_vec	i_vec) {
 	(i_vec).m_p = ae2f_NIL;
 	(i_vec).m_sz = 0ul;
 }
 
-ae2f_MAC((f_free, )) aclspv_stop_vec(aclspv_vec	s_vec) {
+ae2f_MAC((f_free, )) aclspv_stop_vec(x_aclspv_vec	s_vec) {
 	f_free((s_vec).m_p, (s_vec).m_sz);
 }
 
 ae2f_MAC((f_malloc, f_free, )) 
-	aclspv_grow_vec(aclspv_vec rc_vec, const size_t c_new_sz) {
+	aclspv_grow_vec(x_aclspv_vec rc_vec, const size_t c_new_sz) {
 		if((c_new_sz) > (rc_vec).m_sz) {
 			f_free((rc_vec).m_p, (c_new_sz));
 			if(((rc_vec).m_p = f_malloc(c_new_sz))) {
@@ -54,7 +54,7 @@ ae2f_MAC((f_malloc, f_free, ))
 	}
 
 ae2f_MAC((f_malloc, f_free, f_memcpy, L_new, ))
-	aclspv_grow_vec_with_copy(aclspv_vec rc_vec, const size_t c_new_sz) {
+	aclspv_grow_vec_with_copy(x_aclspv_vec rc_vec, const size_t c_new_sz) {
 		if((c_new_sz) > (rc_vec).m_sz) {
 			void* ae2f_restrict 
 				L_new = f_malloc(c_new_sz);

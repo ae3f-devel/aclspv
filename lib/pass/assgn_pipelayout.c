@@ -56,10 +56,10 @@ IMPL_PASS_RET aclspv_pass_assgn_pipelayout(
 	LLVMValueRef F, FNxt;
 
 	for (F = LLVMGetFirstFunction(M); F; F = FNxt) {
+
 		const LLVMValueRef	arg_kinds_node = LLVMGetMetadata(F, arg_kind_md_id);
-		const unsigned nprms = LLVMGetMDNodeNumOperands(arg_kinds_node);
 		uint32_t push_constant_size = 0;
-		unsigned num_descriptors = 0;
+		unsigned num_descriptors = 0, nprms;
 
 		FNxt = LLVMGetNextFunction(F);
 
@@ -68,6 +68,7 @@ IMPL_PASS_RET aclspv_pass_assgn_pipelayout(
 		}
 
 		unless(arg_kinds_node) return FN_ACLSPV_PASS_FAILED_FND_ARGKND;
+		nprms = LLVMGetMDNodeNumOperands(arg_kinds_node);
 
 		if (nprms == 0) continue;
 
@@ -134,7 +135,10 @@ IMPL_PASS_RET aclspv_pass_assgn_pipelayout(
 						continue;
 					}
 
-					assert(desc_type != (unsigned)-1);
+					if(desc_type == (unsigned)-1) {
+						assert(0);
+						return FN_ACLSPV_PASS_FAILED_FND_ARGKND;
+					}
 
 					binding_ops[0] = (LLVMConstInt(LLVMInt32TypeInContext(C), current_binding, 0));
 					binding_ops[1] = (LLVMConstInt(LLVMInt32TypeInContext(C), desc_type, 0));

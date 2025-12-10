@@ -67,6 +67,27 @@ ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_arg_anal;
 ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_assgn_pipelayout;
 
 /**
+ * @fn		aclspv_pass_check_mem_access
+ * @brief	Verifies memory access patterns for Vulkan storage classes (e.g., StorageBuffer vs. Uniform).
+ * @detials	Validates OpenCL memory semantics against Vulkan restrictions.
+ * */
+ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_check_mem_access;
+
+/**
+ * @fn		aclspv_pass_cluster_pod_args
+ * @brief	Groups plain-old-data (POD) kernel arguments into clusters for efficient Vulkan passing.
+ * @details	Bundles scalar/vector args into composite structures for push constants or buffers.
+ * */
+ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_cluster_pod_args;
+
+/**
+ * @fn		aclspv_pass_default_layout
+ * @brief	Applies a default descriptor set layout if not specified.
+ * @details	Provides fallback Vulkan layout for simple kernels.
+ * */
+ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_default_layout;
+
+/**
  * @enum	e_aclspv_passes
  * @brief	the given number for passes
  * */
@@ -74,7 +95,8 @@ typedef enum {
 	ACLSPV_PASSES_OK,
 	ACLSPV_PASSES_ADD_KERN_METADATA,
 	ACLSPV_PASSES_ARG_ANAL,
-	ACLSPV_PASSES_ASSGN_PIPELAYOUT
+	ACLSPV_PASSES_ASSGN_PIPELAYOUT,
+	ACLSPV_PASSES_CHECK_MEM_ACCESS
 } e_aclspv_passes;
 
 

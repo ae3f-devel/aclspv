@@ -149,8 +149,6 @@ IMPL_PASS_RET aclspv_pass_arg_anal(
 			unless (arg_kind_mds && prms)
 				return FN_ACLSPV_PASS_ALLOC_FAILED;
 
-			assert(nprms * sizeof(LLVMValueRef) == CTX->m_v1.m_sz);
-
 			LLVMGetParams(kern_fn, prms);
 
 

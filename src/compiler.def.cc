@@ -2,13 +2,9 @@
 #define aclspv_compiler_auto_h
 
 #include <ae2f/Macro.h>
-#undef	ON
-#undef	OFF
 
 #include <aclspv/obj.h>
 
-#undef	ON
-#undef	OFF
 
 #include <clang/CodeGen/CodeGenAction.h>
 #include <clang/Lex/PreprocessorOptions.h>
@@ -17,6 +13,8 @@
 
 #include <string>
 
+#include <llvm/Support/raw_ostream.h>
+#include <memory>
 ae2f_MAC((C_vfs, C_fm, C_diagptr, C_action, )) aclspv_compile_imp(
 		size_t&	 ae2f_restrict		t_sz0,
 
