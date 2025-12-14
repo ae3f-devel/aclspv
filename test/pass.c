@@ -77,7 +77,11 @@ int main(void) {
 		puts(final_llvm);
 		puts("\nOLD LLVM OUTPUT END");
 		LLVMDisposeMessage(final_llvm);
+
 	} while(0);
+
+
+	LLVMWriteBitcodeToFile(lnk.m_module, "NPassed.bc");
 
 #if 1
 	do {
@@ -96,6 +100,8 @@ int main(void) {
 		      );
 	} while(0);
 #endif
+
+	LLVMWriteBitcodeToFile(lnk.m_module, "Passed.bc");
 
 	do {
 		char*  final_llvm = LLVMPrintModuleToString(lnk.m_module);

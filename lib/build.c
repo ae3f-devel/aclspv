@@ -124,15 +124,14 @@ ae2f_inline static e_fn_aclspv_pass aclspv_build_spv_emit(
 		return FN_ACLSPV_PASS_GET_FAILED;
 	}
 
-	/** FIXME: problemetic */
 	machine = LLVMCreateTargetMachine(
-			target, TRIPLE, "", "",
+			target, TRIPLE, "spirv", "",
 			LLVMCodeGenLevelDefault
 			, LLVMRelocDefault
 			, LLVMCodeModelDefault
 			);
 
-	unless (!machine) {
+	unless (machine) {
 		return FN_ACLSPV_PASS_GET_FAILED;
 	}
 

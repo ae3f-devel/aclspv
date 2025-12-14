@@ -82,9 +82,12 @@ int main(void) {
 				, &count
 				);
 
-		printf("%p %u %u %u %lx\n", (void*)spv, e_pass, e_build, e_wh, count);
+		printf("%p %u %u %u %lu\n", (void*)spv, e_pass, e_build, e_wh, count);
 
 		if(spv) {
+			FILE* const file = fopen("result-build.spv", "wb");
+			fwrite(spv, sizeof(uint32_t), (size_t)count, file);
+			fclose(file);
 			free(spv);
 		}
 		else {
