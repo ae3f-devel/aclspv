@@ -3,11 +3,9 @@
 #include "argknd.h"
 
 #include <llvm-c/Core.h>
-#include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
 
-#define MD_KERNELS ACLSPV_MD_OCL_KERNELS 
+#define MD_KERNELS ACLSPV_MD_OCL_KERNELS
 
 IMPL_PASS_RET aclspv_pass_default_layout(
 		const LLVMModuleRef	M,
@@ -20,7 +18,7 @@ IMPL_PASS_RET aclspv_pass_default_layout(
 	const unsigned layout_kind_id = LLVMGetMDKindIDInContext(
 			C
 			, ACLSPV_MD_PIPELINE_LAYOUT
-			, sizeof(ACLSPV_MD_PIPELINE_LAYOUT) - 1 
+			, sizeof(ACLSPV_MD_PIPELINE_LAYOUT) - 1
 			);
 	const unsigned arg_kind_id = LLVMGetMDKindIDInContext(
 			C
@@ -93,7 +91,7 @@ IMPL_PASS_RET aclspv_pass_default_layout(
 				arg_idx++;
 				continue;
 			}
-			
+
 			kind_str = LLVMGetMDString(str_md_val, &len);
 			unless (kind_str) {
 				arg_idx++;
@@ -114,14 +112,14 @@ IMPL_PASS_RET aclspv_pass_default_layout(
 #define v_arg_idx	LLVMConstInt(LLVMInt32TypeInContext(C), arg_idx, 0)
 
 				/** Default set 0 */
-#define	v_set		LLVMConstInt(LLVMInt32TypeInContext(C), 0, 0)	
+#define	v_set		LLVMConstInt(LLVMInt32TypeInContext(C), 0, 0)
 #define	v_binding	LLVMConstInt(LLVMInt32TypeInContext(C), binding++, 0)
 
 				fin_vals[0] = v_arg_idx;
 				fin_vals[1] = v_set;
 				fin_vals[2] = v_binding;
 
-				layout_mds[layout_mds_count++] = 
+				layout_mds[layout_mds_count++] =
 					LLVMMDNodeInContext(C, fin_vals, sizeof(fin_vals) / sizeof(fin_vals[0]));
 			}
 			arg_idx++;

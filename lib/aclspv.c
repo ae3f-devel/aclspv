@@ -13,7 +13,7 @@ e_aclspv_init_global	aclspv_init_global(void) {
 }
 
 ae2f_extern ACLSPV_ABI_IMPL
-void	aclspv_stop_global(void) {}
+void	aclspv_stop_global(void) {
 
-
+}
 

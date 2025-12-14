@@ -78,9 +78,23 @@ ae2f_noexcept ACLSPV_ABI_IMPL e_aclspv_passes aclspv_runall_module_passes(
 	}
 
 	if((codepass = aclspv_pass_inline_entp(h_module, &ctx))) {
-		code = ACLSPV_PASSES_FIX_MEM_ACCESS;
+		code = ACLSPV_PASSES_INLINE_ENTP;
 		goto LBL_RET;
 	}
+
+	if((codepass = aclspv_pass_lower_ocl_intel_subgrps(h_module, &ctx))) {
+		code = ACLSPV_PASSES_LOWER_OCL_INTEL_SUBGRPS;
+		goto LBL_RET;
+	}
+
+#if 1
+	if((codepass = aclspv_pass_ocl_bltin_lower(h_module, &ctx))) {
+		code = ACLSPV_PASSES_OCL_BLTIN_LOWER;
+		goto LBL_RET;
+	}
+#endif
+
+	
 
 LBL_RET:
 	_aclspv_stop_vec(aclspv_free, ctx.m_v0);

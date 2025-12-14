@@ -1,3 +1,4 @@
+#include "ae2f/Cast.h"
 #include <aclspv.h>
 
 #if	ae2f_stdcc_v < 201100L
@@ -18,6 +19,7 @@ h_aclspv_obj_t	aclspv_compile(
 		)
 {
 	size_t	 			t_sz0;
+	
 
 	clang::CompilerInstance	t_cc;
 	clang::DiagnosticOptions	t_diag_opts;
@@ -36,7 +38,10 @@ h_aclspv_obj_t	aclspv_compile(
 		rd_argv[4] = compiler_arg2;
 		rd_argv[5] = compiler_arg3;
 
-		memcpy(rd_argv.data() + compiler_argc + 1, rd_argv_opt, c_argc * sizeof(void*));
+		memcpy(
+				ae2f_static_cast(void*, rd_argv.data() + compiler_argc + 1)
+				, ae2f_reinterpret_cast(const void*, ae2f_reinterpret_cast(intptr_t, rd_argv_opt))
+				, c_argc * sizeof(void*));
 
 		_aclspv_compile_imp(
 				C_vfs, C_fm, C_diagptr, C_action

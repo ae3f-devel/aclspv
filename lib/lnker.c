@@ -61,7 +61,10 @@ aclspv_add_obj_to_lnker(
 #if 1
 		if(LLVMLinkModules2(
 					(h_lnk)->m_module
-					, LLVMCloneModule(aclspv_get_module_from_obj(rd_hy_tars[i]))
+					, LLVMCloneModule(
+						aclspv_get_module_from_obj(
+							rd_hy_tars[i])
+						)
 
 				   ))
 		{

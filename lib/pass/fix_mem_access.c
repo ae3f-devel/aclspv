@@ -6,7 +6,7 @@
 
 
 /** Standard generic address space for OpenCL in LLVM */
-#define GENERIC_ADDR_SPACE 4 
+#define GENERIC_ADDR_SPACE 4
 
 /**  macro to check if a type is a generic pointer */
 #define		is_generic_pointer_type(c_ty)		\
@@ -26,8 +26,8 @@ typedef struct {
  * This function is recursive and needs to handle various instruction types.
  * */
 ae2f_inline static phy_src_t get_phy_src(
-		LLVMValueRef generic_ptr, 
-		LLVMBuilderRef builder, 
+		LLVMValueRef generic_ptr,
+		LLVMBuilderRef builder,
 		x_aclspv_vec* ae2f_restrict V
 		)
 {
@@ -50,7 +50,7 @@ ae2f_inline static phy_src_t get_phy_src(
 
 	/** If it's an instruction, we need to trace its definition. */
 	if (LLVMIsAAddrSpaceCastInst(generic_ptr)) {
-		const phy_src_t	
+		const phy_src_t
 			srres = get_phy_src(
 				LLVMGetOperand(generic_ptr, 0)
 				, builder
@@ -62,7 +62,7 @@ ae2f_inline static phy_src_t get_phy_src(
 	}
 
 	if (LLVMIsAGetElementPtrInst(generic_ptr)) {
-		const phy_src_t phy_base = 
+		const phy_src_t phy_base =
 			get_phy_src(LLVMGetOperand(generic_ptr, 0), builder, V);
 
 		LLVMTypeRef	gep_source_type;
@@ -102,7 +102,7 @@ ae2f_inline static phy_src_t get_phy_src(
 #define source_val		LLVMGetOperand(generic_ptr, 0)
 		const phy_src_t physical_source = get_phy_src(source_val, builder, V);
 
-		unless (physical_source.m_elty && physical_source.m_phyptr) 
+		unless (physical_source.m_elty && physical_source.m_phyptr)
 			return RET;
 
 		/** Reconstruct BitCast with physical source */
@@ -113,8 +113,10 @@ ae2f_inline static phy_src_t get_phy_src(
 
 		RET.m_phyptr	= LLVMBuildBitCast(builder, physical_source.m_phyptr, new_dest_type, "");
 		RET.m_elty	= element_type;
+
+		return RET;
 	}
-	/** 
+	/**
 	 * TODO: Handle PHI nodes, Select instructions, etc. for more complex cases.
 	 * For now, we only handle direct chains from addrspacecast, GEP, BitCast.
 	 */
@@ -178,8 +180,8 @@ IMPL_PASS_RET aclspv_pass_fix_mem_access(
 
 #define	src_as		LLVMGetPointerAddressSpace(LLVMTypeOf(phy_rep.m_phyptr))
 
-							/* 
-							 * 3 as workgroupm 12 as storagebuffer, 6 as fallback. 
+							/*
+							 * 3 as workgroupm 12 as storagebuffer, 6 as fallback.
 							 * TODO: document this or somewhere in header.
 							 * */
 #define	sc		((src_as == 1) ? 12 : (src_as == 3) ? 3 : 6)
@@ -191,8 +193,8 @@ IMPL_PASS_RET aclspv_pass_fix_mem_access(
 								_aclspv_grow_vec_with_copy(
 										_aclspv_malloc, _aclspv_free, _aclspv_memcpy
 										, L_new, CTX->m_v1
-										, ((mod_capacity == 0) 
-											? 16 
+										, ((mod_capacity == 0)
+											? 16
 											: mod_capacity << 1)
 										);
 
@@ -238,7 +240,7 @@ IMPL_PASS_RET aclspv_pass_fix_mem_access(
 			while (I) {
 
 				/* Get next instruction before potentially erasing I */
-				const LLVMValueRef next_I = LLVMGetNextInstruction(I); 
+				const LLVMValueRef next_I = LLVMGetNextInstruction(I);
 				if (LLVMIsAAddrSpaceCastInst(I) && LLVMGetFirstUse(I) == NULL) {
 					_aclspv_grow_vec_with_copy(_aclspv_malloc, _aclspv_free, _aclspv_memcpy
 							, L_new, CTX->m_v0, to_remove_count + 1);

@@ -29,7 +29,10 @@ typedef enum {
 	FN_ACLSPV_PASS_FAILED_FND_ARGKND,
 
 	/** @brief	met unexpected situation */
-	FN_ACLSPV_PASS_MET_INVAL
+	FN_ACLSPV_PASS_MET_INVAL,
+
+	/** @brief	met the valid syntax but technically not supported. */
+	FN_ACLSPV_PASS_NO_SUPPORT
 } e_fn_aclspv_pass;
 
 /**
@@ -120,6 +123,26 @@ ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_fix_mem_a
 ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_inline_entp;
 
 /**
+ * @fn		aclspv_pass_lower_ocl_intel_subgrps
+ * @brief	Lowers OpenCL subgroup builtins to SPIR-V subgroup ops.
+ * @details	Maps OpenCL subgroup extensions to Vulkan subgroup capabilities.
+ * */
+ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_lower_ocl_intel_subgrps;
+
+/**
+ * @fn		aclspv_pass_ocl_bltin_lower
+ * @brief	Lowers OpenCL builtins (e.g., `get_global_id`) to LLVM intrinsics or SPIR-V equivalents.
+ * @detials	Replaces OpenCL-specific calls with Vulkan/SPIR-V compatible code.
+ * */
+ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_ocl_bltin_lower;
+/**
+ * @fn		aclspv_pass_pod_pshconst_args
+ * @brief	Rewrites POD arguments to use Vulkan push constants instead of descriptors.
+ * @details	Routes small args via push constants for performance.
+ * */
+ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_pass_t aclspv_pass_pod_pshconst_args;
+
+/**
  * @enum	e_aclspv_passes
  * @brief	the given number for passes
  * */
@@ -153,7 +176,13 @@ typedef enum {
 	ACLSPV_PASSES_FIX_MEM_ACCESS,
 
 	/** @brief error from `aclspv_pass_inline_entp` */
-	ACLSPV_PASSES_INLINE_ENTP
+	ACLSPV_PASSES_INLINE_ENTP,
+
+	/** @brief error from `aclspv_pass_lower_ocl_intel_subgrps` */
+	ACLSPV_PASSES_LOWER_OCL_INTEL_SUBGRPS,
+
+	/** @brief error from `aclspv_pass_ocl_bltin_lower` */
+	ACLSPV_PASSES_OCL_BLTIN_LOWER
 } e_aclspv_passes;
 
 
