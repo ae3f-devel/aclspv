@@ -8,6 +8,7 @@
 #include <llvm-c/BitWriter.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #define content0	\
 	"__kernel void __kernel_name_0(__global int* _glob1, __global int* _glob2) {"	\
@@ -83,7 +84,10 @@ int main(void) {
 
 		printf("%p %u %u %u %lx\n", (void*)spv, e_pass, e_build, e_wh, count);
 
-		unless(spv) {
+		if(spv) {
+			free(spv);
+		}
+		else {
 			perror("aclspv_build has failed.");
 			assert(0);
 		}
