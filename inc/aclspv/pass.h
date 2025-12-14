@@ -35,7 +35,16 @@ typedef enum {
 	FN_ACLSPV_PASS_NO_SUPPORT,
 
 	/** @brief	met the situation where some values are too big */
-	FN_ACLSPV_PASS_TOO_BIG
+	FN_ACLSPV_PASS_TOO_BIG,
+
+	/** @brief	getting / fetching something has failed. */
+	FN_ACLSPV_PASS_GET_FAILED,
+	
+	/** @brief	emitting the spv has failed. `LLVMTargetMachineEmitToMemoryBuffer` */
+	FN_ACLSPV_PASS_SPV_EMIT_FAILED,
+
+	/** @brief	copying the emitted the spv has failed. */
+	FN_ACLSPV_PASS_SPV_COPY_FAILED
 } e_fn_aclspv_pass;
 
 /**

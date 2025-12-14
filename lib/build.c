@@ -1,11 +1,12 @@
 #include "./ctx.h"
+#include "aclspv/pass.h"
 #include <aclspv/build.h>
 
 
 /**
  * @fn		aclspv_build_spv_emit
- * @brief	
- * @param	M
+ * @brief	emit valid spir-v to `CTX_RET->m_v0`
+ * @param	M	Module
  * @param	CTX_RET	`CTX_RET->m_v0` will be considered as return value
  * */
 ae2f_inline static e_fn_aclspv_pass aclspv_build_spv_emit(
@@ -44,7 +45,7 @@ ACLSPV_ABI_IMPL ae2f_retnew uint32_t* aclspv_build(
 			, &r_fn
 			);
 
-	if(r_wh || wr_pass_opt) {
+	if(r_wh || r_fn) {
 		r_build = ACLSPV_BUILD_ERR_FROM_PASS;
 		goto END;
 	}
@@ -91,13 +92,86 @@ END:
 }
 
 
+#include <llvm-c/Target.h>
+#include <llvm-c/TargetMachine.h>
+#include <assert.h>
+
+#define _free(a, b)
+
 ae2f_inline static e_fn_aclspv_pass aclspv_build_spv_emit(
 		const LLVMModuleRef	M,
 		h_aclspv_pass_ctx	CTX_RET
-		) 
+		)
 {
-	IGNORE(M);
-	IGNORE(CTX_RET);
+	/** spirv64-unknown-unknown */
+#define TRIPLE	"spirv64-unknown-unknown"
+
+	LLVMTargetRef		target;
+	LLVMTargetMachineRef	machine;
+	LLVMMemoryBufferRef buffer;
+
+	char* error = ae2f_NIL;
+	size_t		new_sz;
+
+	if (LLVMGetTargetFromTriple(
+				TRIPLE
+				, &target
+				, &error
+				)) 
+	{
+		/** TODO: log error */
+		LLVMDisposeMessage(error);
+		return FN_ACLSPV_PASS_GET_FAILED;
+	}
+
+	/** FIXME: problemetic */
+	machine = LLVMCreateTargetMachine(
+			target, TRIPLE, "", "",
+			LLVMCodeGenLevelDefault
+			, LLVMRelocDefault
+			, LLVMCodeModelDefault
+			);
+
+	unless (!machine) {
+		return FN_ACLSPV_PASS_GET_FAILED;
+	}
+
+
+	if (LLVMTargetMachineEmitToMemoryBuffer(
+				machine, M, LLVMObjectFile
+				, &error, &buffer
+				)
+			)
+	{
+		/** TODO: log error */
+		LLVMDisposeMessage(error);
+		LLVMDisposeTargetMachine(machine);
+		return FN_ACLSPV_PASS_SPV_EMIT_FAILED;
+	}
+
+	new_sz = LLVMGetBufferSize(buffer);
+	unless(buffer) {
+		/** TODO: log error */
+		LLVMDisposeMessage(error);
+		LLVMDisposeTargetMachine(machine);
+		return FN_ACLSPV_PASS_SPV_EMIT_FAILED;
+	}
+
+	_aclspv_stop_vec(_aclspv_free, CTX_RET->m_v0);
+	_aclspv_init_vec(CTX_RET->m_v0);
+	_aclspv_grow_vec(malloc, _free, CTX_RET->m_v0, new_sz);
+
+	unless (CTX_RET->m_v0.m_p) {
+		LLVMDisposeMemoryBuffer(buffer);
+		LLVMDisposeTargetMachine(machine);
+		return FN_ACLSPV_PASS_SPV_COPY_FAILED;
+	}
+
+	memcpy(CTX_RET->m_v0.m_p, LLVMGetBufferStart(buffer), new_sz);
+	CTX_RET->m_v0.m_sz = new_sz;
+
+	LLVMDisposeMemoryBuffer(buffer);
+	LLVMDisposeTargetMachine(machine);
 
 	return FN_ACLSPV_PASS_OK;
 }
