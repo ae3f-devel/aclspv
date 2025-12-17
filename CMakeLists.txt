@@ -114,6 +114,7 @@ target_link_libraries(${ae3f__aclspvABI__TENT} PUBLIC
 
 ae2f_CoreTestTentVerbose(${ae3f__aclspvABI__TENT} ./test/lifespan)
 ae2f_CoreTestTentVerbose(${ae3f__aclspvABI__TENT} ./test/stupid)
+ae2f_CoreTestTentVerbose(${ae3f__aclspvABI__TENT} ./test/util)
 ae2f_CoreTestTentVerbose(${ae3f__aclspvABI__TENT} ./test)
 
 ae2f_UltraErrWERROR(${ae3f__aclspvABI__TENT} PRIVATE)

@@ -98,6 +98,9 @@ int main(void) {
 				, pass_progress
 				, pass_result
 		      );
+
+		assert(!pass_progress);
+		assert(!pass_result);
 	} while(0);
 #endif
 
