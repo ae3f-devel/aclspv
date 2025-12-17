@@ -129,7 +129,7 @@ IMPL_PASS_RET aclspv_pass_assgn_pipelayout(
 					const char* ae2f_restrict const kind_str = LLVMGetMDString(op, &len);
 
 					const unsigned desc_type = get_descriptor_type(kind_str);
-					LLVMValueRef binding_ops[4];
+					LLVMValueRef binding_ops[5];
 
 					if (strcmp(kind_str, ACLSPV_ARGKND_POD_PSHCONST) == 0 || strcmp(kind_str, ACLSPV_ARGKND_LOC) == 0) {
 						continue;
@@ -140,12 +140,13 @@ IMPL_PASS_RET aclspv_pass_assgn_pipelayout(
 						return FN_ACLSPV_PASS_FAILED_FND_ARGKND;
 					}
 
-					binding_ops[0] = (LLVMConstInt(LLVMInt32TypeInContext(C), current_binding, 0));
-					binding_ops[1] = (LLVMConstInt(LLVMInt32TypeInContext(C), desc_type, 0));
-					binding_ops[2] = (LLVMConstInt(LLVMInt32TypeInContext(C), 1, 0)); /** count */
-					binding_ops[3] = (LLVMConstInt(LLVMInt32TypeInContext(C), VK_SHADER_STAGE_COMPUTE_BIT, 0));
+					binding_ops[0] = (LLVMConstInt(LLVMInt32TypeInContext(C), i, 0));
+					binding_ops[1] = (LLVMConstInt(LLVMInt32TypeInContext(C), current_binding, 0));
+					binding_ops[2] = (LLVMConstInt(LLVMInt32TypeInContext(C), desc_type, 0));
+					binding_ops[3] = (LLVMConstInt(LLVMInt32TypeInContext(C), 1, 0)); /** count */
+					binding_ops[4] = (LLVMConstInt(LLVMInt32TypeInContext(C), VK_SHADER_STAGE_COMPUTE_BIT, 0));
 
-					bindings[current_binding++] = LLVMMDNodeInContext(C, binding_ops, 4);
+					bindings[current_binding++] = LLVMMDNodeInContext(C, binding_ops, 5);
 				}
 
 				/** set number */

@@ -280,83 +280,102 @@ IMPL_PASS_RET aclspv_pass_mkspv(
 			const LLVMValueRef kernel_func = kernel_nodes[i].m_fn;
 			const LLVMValueRef layout_md = LLVMGetMetadata(kernel_func, layout_md_id);
 			size_t	interface_count = 0;
-			int	num_tuples, t;
+			int num_sets;
+			int i_set;
+			LLVMValueRef set_layouts_node;
 
-			num_tuples = layout_md ? LLVMGetNumOperands(layout_md) : 0;
-
-			printf("numtuples: %d\n", num_tuples);
-			for(t = 0; t < num_tuples ; t++) {
-				const LLVMValueRef tuple = LLVMGetOperand(layout_md, (unsigned)t);
-				uintmax_t	set, binding, arg_idx;
-
-#if		!defined(NDEBUG) || !NDEBUG
-				char	var_name[64];
-				size_t	name_pos;
-#endif
-
-				aclspv_wrd_t	var_id = next_id++;
-
-#if 1
-				printf("LLVMGetNumOperands(tuple): %d\n", LLVMGetNumOperands(tuple));
-				if(!LLVMIsAMDNode(tuple) || LLVMGetNumOperands(tuple) < 3) continue;
-#endif
-
-				set	= LLVMConstIntGetZExtValue(LLVMGetOperand(tuple, 0));
-				binding = LLVMConstIntGetZExtValue(LLVMGetOperand(tuple, 1));
-				arg_idx	= LLVMConstIntGetZExtValue(LLVMGetOperand(tuple, 2));
-
-				if(set > UINT32_MAX || binding > UINT32_MAX || arg_idx > UINT32_MAX)	{
-					status	= FN_ACLSPV_PASS_TOO_BIG;
-					goto LBL_FNSTATISBAD;
-				}
-
-#define set	((aclspv_wrd_t)set)
-#define binding	((aclspv_wrd_t)binding)
-#define	arg_idx	((aclspv_wrd_t)arg_idx)
-
-				/* OpVariable */
-				unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpVariable, 4))) goto LBL_FNSTATISBAD;
-				unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_PTR_STORAGE))) goto LBL_FNSTATISBAD;
-				unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_id))) goto LBL_FNSTATISBAD;
-				unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvStorageClassStorageBuffer))) 
-					goto LBL_FNSTATISBAD;
-				unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, 0))) goto LBL_FNSTATISBAD;
-
-				/** Decorations::Descriptorsets */
-				unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpDecorate, 3))) goto LBL_FNSTATISBAD;
-				unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_id))) goto LBL_FNSTATISBAD;
-				unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvDecorationDescriptorSet))) goto LBL_FNSTATISBAD;
-				unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, set))) goto LBL_FNSTATISBAD;
-
-				/** Decorations::Bind */
-				unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpDecorate, 3))) goto LBL_FNSTATISBAD;
-				unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_id))) goto LBL_FNSTATISBAD;
-				unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvDecorationBinding))) goto LBL_FNSTATISBAD;
-				unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, binding))) goto LBL_FNSTATISBAD;
-
-#undef	set
-#undef	binding
-#undef	arg_idx
-
-				/** opname */
-#if		!defined(NDEBUG) || !NDEBUG
-				snprintf(var_name, sizeof(var_name), "%s.arg%u", LLVMGetValueName(kernel_func), (uint32_t)arg_idx);
-				name_pos = ret_count;
-				unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpName, 0))) goto LBL_FNSTATISBAD;
-				unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_id))) goto LBL_FNSTATISBAD;
-				unless((ret_count = emit_str(&CTX->m_ret, ret_count, var_name))) goto LBL_FNSTATISBAD;
-				set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_ret)[name_pos], ret_count - name_pos - 1);
-#endif
-
-				/** store id */
-				if(grow_last_scale(&CTX->m_v1, count_to_sz(interface_count + 1))) {
-					goto LBL_FNSTATISBAD;
-				}
-
-				puts("appnd");
-				interface_ids[interface_count++] = var_id;
+			if (!layout_md || !LLVMIsAMDNode(layout_md) || LLVMGetNumOperands(layout_md) < 2) {
+				goto LBL_NEXT_KRNL;
 			}
 
+			set_layouts_node = LLVMGetOperand(layout_md, 1);
+			if (!set_layouts_node || !LLVMIsAMDNode(set_layouts_node)) {
+				goto LBL_NEXT_KRNL;
+			}
+
+			num_sets = LLVMGetNumOperands(set_layouts_node);
+			/* Iterate over descriptor sets */
+			for (i_set = 0; i_set < num_sets; ++i_set) {
+				const LLVMValueRef set_layout_node = LLVMGetOperand(set_layouts_node, (unsigned)i_set);
+				LLVMValueRef	set_num_val, bindings_node;
+				aclspv_wrd_t	set;
+				int	num_bindings, i_binding;
+
+				if (!set_layout_node || !LLVMIsAMDNode(set_layout_node) || LLVMGetNumOperands(set_layout_node) < 2) {
+					continue;
+				}
+
+				set_num_val = LLVMGetOperand(set_layout_node, 0);
+				set = (aclspv_wrd_t)LLVMConstIntGetZExtValue(set_num_val);
+
+				bindings_node = LLVMGetOperand(set_layout_node, 1);
+				if (!bindings_node || !LLVMIsAMDNode(bindings_node)) {
+					continue;
+				}
+
+				/* Iterate over bindings */
+				num_bindings = LLVMGetNumOperands(bindings_node);
+				for (i_binding = 0; i_binding < num_bindings; ++i_binding) {
+					const LLVMValueRef binding_node = LLVMGetOperand(bindings_node, (unsigned)i_binding);
+					LLVMValueRef	arg_idx_val, binding_val;
+					aclspv_wrd_t	arg_idx, binding;
+
+
+					const aclspv_wrd_t	var_id = next_id++;
+
+#if		!defined(NDEBUG) || !NDEBUG
+					char	var_name[64];
+					size_t	name_pos;
+#endif
+
+					if (!binding_node || !LLVMIsAMDNode(binding_node) || LLVMGetNumOperands(binding_node) < 5) {
+						continue;
+					}
+
+					arg_idx_val = LLVMGetOperand(binding_node, 0);
+					binding_val = LLVMGetOperand(binding_node, 1);
+
+					arg_idx = (aclspv_wrd_t)LLVMConstIntGetZExtValue(arg_idx_val);
+					binding = (aclspv_wrd_t)LLVMConstIntGetZExtValue(binding_val);
+
+					/* OpVariable */
+					unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpVariable, 3))) goto LBL_FNSTATISBAD;
+					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_PTR_STORAGE))) goto LBL_FNSTATISBAD;
+					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_id))) goto LBL_FNSTATISBAD;
+					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvStorageClassStorageBuffer))) 
+						goto LBL_FNSTATISBAD;
+
+					/** Decorations::Descriptorsets */
+					unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpDecorate, 3))) goto LBL_FNSTATISBAD;
+					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_id))) goto LBL_FNSTATISBAD;
+					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvDecorationDescriptorSet))) goto LBL_FNSTATISBAD;
+					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, set))) goto LBL_FNSTATISBAD;
+
+					/** Decorations::Bind */
+					unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpDecorate, 3))) goto LBL_FNSTATISBAD;
+					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_id))) goto LBL_FNSTATISBAD;
+					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvDecorationBinding))) goto LBL_FNSTATISBAD;
+					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, binding))) goto LBL_FNSTATISBAD;
+
+					/** opname */
+#if		!defined(NDEBUG) || !NDEBUG
+					snprintf(var_name, sizeof(var_name), "%s.arg%u", LLVMGetValueName(kernel_func), (uint32_t)arg_idx);
+					name_pos = ret_count;
+					unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpName, 0))) goto LBL_FNSTATISBAD;
+					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_id))) goto LBL_FNSTATISBAD;
+					unless((ret_count = emit_str(&CTX->m_ret, ret_count, var_name))) goto LBL_FNSTATISBAD;
+					set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_ret)[name_pos], ret_count - name_pos - 1);
+#endif
+
+					/** store id */
+					if(grow_last_scale(&CTX->m_v1, count_to_sz(interface_count + 1))) {
+						goto LBL_FNSTATISBAD;
+					}
+					interface_ids[interface_count++] = var_id;
+				}
+			}
+
+LBL_NEXT_KRNL:
 			assert(get_last_scale_from_vec(&CTX->m_v1)->m_sz >= count_to_sz(interface_count));
 			get_last_scale_from_vec(&CTX->m_v1)->m_sz = count_to_sz(interface_count);
 

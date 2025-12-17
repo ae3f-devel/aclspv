@@ -42,10 +42,12 @@ ae2f_noexcept ACLSPV_ABI_IMPL e_aclspv_passes aclspv_runall_module_passes(
 		goto LBL_RET;
 	}
 
+#if 1
 	if((codepass = aclspv_pass_assgn_pipelayout(h_module, &ctx))) {
 		code = ACLSPV_PASSES_ASSGN_PIPELAYOUT;
 		goto LBL_RET;
 	}
+#endif
 
 	if((codepass = aclspv_pass_check_mem_access(h_module, &ctx))) {
 		code = ACLSPV_PASSES_CHECK_MEM_ACCESS;

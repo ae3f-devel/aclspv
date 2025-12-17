@@ -105,6 +105,7 @@ int main(void) {
 #endif
 
 	LLVMWriteBitcodeToFile(lnk.m_module, "Passed.bc");
+	LLVMPrintModuleToFile(lnk.m_module, "Passed.llvm", ae2f_NIL);
 
 	do {
 		char*  final_llvm = LLVMPrintModuleToString(lnk.m_module);
