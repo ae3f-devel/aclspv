@@ -276,6 +276,19 @@ IMPL_PASS_RET aclspv_pass_mkspv(
 			unless(num_kernels) goto LBL_NO_KRNL;
 #define	num_kernels	((const unsigned)num_kernels)
 		}
+		typedef struct {
+			aclspv_wrd_t	var_id;
+			aclspv_wrd_t	set;
+			aclspv_wrd_t	binding;
+			aclspv_wrd_t	arg_idx;
+			LLVMValueRef	kernel_func;
+		} s_var_info;
+
+#define var_infos	((s_var_info* ae2f_restrict)CTX->m_v2.m_p)
+		size_t	num_vars = 0;
+		_aclspv_grow_vec(malloc, _free, CTX->m_v2, sizeof(s_var_info) * num_kernels * 4); // Initial alloc
+		unless(var_infos) goto LBL_FNSTATISBAD;
+
 		for(i = 0; i < num_kernels; i++) {
 			const LLVMValueRef kernel_func = kernel_nodes[i].m_fn;
 			const LLVMValueRef layout_md = LLVMGetMetadata(kernel_func, layout_md_id);
@@ -317,60 +330,33 @@ IMPL_PASS_RET aclspv_pass_mkspv(
 				for (i_binding = LLVMGetNumOperands(bindings_node); i_binding-- > 0; ) {
 					const LLVMValueRef binding_node = LLVMGetOperand(bindings_node, (unsigned)i_binding);
 					LLVMValueRef	arg_idx_val, binding_val;
-					aclspv_wrd_t	arg_idx, binding;
-
-
-					const aclspv_wrd_t	var_id = next_id++;
-
-#if		!defined(NDEBUG) || !NDEBUG
-					char	var_name[64];
-					size_t	name_pos;
-#endif
+					s_var_info* ae2f_restrict	info;
 
 					if (!binding_node || !LLVMIsAMDNode(binding_node) || LLVMGetNumOperands(binding_node) < 5) {
 						continue;
 					}
 
+					if (CTX->m_v2.m_sz <= sizeof(s_var_info) * num_vars) {
+						_aclspv_grow_vec_with_copy(malloc, _free, _aclspv_memcpy, L_new, CTX->m_v2, CTX->m_v2.m_sz << 1);
+						unless(var_infos) goto LBL_FNSTATISBAD;
+					}
+					info = &var_infos[num_vars];
+
 					arg_idx_val = LLVMGetOperand(binding_node, 0);
 					binding_val = LLVMGetOperand(binding_node, 1);
 
-					arg_idx = (aclspv_wrd_t)LLVMConstIntGetZExtValue(arg_idx_val);
-					binding = (aclspv_wrd_t)LLVMConstIntGetZExtValue(binding_val);
-
-					/* OpVariable */
-					unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpVariable, 3))) goto LBL_FNSTATISBAD;
-					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_PTR_STORAGE))) goto LBL_FNSTATISBAD;
-					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_id))) goto LBL_FNSTATISBAD;
-					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvStorageClassStorageBuffer))) 
-						goto LBL_FNSTATISBAD;
-
-					/** Decorations::Descriptorsets */
-					unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpDecorate, 3))) goto LBL_FNSTATISBAD;
-					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_id))) goto LBL_FNSTATISBAD;
-					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvDecorationDescriptorSet))) goto LBL_FNSTATISBAD;
-					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, set))) goto LBL_FNSTATISBAD;
-
-					/** Decorations::Bind */
-					unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpDecorate, 3))) goto LBL_FNSTATISBAD;
-					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_id))) goto LBL_FNSTATISBAD;
-					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvDecorationBinding))) goto LBL_FNSTATISBAD;
-					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, binding))) goto LBL_FNSTATISBAD;
-
-					/** opname */
-#if		!defined(NDEBUG) || !NDEBUG
-					snprintf(var_name, sizeof(var_name), "%s.arg%u", LLVMGetValueName(kernel_func), (uint32_t)arg_idx);
-					name_pos = ret_count;
-					unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpName, 0))) goto LBL_FNSTATISBAD;
-					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_id))) goto LBL_FNSTATISBAD;
-					unless((ret_count = emit_str(&CTX->m_ret, ret_count, var_name))) goto LBL_FNSTATISBAD;
-					set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_ret)[name_pos], ret_count - name_pos - 1);
-#endif
+					info->var_id = next_id++;
+					info->arg_idx = (aclspv_wrd_t)LLVMConstIntGetZExtValue(arg_idx_val);
+					info->binding = (aclspv_wrd_t)LLVMConstIntGetZExtValue(binding_val);
+					info->set = set;
+					info->kernel_func = kernel_func;
 
 					/** store id */
 					if(grow_last_scale(&CTX->m_v1, count_to_sz(interface_count + 1))) {
 						goto LBL_FNSTATISBAD;
 					}
-					interface_ids[interface_count++] = var_id;
+					interface_ids[interface_count++] = info->var_id;
+					num_vars++;
 				}
 			}
 
@@ -381,6 +367,47 @@ LBL_NEXT_KRNL:
 			unless(mk_scale_from_vec(&CTX->m_v1, 0)) {
 				goto LBL_FNSTATISBAD;
 			}
+		}
+
+		/* Emit decorations and names */
+		for (i = 0; i < num_vars; i++) {
+			const s_var_info* ae2f_restrict const info = &var_infos[i];
+#if		!defined(NDEBUG) || !NDEBUG
+			char	var_name[64];
+			size_t	name_pos;
+#endif
+			/** Decorations::Descriptorsets */
+			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpDecorate, 3))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->var_id))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvDecorationDescriptorSet))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->set))) goto LBL_FNSTATISBAD;
+
+			/** Decorations::Bind */
+			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpDecorate, 3))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->var_id))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvDecorationBinding))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->binding))) goto LBL_FNSTATISBAD;
+
+			/** opname */
+#if		!defined(NDEBUG) || !NDEBUG
+			snprintf(var_name, sizeof(var_name), "%s.arg%u", LLVMGetValueName(info->kernel_func), (uint32_t)info->arg_idx);
+			name_pos = ret_count;
+			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpName, 0))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->var_id))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_str(&CTX->m_ret, ret_count, var_name))) goto LBL_FNSTATISBAD;
+			set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_ret)[name_pos], ret_count - name_pos - 1);
+#endif
+		}
+
+		/* Emit variables */
+		for (i = 0; i < num_vars; i++) {
+			const s_var_info* ae2f_restrict const info = &var_infos[i];
+			/* OpVariable */
+			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpVariable, 3))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_PTR_STORAGE))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->var_id))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvStorageClassStorageBuffer))) 
+				goto LBL_FNSTATISBAD;
 		}
 
 		for(i = 0; i < num_kernels; i++) {
