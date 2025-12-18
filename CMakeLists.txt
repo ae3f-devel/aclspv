@@ -34,6 +34,8 @@ endif()
 
 ae2f_CoreLibFetchX(ae2f Core	main)
 ae2f_CoreLibFetchX(ae2f Preproc	main)
+ae2f_CoreLibFetchX(ae2f VK-Core	main)
+
 ae2f_CoreLibFetchX(KhronosGroup SPIRV-Headers main)
 
 find_package(LLVM)
@@ -121,3 +123,8 @@ ae2f_UltraErrWERROR(${ae3f__aclspvABI__TENT} PRIVATE)
 
 add_executable(dummy main.cc)
 target_link_libraries(dummy ae3f::aclspvABI)
+
+
+add_library(aclspv-with-vulkan INTERFACE)
+target_link_libraries(aclspv-with-vulkan INTERFACE ae2f::VK-Core ae3f::aclspvABI)
+ae2f_CoreTestTentVerbose(aclspv-with-vulkan ./test/vk)

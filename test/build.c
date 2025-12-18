@@ -17,6 +17,7 @@
 
 #define content1	\
 	"double sin(double);\n"	\
+	"int returnthree(void) { return 3; }" \
 	"unsigned int get_global_id(unsigned int dimindx);\n"	\
 	"unsigned int get_local_id(unsigned int dimindx);\n"	\
 	"__kernel void __kernel_name_1(__global float* f, __global int* _glob1, __global int* _glob2, const int _pushconstant) {"	\

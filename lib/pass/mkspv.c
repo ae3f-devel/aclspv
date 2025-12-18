@@ -7,7 +7,7 @@
 #include <ae2f/c90/StdBool.h>
 
 #include <llvm-c/Core.h>
-#include <spirv/unified1/spirv.h>
+#include <spirv/1.0/spirv.h>
 #include <assert.h>
 #include <string.h>
 
@@ -45,6 +45,16 @@ typedef enum {
 
 	ID_DEFAULT_END
 } e_id_default;
+
+typedef struct {
+	aclspv_wrd_t	var_id;
+	aclspv_wrd_t	set;
+	aclspv_wrd_t	binding;
+	aclspv_wrd_t	arg_idx;
+	LLVMValueRef	kernel_func;
+	aclspv_wrd_t	struct_id;
+	aclspv_wrd_t	ptr_struct_id;
+} s_var_info;
 
 /**
  * @fn		emit_wrd
@@ -194,39 +204,9 @@ IMPL_PASS_RET aclspv_pass_mkspv(
 		goto LBL_FNSTATISBAD;
 	}
 
-	/** OpTypeVoid */
-	unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpTypeVoid, 1))) 
-		goto LBL_FNSTATISBAD;
-	unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_VOID))) 
-		goto LBL_FNSTATISBAD;
-
-
-	/** OpTypeInt */
-	unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpTypeInt, 3))) 
-		goto LBL_FNSTATISBAD;
-	unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_INT32))) 
-		goto LBL_FNSTATISBAD;
-	unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, 32))) 
-		goto LBL_FNSTATISBAD;
-	unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, 1))) 
-		goto LBL_FNSTATISBAD;  /* signed */
-
-	/** OpTypeFunction %void () */
-	unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpTypeFunction, 2)))
-		goto LBL_FNSTATISBAD;
-	unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_FN_VOID)))
-		goto LBL_FNSTATISBAD;
-	unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_VOID)))
-		goto LBL_FNSTATISBAD;
-
-	/** Storage Pointer */
-	unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpTypePointer, 3))) goto LBL_FNSTATISBAD;
-	unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_PTR_STORAGE))) goto LBL_FNSTATISBAD;
-	unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvStorageClassStorageBuffer))) goto LBL_FNSTATISBAD;
-	unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_INT32))) goto LBL_FNSTATISBAD;
-
 	{
 		unsigned i = 0;
+		size_t	num_vars = 0;
 
 		{
 			LLVMValueRef	func;
@@ -265,7 +245,7 @@ IMPL_PASS_RET aclspv_pass_mkspv(
 								ACLSPV_MD_PIPELINE_LAYOUT
 								, sizeof(ACLSPV_MD_PIPELINE_LAYOUT) - 1))
 
-						&& !strncmp(LLVMGetValueName(func), "__kernel_", sizeof("__kernel_") - 1)
+						&& LLVMGetFunctionCallConv(func) == LLVMSPIRKERNELCallConv
 				   )
 				{
 					kernel_nodes[i++].m_fn = func;
@@ -276,17 +256,9 @@ IMPL_PASS_RET aclspv_pass_mkspv(
 			unless(num_kernels) goto LBL_NO_KRNL;
 #define	num_kernels	((const unsigned)num_kernels)
 		}
-		typedef struct {
-			aclspv_wrd_t	var_id;
-			aclspv_wrd_t	set;
-			aclspv_wrd_t	binding;
-			aclspv_wrd_t	arg_idx;
-			LLVMValueRef	kernel_func;
-		} s_var_info;
 
 #define var_infos	((s_var_info* ae2f_restrict)CTX->m_v2.m_p)
-		size_t	num_vars = 0;
-		_aclspv_grow_vec(malloc, _free, CTX->m_v2, sizeof(s_var_info) * num_kernels * 4); // Initial alloc
+		_aclspv_grow_vec(malloc, _free, CTX->m_v2, (size_t)(sizeof(s_var_info) * num_kernels * 4)); /* Initial alloc */
 		unless(var_infos) goto LBL_FNSTATISBAD;
 
 		for(i = 0; i < num_kernels; i++) {
@@ -336,7 +308,7 @@ IMPL_PASS_RET aclspv_pass_mkspv(
 						continue;
 					}
 
-					if (CTX->m_v2.m_sz <= sizeof(s_var_info) * num_vars) {
+					if (CTX->m_v2.m_sz <= ((size_t)sizeof(s_var_info) * num_vars)) {
 						_aclspv_grow_vec_with_copy(malloc, _free, _aclspv_memcpy, L_new, CTX->m_v2, CTX->m_v2.m_sz << 1);
 						unless(var_infos) goto LBL_FNSTATISBAD;
 					}
@@ -346,6 +318,8 @@ IMPL_PASS_RET aclspv_pass_mkspv(
 					binding_val = LLVMGetOperand(binding_node, 1);
 
 					info->var_id = next_id++;
+					info->struct_id = next_id++;
+					info->ptr_struct_id = next_id++;
 					info->arg_idx = (aclspv_wrd_t)LLVMConstIntGetZExtValue(arg_idx_val);
 					info->binding = (aclspv_wrd_t)LLVMConstIntGetZExtValue(binding_val);
 					info->set = set;
@@ -369,13 +343,95 @@ LBL_NEXT_KRNL:
 			}
 		}
 
-		/* Emit decorations and names */
-		for (i = 0; i < num_vars; i++) {
-			const s_var_info* ae2f_restrict const info = &var_infos[i];
-#if		!defined(NDEBUG) || !NDEBUG
-			char	var_name[64];
-			size_t	name_pos;
+		for(i = num_kernels; i--;) {
+			LLVMValueRef	kernel_func = kernel_nodes[i].m_fn;
+			const char* ae2f_restrict	name = LLVMGetValueName(kernel_func);
+			const aclspv_wrd_t	func_id	= next_id++;
+			h_scale_t	scale = get_scale_from_vec(&CTX->m_v1, (size_t)i);
+			size_t entry_pos = ret_count;
+
+			kernel_nodes[i].m_id = func_id;
+
+			unless(scale)	{
+				status = FN_ACLSPV_PASS_GET_FAILED;
+				goto LBL_FNSTATISBAD;
+			}
+
+			/** OpEntryPoint */
+			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpEntryPoint, 0))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvExecutionModelGLCompute))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, func_id))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_str(&CTX->m_ret, ret_count, name))) goto LBL_FNSTATISBAD;	
+
+#if 0
+			{
+				size_t j;
+				for (j = 0; j < sz_to_count(scale->m_sz); ++j) {
+					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count
+									, ((aclspv_wrd_t* ae2f_restrict)
+										get_buf_from_scale(&CTX->m_v1, *scale))[j]))) 
+						goto LBL_FNSTATISBAD;
+				}
+			}
 #endif
+
+			set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_ret)[entry_pos], ret_count - entry_pos - 1);
+		}
+
+		/** OpExecutionModel */
+		for(i = num_kernels; i--; ) {
+			/** TODO: implement attribute __attribute__((execmodel(x, y, z))) */
+			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpExecutionMode, 5))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, kernel_nodes[i].m_id))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvExecutionModeLocalSize))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, 1))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, 1))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, 1))) goto LBL_FNSTATISBAD;
+		}
+
+
+		/* OpName for function */
+#if !defined(NDEBUG) || !NDEBUG
+		for(i = num_kernels; i--; ) {
+			const size_t name_pos = ret_count;
+			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpName, 0))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, kernel_nodes[i].m_id))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_str(&CTX->m_ret, ret_count, LLVMGetValueName(kernel_nodes[i].m_fn)))) goto LBL_FNSTATISBAD;
+			set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_ret)[name_pos], ret_count - name_pos - 1);
+		}
+#endif
+
+		/** OpName for Decorators */
+
+#if		!defined(NDEBUG) || !NDEBUG
+		for(i = (unsigned)num_vars; i--; ) {
+			char	var_name[64];
+
+			size_t	name_pos;
+			snprintf(var_name, sizeof(var_name), "%s.arg%u", LLVMGetValueName(var_infos[i].kernel_func), (uint32_t)var_infos[i].arg_idx);
+			name_pos = ret_count;
+			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpName, 0))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, var_infos[i].var_id))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_str(&CTX->m_ret, ret_count, var_name))) goto LBL_FNSTATISBAD;
+			set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_ret)[name_pos], ret_count - name_pos - 1);
+		}
+#endif
+
+		/* Emit decorations and names */
+		for (i = (unsigned)num_vars; i--; ) {
+			const s_var_info* ae2f_restrict const info = &var_infos[i];
+			/* OpDecorate %struct Block */
+			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpDecorate, 2))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->struct_id))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvDecorationBlock))) goto LBL_FNSTATISBAD;
+
+			/* OpMemberDecorate */
+			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpMemberDecorate, 4))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->struct_id))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, 0))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvDecorationOffset))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, 0))) goto LBL_FNSTATISBAD;
+
 			/** Decorations::Descriptorsets */
 			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpDecorate, 3))) goto LBL_FNSTATISBAD;
 			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->var_id))) goto LBL_FNSTATISBAD;
@@ -389,62 +445,60 @@ LBL_NEXT_KRNL:
 			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->binding))) goto LBL_FNSTATISBAD;
 
 			/** opname */
-#if		!defined(NDEBUG) || !NDEBUG
-			snprintf(var_name, sizeof(var_name), "%s.arg%u", LLVMGetValueName(info->kernel_func), (uint32_t)info->arg_idx);
-			name_pos = ret_count;
-			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpName, 0))) goto LBL_FNSTATISBAD;
-			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->var_id))) goto LBL_FNSTATISBAD;
-			unless((ret_count = emit_str(&CTX->m_ret, ret_count, var_name))) goto LBL_FNSTATISBAD;
-			set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_ret)[name_pos], ret_count - name_pos - 1);
-#endif
+
+		}
+
+		/* Emit types for variables */
+
+		/** OpTypeVoid */
+		unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpTypeVoid, 1))) 
+			goto LBL_FNSTATISBAD;
+		unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_VOID))) 
+			goto LBL_FNSTATISBAD;
+
+
+		/** OpTypeInt */
+		unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpTypeInt, 3))) 
+			goto LBL_FNSTATISBAD;
+		unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_INT32))) 
+			goto LBL_FNSTATISBAD;
+		unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, 32))) 
+			goto LBL_FNSTATISBAD;
+		unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, 1))) 
+			goto LBL_FNSTATISBAD;  /* signed */
+
+		/** OpTypeFunction %void () */
+		unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpTypeFunction, 2)))
+			goto LBL_FNSTATISBAD;
+		unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_FN_VOID)))
+			goto LBL_FNSTATISBAD;
+		unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_VOID)))
+			goto LBL_FNSTATISBAD;
+
+		for (i = 0; i < (unsigned)num_vars; i++) {
+			const s_var_info* ae2f_restrict const info = &var_infos[i];
+
+			/* OpTypeStruct */
+			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpTypeStruct, 2))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->struct_id))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_INT32))) goto LBL_FNSTATISBAD;
+
+			/* OpTypePointer */
+			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpTypePointer, 3))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->ptr_struct_id))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvStorageClassStorageBuffer))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->struct_id))) goto LBL_FNSTATISBAD;
 		}
 
 		/* Emit variables */
-		for (i = 0; i < num_vars; i++) {
+		for (i = 0; i < (unsigned)num_vars; i++) {
 			const s_var_info* ae2f_restrict const info = &var_infos[i];
 			/* OpVariable */
 			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpVariable, 3))) goto LBL_FNSTATISBAD;
-			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_PTR_STORAGE))) goto LBL_FNSTATISBAD;
+			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->ptr_struct_id))) goto LBL_FNSTATISBAD;
 			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, info->var_id))) goto LBL_FNSTATISBAD;
 			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvStorageClassStorageBuffer))) 
 				goto LBL_FNSTATISBAD;
-		}
-
-		for(i = 0; i < num_kernels; i++) {
-			LLVMValueRef	kernel_func = kernel_nodes[i].m_fn;
-			const char* ae2f_restrict	name = LLVMGetValueName(kernel_func);
-			const aclspv_wrd_t	func_id	= next_id++;
-			h_scale_t	scale = get_scale_from_vec(&CTX->m_v1, (size_t)i);
-			size_t entry_pos = ret_count, name_pos;
-
-			kernel_nodes[i].m_id = func_id;
-
-			unless(scale)	{
-				status = FN_ACLSPV_PASS_GET_FAILED;
-				goto LBL_FNSTATISBAD;
-			}
-			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpEntryPoint, 0))) goto LBL_FNSTATISBAD;
-			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvExecutionModelGLCompute))) goto LBL_FNSTATISBAD;
-			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, func_id))) goto LBL_FNSTATISBAD;
-			unless((ret_count = emit_str(&CTX->m_ret, ret_count, name))) goto LBL_FNSTATISBAD;
-
-			for (size_t j = 0; j < sz_to_count(scale->m_sz); ++j) {
-				unless((ret_count = emit_wrd(&CTX->m_ret, ret_count
-								, ((aclspv_wrd_t* ae2f_restrict)
-									get_buf_from_scale(&CTX->m_v1, *scale))[j]))) 
-					goto LBL_FNSTATISBAD;
-			}
-
-			set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_ret)[entry_pos], ret_count - entry_pos - 1);
-
-			/* OpName for function */
-#if !defined(NDEBUG) || !NDEBUG
-			name_pos = ret_count;
-			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpName, 0))) goto LBL_FNSTATISBAD;
-			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, func_id))) goto LBL_FNSTATISBAD;
-			unless((ret_count = emit_str(&CTX->m_ret, ret_count, name))) goto LBL_FNSTATISBAD;
-			set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_ret)[name_pos], ret_count - name_pos - 1);
-#endif
 		}
 
 		/* Emit function stubs */
@@ -465,26 +519,25 @@ LBL_NEXT_KRNL:
 			unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpFunctionEnd, 0))) goto LBL_FNSTATISBAD;
 		}
 LBL_NO_KRNL:
-		;
-	}
 
-	goto LBL_FNSTATISGOOD;
+		goto LBL_FNSTATISGOOD;
 
 LBL_FNSTATISBAD:
-	_aclspv_stop_vec(_free, CTX->m_ret);
-	_aclspv_init_vec(CTX->m_ret);
-	return status;
+		_aclspv_stop_vec(_free, CTX->m_ret);
+		_aclspv_init_vec(CTX->m_ret);
+		return status;
 
 LBL_FNSTATISGOOD:
-	assert(CTX->m_ret.m_p);
-	if(CTX->m_ret.m_sz < count_to_sz(ret_count) || (ret_count) > (size_t)UINT32_MAX || !CTX->m_ret.m_p) {
-		status = FN_ACLSPV_PASS_TOO_BIG;
-		goto LBL_FNSTATISBAD;
-	} else {
-		/** bound */
-		get_wrd_of_vec(&CTX->m_ret)[3] = ((aclspv_wrd_t)ret_count);
-		CTX->m_ret.m_sz = count_to_sz((ret_count));
-	}
+		assert(CTX->m_ret.m_p);
+		if(CTX->m_ret.m_sz < count_to_sz(ret_count) || (ret_count) > (size_t)UINT32_MAX || !CTX->m_ret.m_p) {
+			status = FN_ACLSPV_PASS_TOO_BIG;
+			goto LBL_FNSTATISBAD;
+		} else {
+			/** bound */
+			get_wrd_of_vec(&CTX->m_ret)[3] = ((aclspv_wrd_t)ret_count);
+			CTX->m_ret.m_sz = count_to_sz((ret_count));
+		}
 
-	return FN_ACLSPV_PASS_OK;
+		return FN_ACLSPV_PASS_OK;
+	}
 }

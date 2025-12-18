@@ -32,7 +32,7 @@ IMPL_PASS_RET aclspv_pass_default_layout(
 
 	LLVMGetNamedMetadataOperands(M, MD_KERNELS, kernel_nodes);
 
-	for (i = 0; i < num_kernels; ++i) {
+	for (i = num_kernels; i--;) {
 		const LLVMValueRef	kernel_node = kernel_nodes[i];
 		LLVMValueRef	F;
 		unsigned num_params;
