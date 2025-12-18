@@ -6,7 +6,6 @@
 
 #include "./argknd.h"
 #include "md.h"
-#define ACLSPV_MD_POD_CLUSTERS "aclspv.pod_clusters"
 
 #ifndef unless
 #define unless(c) if (!(c))

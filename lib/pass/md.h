@@ -26,9 +26,19 @@
 #define ACLSPV_MD_PIPELINE_LAYOUT	"aclspv.pipelayout"
 
 /**
+ * @def		ACLSPV_MD_POD_CLUSTERS
+ * @brief	pod clusters
+ * @see		lib/pass/cluster_pod_args.c
+ * @see		ACLSPV_PASSES_CLUSTER_POD_ARGS
+ * */
+#define ACLSPV_MD_POD_CLUSTERS		"aclspv.pod_clusters"
+
+/**
  * @def		ACLSPV_MD_OCL_KERNELS
  * @brief	opencl kernels, which needs to be removed.
  * */
 #define ACLSPV_MD_OCL_KERNELS		"opencl.kernels"
+
+
 
 #endif

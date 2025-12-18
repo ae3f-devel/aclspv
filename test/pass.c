@@ -81,7 +81,7 @@ int main(void) {
 	} while(0);
 
 
-	LLVMWriteBitcodeToFile(lnk.m_module, "NPassed.bc");
+	LLVMPrintModuleToFile(lnk.m_module, "NPassed.llvm", ae2f_NIL);
 
 #if 1
 	do {

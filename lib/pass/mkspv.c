@@ -261,7 +261,7 @@ IMPL_PASS_RET aclspv_pass_mkspv(
 		_aclspv_grow_vec(malloc, _free, CTX->m_v2, (size_t)(sizeof(s_var_info) * num_kernels * 4)); /* Initial alloc */
 		unless(var_infos) goto LBL_FNSTATISBAD;
 
-		for(i = 0; i < num_kernels; i++) {
+		for(i = num_kernels; i-- ;) {
 			const LLVMValueRef kernel_func = kernel_nodes[i].m_fn;
 			const LLVMValueRef layout_md = LLVMGetMetadata(kernel_func, layout_md_id);
 			size_t	interface_count = 0;
@@ -322,6 +322,9 @@ IMPL_PASS_RET aclspv_pass_mkspv(
 					info->ptr_struct_id = next_id++;
 					info->arg_idx = (aclspv_wrd_t)LLVMConstIntGetZExtValue(arg_idx_val);
 					info->binding = (aclspv_wrd_t)LLVMConstIntGetZExtValue(binding_val);
+
+					assert(info->arg_idx == info->binding);
+
 					info->set = set;
 					info->kernel_func = kernel_func;
 
@@ -362,18 +365,6 @@ LBL_NEXT_KRNL:
 			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvExecutionModelGLCompute))) goto LBL_FNSTATISBAD;
 			unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, func_id))) goto LBL_FNSTATISBAD;
 			unless((ret_count = emit_str(&CTX->m_ret, ret_count, name))) goto LBL_FNSTATISBAD;	
-
-#if 0
-			{
-				size_t j;
-				for (j = 0; j < sz_to_count(scale->m_sz); ++j) {
-					unless((ret_count = emit_wrd(&CTX->m_ret, ret_count
-									, ((aclspv_wrd_t* ae2f_restrict)
-										get_buf_from_scale(&CTX->m_v1, *scale))[j]))) 
-						goto LBL_FNSTATISBAD;
-				}
-			}
-#endif
 
 			set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_ret)[entry_pos], ret_count - entry_pos - 1);
 		}

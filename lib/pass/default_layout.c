@@ -119,6 +119,7 @@ IMPL_PASS_RET aclspv_pass_default_layout(
 				fin_vals[1] = v_set;
 				fin_vals[2] = v_binding;
 
+
 				layout_mds[layout_mds_count++] =
 					LLVMMDNodeInContext(C, fin_vals, sizeof(fin_vals) / sizeof(fin_vals[0]));
 			}

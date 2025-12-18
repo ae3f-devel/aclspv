@@ -118,8 +118,6 @@ IMPL_PASS_RET aclspv_pass_assgn_pipelayout(
 			LLVMValueRef	set_layout_node;
 
 			if (num_descriptors > 0) {
-				unsigned current_binding = 0;
-
 				_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX->m_v1, (size_t)(sizeof(LLVMValueRef) * num_descriptors));
 #define	bindings	ae2f_static_cast(LLVMValueRef* ae2f_restrict, CTX->m_v1.m_p)
 
@@ -141,12 +139,12 @@ IMPL_PASS_RET aclspv_pass_assgn_pipelayout(
 					}
 
 					binding_ops[0] = (LLVMConstInt(LLVMInt32TypeInContext(C), i, 0));
-					binding_ops[1] = (LLVMConstInt(LLVMInt32TypeInContext(C), current_binding, 0));
+					binding_ops[1] = (LLVMConstInt(LLVMInt32TypeInContext(C), i, 0));
 					binding_ops[2] = (LLVMConstInt(LLVMInt32TypeInContext(C), desc_type, 0));
 					binding_ops[3] = (LLVMConstInt(LLVMInt32TypeInContext(C), 1, 0)); /** count */
 					binding_ops[4] = (LLVMConstInt(LLVMInt32TypeInContext(C), VK_SHADER_STAGE_COMPUTE_BIT, 0));
 
-					bindings[current_binding++] = LLVMMDNodeInContext(C, binding_ops, 5);
+					bindings[i] = LLVMMDNodeInContext(C, binding_ops, 5);
 				}
 
 				/** set number */

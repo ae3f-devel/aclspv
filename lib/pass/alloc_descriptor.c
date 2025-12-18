@@ -48,7 +48,6 @@ IMPL_PASS_RET aclspv_pass_alloc_descriptor(
 		int	num_args;
 
 		unsigned layout_count = 0;
-		unsigned binding_idx = 0;
 		unsigned j;
 
 
@@ -117,12 +116,11 @@ LBL_SKIP_FOR_K:
 				LLVMValueRef values[4];
 
 				values[0] = LLVMConstInt(LLVMInt32TypeInContext(C), 0, false);
-				values[1] = LLVMConstInt(LLVMInt32TypeInContext(C), binding_idx, false);
+				values[1] = LLVMConstInt(LLVMInt32TypeInContext(C), j, false);
 				values[2] = kind_md;
 				values[3] = LLVMConstInt(LLVMInt32TypeInContext(C), j, false); 
 
 				layout_operands[layout_count++] = LLVMMDNodeInContext(C, values, 4);
-				binding_idx++;
 			}
 		}
 
