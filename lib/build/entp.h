@@ -5,7 +5,16 @@
 #include <llvm-c/Core.h>
 
 typedef struct {
-	aclspv_wrd_t	m_id;
+	aclspv_id_t	m_id;
+
+	struct {
+		aclspv_id_t m_push_struct;
+		aclspv_id_t m_push_ptr;
+		aclspv_id_t m_push_var;
+		aclspv_id_t m_arrty;
+		aclspv_id_t m_arrsz;
+	} m_push_ids;
+
 	LLVMValueRef	m_fn;
 } lib_build_entp_t;
 
