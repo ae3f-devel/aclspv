@@ -10,6 +10,10 @@
 - C90 for llvm-c
 - C++ for clang/llvm
 
+## license
+- [this project](./LICENSE)
+- [llvm related programmes](./LICENSE-llvm)
+
 # What is this library to be expected
 - it compiles opencl c into `oclc flavoured llvm ir`.
 - it converts `oclc flavoured llvm ir` to `custom llvm ir`.
