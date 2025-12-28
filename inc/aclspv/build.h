@@ -29,14 +29,39 @@ ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_build_t aclspv_build_fniter;
  * */
 ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_build_t aclspv_build_decl_entp;
 
+/**
+ * @fn		aclspv_build_decl_fn
+ * @brief	emits the declaration of normal functions
+ * @related	aclspv_build_fniter
+ * */
+ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_build_t aclspv_build_decl_fn;
+
 /** 
  * @fn		aclspv_build_fetch_bind
  * @brief	extracts the binds from each entry points 
  * @related	aclspv_build_fniter
  * */
 ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_build_t aclspv_build_fetch_bind;
+
+/**
+ * @fn		aclspv_build_decl_bind
+ * @brief	emits the declaration of bindings for entry points
+ * @related	aclspv_build_fetch_bind
+ * */
 ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_build_t aclspv_build_decl_bind;
+
+/**
+ * @fn		aclspv_bulid_decl_wrkgroup
+ * @brief	emits the declaration of bindings as workgroup
+ * @related	aclspv_build_fniter
+ * */
 ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_build_t aclspv_build_decl_wrkgroup;
+
+/**
+ * @fn		aclspv_build_def_entp
+ * @brief	emits the definition (body) of entry points
+ * */
+ae2f_extern ACLSPV_ABI_DECL ae2f_noexcept fn_aclspv_build_t aclspv_build_def_entp;
 
 /** 
  * @fn		aclspv_build_asm
@@ -52,8 +77,11 @@ typedef enum {
 	ACLSPV_BUILDS_CONF	= ACLSPV_PASSES_EDENUM,
 	ACLSPV_BUILDS_FNITER,
 	ACLSPV_BUILDS_DECL_ENTP,
+	ACLSPV_BUILDS_DECL_FN,
 	ACLSPV_BUILDS_FETCH_BIND,
 	ACLSPV_BUILDS_DECL_BIND,
+	ACLSPV_BUILDS_DECL_WRKGROUP,
+	ACLSPV_BUILDS_DEF_ENTP,
 	ACLSPV_BUILDS_ASM,
 	ACLSPV_BUILDS_EDENUM
 } e_aclspv_builds;

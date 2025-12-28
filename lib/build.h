@@ -4,6 +4,8 @@
 #include <aclspv/build.h>
 #include <pass/ctx.h>
 
+#include "./build/id.h"
+
 #define	_free(a, b)	free(a)
 
 typedef struct a_aclspv_build_ctx {
@@ -19,6 +21,7 @@ typedef struct a_aclspv_build_ctx {
 	 * @brief	id
 	 * */
 	aclspv_id_t		m_id;
+	aclspv_id_t		m_id_defaults[ID_DEFAULT_END];
 
 	struct {
 		x_aclspv_vec 
@@ -47,6 +50,7 @@ typedef struct a_aclspv_build_ctx {
 		/**
 		 * @var		m_fn
 		 * @brief	normal functions
+		 * @see		lib_build_fn_t
 		 * */
 		x_aclspv_vec	m_fn;
 

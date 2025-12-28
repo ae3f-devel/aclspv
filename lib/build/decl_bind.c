@@ -4,7 +4,7 @@
 
 #include <pass/md.h>
 
-#include <spirv/1.0/spirv.h>
+#include <spirv/unified1/spirv.h>
 
 #include "./wrdemit.h"
 #include "./entp.h"
@@ -32,7 +32,11 @@ ACLSPV_ABI_IMPL ae2f_noexcept e_fn_aclspv_pass	aclspv_build_decl_bind(
 		char	var_name[64];
 
 		aclspv_wrdcount_t	name_pos;
-		snprintf(var_name, sizeof(var_name), "%s.arg%u", LLVMGetValueName(__vec[var_infos[i].m_entp_idx].m_fn), var_infos[i].m_arg_idx);
+
+		snprintf(
+				var_name, sizeof(var_name), "%s.arg%u"
+				, LLVMGetValueName(__vec[var_infos[i].m_entp_idx].m_fn), var_infos[i].m_arg_idx
+				);
 
 #define		ret_count	CTX->m_count.m_name
 #define		m_ret		m_section.m_name

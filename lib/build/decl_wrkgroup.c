@@ -4,7 +4,7 @@
 #include <pass/md.h>
 #include <pass/argknd.h>
 
-#include <spirv/1.0/spirv.h>
+#include <spirv/unified1/spirv.h>
 
 #include "./wrdemit.h"
 #include "./entp.h"

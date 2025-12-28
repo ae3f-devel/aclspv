@@ -4,11 +4,13 @@
 #include "./wrdemit.h"
 #include "./entp.h"
 #include "./constant.h"
+#include "./iddef.h"
+
 #include "aclspv/pass.h"
 
 #include <pass/md.h>
 
-#include <spirv/1.0/spirv.h>
+#include <spirv/unified1/spirv.h>
 
 
 #define	BADALLOC	FN_ACLSPV_PASS_ALLOC_FAILED
@@ -64,7 +66,6 @@ PSHCONSTANT_IS_ZERO:
 		}
 		else {
 #define	next_id		CTX->m_id
-#define	uint_type_id	ID_DEFAULT_INT32
 
 			aclspv_wrd_t array_size_const;
 			aclspv_wrd_t array_type_id;
@@ -112,7 +113,7 @@ PSHCONSTANT_IS_ZERO:
 					SIZE_VAL = ((LLVMValueRef* ae2f_restrict)CTX->m_tmp.m_v0.m_p)[3];
 
 					unless(LLVMIsAConstant(SIZE_VAL)) {
-						assert(!"VAL was not constant");
+						assert(0 && "VAL was not constant");
 						return FN_ACLSPV_PASS_GET_FAILED;
 					}
 
@@ -131,7 +132,7 @@ PSHCONSTANT_IS_ZERO:
 			/** OpConstant for array size (32 = 128 bytes) */
 			unless(array_size_const = lib_build_mk_constant_val_id(arrcount, CTX)) return BADALLOC;
 			/** OpTypeArray %uint [32] */
-			unless(array_type_id = lib_build_mk_constant_arr_id(arrcount, CTX)) return BADALLOC;
+			unless(array_type_id = lib_build_mk_constant_arr32_id(arrcount, CTX)) return BADALLOC;
 			/** OpTypeStruct { array< uint, 32 > } */
 			/** OpDecorate %push_struct Block */
 			unless(push_struct_id = lib_build_mk_constant_struct_id(arrcount, CTX)) return BADALLOC;

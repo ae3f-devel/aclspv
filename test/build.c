@@ -11,7 +11,8 @@
 #include <stdlib.h>
 
 #define content0	\
-	"__kernel void __kernel_name_0(__global int* _glob1, __local int* _loc) {"	\
+	"union pushconstant_union_lol { int a; float b; };"		\
+	"__kernel void __kernel_name_0(__global int* _glob1, __local int* _loc, union pushconstant_union_lol lol) {"	\
 		"*(_glob1) = *(_loc);"	\
 	"}"				\
 	"__kernel void __kernel_name_1(__local int* out, __constant int* asdf, int asdf_push, double asdf_push1, __global const int* dd) {"	\

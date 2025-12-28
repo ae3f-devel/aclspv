@@ -1,16 +1,21 @@
 #include <build.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include <pass/md.h>
 #include <pass/argknd.h>
 
-#include <spirv/1.0/spirv.h>
+#include <llvm-c/Core.h>
+#include <llvm-c/Types.h>
+#include <spirv/unified1/spirv.h>
 
 #include "./wrdemit.h"
 #include "./entp.h"
 #include "./bind.h"
 #include "./scale.h"
 #include "./constant.h"
+#include "./llvmtospv.h"
+#include "aclspv/pass.h"
 
 ACLSPV_ABI_IMPL ae2f_noexcept e_fn_aclspv_pass	aclspv_build_fetch_bind(
 		const LLVMModuleRef		M,
@@ -40,6 +45,17 @@ ACLSPV_ABI_IMPL ae2f_noexcept e_fn_aclspv_pass	aclspv_build_fetch_bind(
 		LLVMValueRef		set_layouts_node;
 		int			num_sets, i_set;
 		aclspv_wrdcount_t	interface_count = 0;
+
+		_aclspv_grow_vec(
+				_aclspv_malloc, _aclspv_free
+				, CTX->m_tmp.m_v0
+				, (size_t)(LLVMCountParams(kernel.m_fn) * sizeof(LLVMTypeRef))
+				);
+		unless(CTX->m_tmp.m_v0.m_p) return FN_ACLSPV_PASS_ALLOC_FAILED;
+		LLVMGetParamTypes(
+				LLVMGlobalGetValueType(kernel.m_fn)
+				, CTX->m_tmp.m_v0.m_p);
+
 
 		if (!layout_md || !LLVMIsAMDNode(layout_md) || LLVMGetNumOperands(layout_md) < 2) {
 			goto LBL_NEXT_KRNL;
@@ -107,10 +123,16 @@ ACLSPV_ABI_IMPL ae2f_noexcept e_fn_aclspv_pass	aclspv_build_fetch_bind(
 				arg_idx_val = LLVMGetOperand(binding_node, 0);
 				binding_val = LLVMGetOperand(binding_node, 1);
 
+
+				info->m_arg_idx = (aclspv_wrd_t)LLVMConstIntGetZExtValue(arg_idx_val);
+
 				info->m_var_id = CTX->m_id++;
+				/** 
+				 * NOTICE:
+				 * size matters in context of alignment, not the actual size of element shall be.
+				 * */
 				info->m_struct_id = lib_build_mk_constant_struct_id(1, CTX);
 				unless(info->m_struct_id) return FN_ACLSPV_PASS_MET_INVAL;
-				info->m_arg_idx = (aclspv_wrd_t)LLVMConstIntGetZExtValue(arg_idx_val);
 				info->m_binding = (aclspv_wrd_t)LLVMConstIntGetZExtValue(binding_val);
 
 				assert(info->m_arg_idx == info->m_binding);
@@ -128,22 +150,34 @@ ACLSPV_ABI_IMPL ae2f_noexcept e_fn_aclspv_pass	aclspv_build_fetch_bind(
 							if (kind_str) {
 								if (strcmp(kind_str, ACLSPV_ARGKND_BUFF_UBO) == 0) {
 									info->m_storage_class = SpvStorageClassUniform;
-									info->m_ptr_struct_id = lib_build_mk_constant_ptr_uniform_id(1, CTX);
+									info->m_struct_id = lib_build_mk_constant_struct128_id(1, CTX);
+									info->m_ptr_struct_id = lib_build_mk_constant_ptr_uniform_id(
+											1, CTX
+											);
 								} else {
 									info->m_storage_class = SpvStorageClassStorageBuffer;
-									info->m_ptr_struct_id = lib_build_mk_constant_ptr_storage_id(1, CTX);
+									info->m_ptr_struct_id = lib_build_mk_constant_ptr_storage_id(
+										1	
+											, CTX
+											);
 								}
 							} else {
 								info->m_storage_class = SpvStorageClassStorageBuffer;
-								info->m_ptr_struct_id = lib_build_mk_constant_ptr_storage_id(1, CTX);
+								info->m_ptr_struct_id = lib_build_mk_constant_ptr_storage_id(
+									1	
+										, CTX);
 							}
 						} else {
 							info->m_storage_class = SpvStorageClassStorageBuffer;
-							info->m_ptr_struct_id = lib_build_mk_constant_ptr_storage_id(1, CTX);
+							info->m_ptr_struct_id = lib_build_mk_constant_ptr_storage_id(
+								1	
+									, CTX);
 						}
 					} else {
 						info->m_storage_class = SpvStorageClassStorageBuffer;
-						info->m_ptr_struct_id = lib_build_mk_constant_ptr_storage_id(1, CTX);
+						info->m_ptr_struct_id = lib_build_mk_constant_ptr_storage_id(
+							1	
+								, CTX);
 					}
 				}
 

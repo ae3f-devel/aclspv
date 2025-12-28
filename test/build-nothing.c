@@ -66,7 +66,17 @@ int main(void) {
 				);
 
 		printf("%p %u %u %lu\n", (void*)spv, e_pass, e_wh, count);
-		free(spv);
+		if(spv) {
+			FILE* const file = fopen("result-build-nothing.spv", "wb");
+			fwrite(spv, sizeof(uint32_t), (size_t)(count), file);
+			fclose(file);
+			free(spv);
+		}
+		else {
+			perror("aclspv_build has failed.");
+			assert(!(const char*)("ASSERT: aclspv_build has failed"));
+		}
+
 	}
 
 	aclspv_stop_lnker(&lnk);

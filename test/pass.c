@@ -9,8 +9,10 @@
 #include <stdio.h>
 
 #define content0	\
-	"__kernel void __kernel_name_0(__global int* _glob1, __global int* _glob2) {"	\
-		"*(_glob1) = *(_glob2);"	\
+	"struct kernel_param_struct { int a; double b; float c; }; "	\
+	"union kernel_param_struct_u { int a; double b; float c; }; "	\
+	"__kernel void __kernel_name_0(__global union kernel_param_struct_u* _glob1, __global struct kernel_param_struct* _glob2) {"	\
+		"(_glob1)->a = (_glob2)->a;"	\
 	"}"
 
 #define content1	\

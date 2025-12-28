@@ -1,12 +1,9 @@
 #include <build.h>
+
 #include "./wrdemit.h"
 #include "./id.h"
 
-
-#include <stdio.h>
-
-#include <spirv/1.0/spirv.h>
-
+#include <spirv/unified1/spirv.h>
 
 #define	wrd_caps	lib_build_ctx_section_capability(*CTX)
 #define wrd_caps_count	CTX->m_count.m_capability
@@ -34,7 +31,6 @@ ACLSPV_ABI_IMPL ae2f_noexcept e_fn_aclspv_pass aclspv_build_conf(
 	CTX->m_count.m_entpdef		= 0;
 
 	/*** Shader Capability **/
-	/** assert(wrd_caps.m_p); */
 
 	unless(wrd_caps_count = emit_opcode(&wrd_caps, 0, SpvOpCapability, 1))
 		return FN_ACLSPV_PASS_ALLOC_FAILED;
@@ -72,42 +68,6 @@ ACLSPV_ABI_IMPL ae2f_noexcept e_fn_aclspv_pass aclspv_build_conf(
 					, CTX->m_count.m_memmodel, SpvMemoryModelGLSL450 
 					)))
 		return FN_ACLSPV_PASS_ALLOC_FAILED;
-
-	/** Default Types */
-
-
-#define	ret_count	CTX->m_count.m_types
-	/** OpTypeVoid */
-	unless((ret_count = emit_opcode(&CTX->m_section.m_types, ret_count, SpvOpTypeVoid, 1)))
-		return FN_ACLSPV_PASS_ALLOC_FAILED;
-	unless((ret_count = emit_wrd(&CTX->m_section.m_types, ret_count, ID_DEFAULT_VOID))) 
-		return FN_ACLSPV_PASS_ALLOC_FAILED;
-
-	/** OpTypeInt */
-	unless((ret_count = emit_opcode(&CTX->m_section.m_types, ret_count, SpvOpTypeInt, 3))) 
-		return FN_ACLSPV_PASS_ALLOC_FAILED;
-	unless((ret_count = emit_wrd(&CTX->m_section.m_types, ret_count, ID_DEFAULT_INT32))) 
-		return FN_ACLSPV_PASS_ALLOC_FAILED;
-	unless((ret_count = emit_wrd(&CTX->m_section.m_types, ret_count, 32))) 
-		return FN_ACLSPV_PASS_ALLOC_FAILED;
-	unless((ret_count = emit_wrd(&CTX->m_section.m_types, ret_count, 1))) 
-		return FN_ACLSPV_PASS_ALLOC_FAILED;  /* signed */
-
-	/** OpTypeFunction %void () */
-	unless((ret_count = emit_opcode(&CTX->m_section.m_types, ret_count, SpvOpTypeFunction, 2)))
-		return FN_ACLSPV_PASS_ALLOC_FAILED;
-	unless((ret_count = emit_wrd(&CTX->m_section.m_types, ret_count, ID_DEFAULT_FN_VOID)))
-		return FN_ACLSPV_PASS_ALLOC_FAILED;
-	unless((ret_count = emit_wrd(&CTX->m_section.m_types, ret_count, ID_DEFAULT_VOID)))
-		return FN_ACLSPV_PASS_ALLOC_FAILED;
-
-#undef	ret_count
-
-
-	assert("" && 
-			(0[(aclspv_wrd_t* ae2f_restrict)lib_build_ctx_section_capability(*CTX).m_p] & SpvOpCapability) 
-			== SpvOpCapability
-			);
 
 	return FN_ACLSPV_PASS_OK;
 }

@@ -3,55 +3,11 @@
 
 #include <spirv/1.0/spirv.h>
 
-
-#include "./id.h"
-#include "./entp.h"
-
-
 ACLSPV_ABI_IMPL ae2f_noexcept e_fn_aclspv_pass	aclspv_build_asm(
 		const LLVMModuleRef		M,
 		const h_aclspv_build_ctx_t	CTX
 		)
 {
-#define		ret_count	CTX->m_count.m_entpdef
-#define		m_ret		m_section.m_entpdef
-#define		num_kernels	CTX->m_fnlist.m_num_entp
-#define		kernel_nodes	((lib_build_entp_t* ae2f_restrict)CTX->m_fnlist.m_entp.m_p)
-
-	aclspv_wrdcount_t	i;
-
-	/* Emit function stubs */
-	for (i = num_kernels; i--; ) {
-		aclspv_wrd_t func_id = kernel_nodes[i].m_id; 
-		aclspv_wrd_t lbl_id = CTX->m_id++;
-
-		unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpFunction, 4))) 
-			return FN_ACLSPV_PASS_ALLOC_FAILED;
-		unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_VOID))) 
-			return FN_ACLSPV_PASS_ALLOC_FAILED;
-		unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, func_id))) 
-			return FN_ACLSPV_PASS_ALLOC_FAILED;
-		unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, SpvFunctionControlMaskNone))) 
-			return FN_ACLSPV_PASS_ALLOC_FAILED;
-		unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, ID_DEFAULT_FN_VOID))) 
-			return FN_ACLSPV_PASS_ALLOC_FAILED;
-
-		unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpLabel, 1))) 
-			return FN_ACLSPV_PASS_ALLOC_FAILED;
-		unless((ret_count = emit_wrd(&CTX->m_ret, ret_count, lbl_id))) 
-			return FN_ACLSPV_PASS_ALLOC_FAILED;
-
-		unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpReturn, 0))) 
-			return FN_ACLSPV_PASS_ALLOC_FAILED;
-		unless((ret_count = emit_opcode(&CTX->m_ret, ret_count, SpvOpFunctionEnd, 0))) 
-			return FN_ACLSPV_PASS_ALLOC_FAILED;
-	}
-
-#undef	m_ret
-#undef	ret_count
-#undef	num_kernels
-#undef	kernel_nodes
-
 	IGNORE(M);
 
 	CTX->m_retcount
