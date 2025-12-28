@@ -7,8 +7,7 @@
 - `inc` for library header
 
 ## language
-- C90 for llvm-c
-- C++ for clang/llvm
+- C90 for clang-c
 
 ## license
 - [this project](./LICENSE)
