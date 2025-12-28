@@ -4,13 +4,16 @@
 #include <clang-c/CXErrorCode.h>
 #include <clang-c/Index.h>
 
+#include "./impl/asm.h"
+#include "./impl/conf.h"
+
 #include "./util/ctx.h"
 
 #include <assert.h>
 #include <string.h>
 
-#include "./impl/conf.h"
-#include "./impl/asm.h"
+#include "./iter/root.h"
+
 
 /**
  * @fn	aclspv_compile
@@ -31,6 +34,8 @@ aclspv_compile(
 	const CXIndex	CXIDX =	clang_createIndex(0, 0);
 	e_aclspv_compile_t STATE_VAL = ACLSPV_COMPILE_OK;
 	CXTranslationUnit	CXTU = ae2f_NIL;
+	CXCursor		CXROOTCUR;
+
 	enum CXErrorCode	CXERR = CXError_Success;
 	x_aclspv_ctx	CTX;
 
@@ -58,15 +63,20 @@ aclspv_compile(
 		goto LBL_CLEANUP;
 	}
 
-	/** compilation start */
+	unless(CXTU) {
+		STATE_VAL = ACLSPV_COMPILE_MET_INVAL;
+		goto LBL_CLEANUP;
+	}
 
 	if((STATE_VAL = impl_conf(&CTX)))
 		goto LBL_CLEANUP;
 
+	CXROOTCUR = clang_getTranslationUnitCursor(CXTU);
+
+	clang_visitChildren(CXROOTCUR, iter_root, &CTX);
+
 	if((STATE_VAL = impl_asm(&CTX)))
 		goto LBL_CLEANUP;
-
-	/** compilation end */
 
 LBL_CLEANUP:
 
@@ -100,3 +110,5 @@ LBL_CLEANUP:
 	
 	return STATE_VAL;
 }
+
+

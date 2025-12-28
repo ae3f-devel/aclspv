@@ -1,10 +1,9 @@
 
+#include <spirv/1.0/spirv.h>
 #include <aclspv.h>
 
 #include <util/iddef.h>
 #include <util/wrdemit.h>
-
-#include <spirv/1.0/spirv.h>
 
 ae2f_inline static ae2f_noexcept e_aclspv_compile_t impl_asm(
 		const h_aclspv_build_ctx_t	h_ctx
