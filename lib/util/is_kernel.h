@@ -8,31 +8,35 @@
 
 
 ae2f_inline static unsigned util_is_kernel(const CXCursor h_fndecl) {
+	CXSourceRange	RANGE;
+	CXTranslationUnit TU;
+	CXToken *  TOKS;
+	unsigned NUM_TOKEN, FOUND, IDX;
 	if (clang_getCursorKind(h_fndecl) != CXCursor_FunctionDecl)
 		return 0;
 
-	CXSourceRange range = clang_getCursorExtent(h_fndecl);
-	CXTranslationUnit tu = clang_Cursor_getTranslationUnit(h_fndecl);
+	RANGE = clang_getCursorExtent(h_fndecl);
+	TU = clang_Cursor_getTranslationUnit(h_fndecl);
 
-	CXToken *tokens = NULL;
-	unsigned nTokens = 0;
-	unsigned found = 0;
-	unsigned i = 0;
+	TOKS = NULL;
+	NUM_TOKEN = 0;
+	FOUND = 0;
+	IDX = 0;
 
-	clang_tokenize(tu, range, &tokens, &nTokens);
+	clang_tokenize(TU, RANGE, &TOKS, &NUM_TOKEN);
 
-	for (; i < nTokens; ++i) {
-		CXString spelling = clang_getTokenSpelling(tu, tokens[i]);
-		if (strcmp(clang_getCString(spelling), "__kernel") == 0) {
-			found = 1;
+	for (; IDX < NUM_TOKEN; ++IDX) {
+		CXString spelling = clang_getTokenSpelling(TU, TOKS[IDX]);
+		if (strstr(clang_getCString(spelling), "__kernel")) {
+			FOUND = 1;
 			clang_disposeString(spelling);
 			break;
 		}
 		clang_disposeString(spelling);
 	}
 
-	clang_disposeTokens(tu, tokens, nTokens);
-	return found;
+	clang_disposeTokens(TU, TOKS, NUM_TOKEN);
+	return FOUND;
 }
 
 #endif

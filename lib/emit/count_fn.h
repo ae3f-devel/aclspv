@@ -1,5 +1,9 @@
 #include <ae2f/Keys.h>
+
+#include <clang-c/CXString.h>
 #include <clang-c/Index.h>
+
+#include <stdio.h>
 #include <assert.h>
 
 #include <util/ctx.h>
@@ -9,18 +13,50 @@
 #include <ae2f/c90/StdBool.h>
 #include <spirv/1.0/spirv.h>
 
+static enum CXChildVisitResult emit_count_fn_wrdgroup_attr(CXCursor h_cur, CXCursor h_parent, CXClientData wr_data) {
+	CXString	ATTR_KIND;
+	const char* NIDDLE;
 
-static enum CXChildVisitResult emit_count_fn(CXCursor h_cur, CXCursor h_cur_parent, CXClientData _h_ctx) {
+	ATTR_KIND = clang_getCursorSpelling(h_cur);
+	if((NIDDLE = strstr(ATTR_KIND.data, "reqd_work_group_size("))) {
+		sscanf(NIDDLE, "reqd_work_group_size( %u , %u , %u )"
+				, ((unsigned* ae2f_restrict)wr_data)
+				, ((unsigned* ae2f_restrict)wr_data) + 1
+				, ((unsigned* ae2f_restrict)wr_data) + 2
+		      );
+
+		clang_disposeString(ATTR_KIND);
+		return CXChildVisit_Break;
+	} else if ((NIDDLE = strstr(ATTR_KIND.data, "aclspv_wrkgroup_size("))) {
+		sscanf(NIDDLE, "aclspv_wrkgroup_size( %u , %u , %u )"
+				, ((unsigned* ae2f_restrict)wr_data)
+				, ((unsigned* ae2f_restrict)wr_data) + 1
+				, ((unsigned* ae2f_restrict)wr_data) + 2
+		      );
+
+		clang_disposeString(ATTR_KIND);
+		return CXChildVisit_Break;
+	}
+
+	clang_disposeString(ATTR_KIND);
+	return CXChildVisit_Recurse;
+	(void)h_parent;
+}
+
+static enum CXChildVisitResult emit_count_fn(CXCursor h_cur, CXCursor h_parent, CXClientData _h_ctx) {
 #define h_ctx	((x_aclspv_ctx* ae2f_restrict)_h_ctx)
 	assert(h_ctx);
 
-	unless(h_cur.kind == CXCursor_CompoundStmt && h_cur_parent.kind == CXCursor_FunctionDecl)
+	unless(h_cur.kind == CXCursor_CompoundStmt && h_parent.kind == CXCursor_FunctionDecl)
 		return CXChildVisit_Recurse;
 
-	if(util_is_kernel(h_cur_parent)) {
-		const CXString NAME = clang_getCursorSpelling(h_cur_parent);
+	if(util_is_kernel(h_parent)) {
+		const CXString NAME = clang_getCursorSpelling(h_parent);
+		unsigned	XYZ[3] = { 1, 1, 1 };
 		aclspv_wrdcount_t	POS = h_ctx->m_count.m_entp;
 		h_ctx->m_state = ACLSPV_COMPILE_ALLOC_FAILED;
+
+		clang_visitChildren(h_parent, emit_count_fn_wrdgroup_attr, XYZ);
 
 		/** OpEntryPoint */
 		unless((h_ctx->m_count.m_entp = emit_opcode(
@@ -67,17 +103,17 @@ static enum CXChildVisitResult emit_count_fn(CXCursor h_cur, CXCursor h_cur_pare
 		unless((h_ctx->m_count.m_execmode = 
 					emit_wrd(&h_ctx->m_section.m_execmode
 						, h_ctx->m_count.m_execmode
-						, 1)))
+						, XYZ[0])))
 			goto LBL_ABRT;
 		unless((h_ctx->m_count.m_execmode = 
 					emit_wrd(&h_ctx->m_section.m_execmode
 						, h_ctx->m_count.m_execmode
-						, 1)))
+						, XYZ[1])))
 			goto LBL_ABRT;
 		unless((h_ctx->m_count.m_execmode = 
 					emit_wrd(&h_ctx->m_section.m_execmode
 						, h_ctx->m_count.m_execmode
-						, 1)))
+						, XYZ[2])))
 			goto LBL_ABRT;
 
 #if !defined(NDEBUG) || !NDEBUG
@@ -89,7 +125,6 @@ static enum CXChildVisitResult emit_count_fn(CXCursor h_cur, CXCursor h_cur_pare
 #endif
 
 		++h_ctx->m_fnlist.m_num_entp;
-
 		h_ctx->m_state = ACLSPV_COMPILE_OK;
 LBL_ABRT:
 		clang_disposeString(NAME);

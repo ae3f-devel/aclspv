@@ -6,8 +6,9 @@
 char maincontent[] =
 "struct STRUCTURE { int aa; struct { float D; double C; } M; int a; int b; };"
 "void N_KERNEL_0();"
+"__attribute__((annotate(\"reqd_work_group_size(2, 2, 2)\")))"
 "__kernel void KERNEL_0(uint pushu32, __global uint* __attribute__((annotate(\"aclspv_set(2)\"))) globu32, __local uint* locu32, float pushf32, struct STRUCTURE push_struct) { }"
-"__kernel void N_KERNEL_0() {}";
+"__kernel void N_KERNEL_0(__constant int* consti32) {}";
 
 int main(void) {
 	struct CXUnsavedFile	files[1];

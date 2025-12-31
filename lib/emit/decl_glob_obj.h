@@ -196,6 +196,7 @@ LBL_ABRT_NALLOC:
 		return CXChildVisit_Break;
 #endif
 
+
 	CTX->m_state = ACLSPV_COMPILE_OK;
 
 	++ARG_IDX;
@@ -230,9 +231,9 @@ static enum CXChildVisitResult emit_decl_glob_obj(CXCursor h_cur, CXCursor h_cur
 			0 /* interface count */,
 		};
 
-		BUFF[4] = h_ctx->m_tmp.m_w2;
-
 		const int NPARAMS = clang_Cursor_getNumArguments(h_cur_parent);
+
+		BUFF[4] = h_ctx->m_tmp.m_w2;
 
 		if(NPARAMS < 0) {
 			h_ctx->m_state = ACLSPV_COMPILE_MET_INVAL;
