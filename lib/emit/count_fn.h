@@ -18,8 +18,8 @@ static enum CXChildVisitResult emit_count_fn_wrdgroup_attr(CXCursor h_cur, CXCur
 	const char* NIDDLE;
 
 	ATTR_KIND = clang_getCursorSpelling(h_cur);
-	if((NIDDLE = strstr(ATTR_KIND.data, "reqd_work_group_size("))) {
-		sscanf(NIDDLE, "reqd_work_group_size( %u , %u , %u )"
+	if((NIDDLE = strstr(ATTR_KIND.data, "reqd_work_group_size"))) {
+		sscanf(NIDDLE, "reqd_work_group_size ( %u , %u , %u )"
 				, ((unsigned* ae2f_restrict)wr_data)
 				, ((unsigned* ae2f_restrict)wr_data) + 1
 				, ((unsigned* ae2f_restrict)wr_data) + 2
@@ -27,8 +27,8 @@ static enum CXChildVisitResult emit_count_fn_wrdgroup_attr(CXCursor h_cur, CXCur
 
 		clang_disposeString(ATTR_KIND);
 		return CXChildVisit_Break;
-	} else if ((NIDDLE = strstr(ATTR_KIND.data, "aclspv_wrkgroup_size("))) {
-		sscanf(NIDDLE, "aclspv_wrkgroup_size( %u , %u , %u )"
+	} else if ((NIDDLE = strstr(ATTR_KIND.data, "aclspv_wrkgroup_size"))) {
+		sscanf(NIDDLE, "aclspv_wrkgroup_size ( %u , %u , %u )"
 				, ((unsigned* ae2f_restrict)wr_data)
 				, ((unsigned* ae2f_restrict)wr_data) + 1
 				, ((unsigned* ae2f_restrict)wr_data) + 2

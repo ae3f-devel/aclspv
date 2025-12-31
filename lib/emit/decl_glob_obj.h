@@ -24,17 +24,20 @@ static enum CXChildVisitResult	emit_decl_glob_obj_visit_parseattr(CXCursor h_cur
 	CXString TEXT;
 	enum CXChildVisitResult RES = CXChildVisit_Break;
 	char* NEEDLE;
+	unsigned SET;
 
 	unless(h_cur.kind == CXCursor_AnnotateAttr) return CXChildVisit_Recurse;
 	TEXT = clang_getCursorSpelling(h_cur);
 
-	unless(NEEDLE = strstr(TEXT.data, "aclspv_set(")) {
+	unless(NEEDLE = strstr(TEXT.data, "aclspv_set")) {
 		RES = CXChildVisit_Continue;
 		goto LBL_FINI;
 	}
 
 
-	*((aclspv_wrd_t* ae2f_restrict)h_data) = (aclspv_wrd_t)atoi(NEEDLE + sizeof("aclspv_set"));
+	sscanf(NEEDLE, "aclspv_set ( %u )", &SET);
+
+	*((aclspv_wrd_t* ae2f_restrict)h_data) = (aclspv_wrd_t)SET;
 
 LBL_FINI:
 	clang_disposeString(TEXT);
@@ -154,7 +157,7 @@ LBL_ABRT_NALLOC:
 	} else if (strstr(PARAM_TY_NAME.data, "__local")) {
 		INFO->m_storage_class = SpvStorageClassWorkgroup;
 	} else if (strstr(PARAM_TY_NAME.data, "__constant")) {
-		INFO->m_storage_class = SpvStorageClassUniformConstant;
+		INFO->m_storage_class = SpvStorageClassUniform;
 	}
 
 	clang_disposeString(PARAM_TY_NAME);
@@ -184,7 +187,13 @@ LBL_ABRT_NALLOC:
 			return CXChildVisit_Break;
 	}
 
-#if 1
+	if(INFO->m_storage_class == SpvStorageClassWorkgroup) {
+		INFO->m_ptr_struct_id = util_mk_constant_ptr_work_id(1, CTX);
+	} else if(INFO->m_storage_class == SpvStorageClassUniform) {
+		INFO->m_storage_class = SpvStorageClassUniform;
+		INFO->m_ptr_struct_id = util_mk_constant_ptr_uniform_id(1, CTX);
+	}
+
 	/* OpVariable */
 	unless((CTX->m_count.m_vars = emit_opcode(&CTX->m_section.m_vars, CTX->m_count.m_vars, SpvOpVariable, 3))) 
 		return CXChildVisit_Break;
@@ -194,7 +203,6 @@ LBL_ABRT_NALLOC:
 		return CXChildVisit_Break;
 	unless((CTX->m_count.m_vars = emit_wrd(&CTX->m_section.m_vars, CTX->m_count.m_vars, INFO->m_storage_class)))
 		return CXChildVisit_Break;
-#endif
 
 
 	CTX->m_state = ACLSPV_COMPILE_OK;

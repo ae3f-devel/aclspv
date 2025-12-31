@@ -29,7 +29,7 @@ ae2f_inline static e_aclspv_compile_t impl_conf(
 	h_ctx->m_count.m_decorate	= 0;
 	h_ctx->m_count.m_types		= 0;
 	h_ctx->m_count.m_vars		= 0;
-	h_ctx->m_count.m_entpdef	= 0;
+	h_ctx->m_count.m_fndef		= 0;
 
 	/*** Shader Capability **/
 

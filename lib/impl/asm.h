@@ -19,7 +19,7 @@ ae2f_inline static ae2f_noexcept e_aclspv_compile_t impl_asm(
 		+ h_ctx->m_count.m_decorate
 		+ h_ctx->m_count.m_types
 		+ h_ctx->m_count.m_vars
-		+ h_ctx->m_count.m_entpdef
+		+ h_ctx->m_count.m_fndef
 		+ 5;
 
 	_aclspv_grow_vec(malloc, _free, h_ctx->m_ret
@@ -145,8 +145,8 @@ ae2f_inline static ae2f_noexcept e_aclspv_compile_t impl_asm(
 	+ (h_ctx->m_count.m_decorate)		\
 	+ (h_ctx->m_count.m_types)		\
 	+ (h_ctx->m_count.m_vars)
-#define	cpysz	count_to_sz(h_ctx->m_count.m_entpdef)
-	memcpy(cpypad, (h_ctx)->m_section.m_entpdef.m_p, (size_t)cpysz);
+#define	cpysz	count_to_sz(h_ctx->m_count.m_fndef)
+	memcpy(cpypad, (h_ctx)->m_section.m_fndef.m_p, (size_t)cpysz);
 
 #undef	retbuf
 

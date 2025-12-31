@@ -34,6 +34,7 @@ typedef struct {
 
 	/** uniform pointer id */
 	aclspv_id_t		m_ptr_uniform;
+	aclspv_id_t		m_ptr_uniformconst;
 
 	/** workgroup pointer id */
 	aclspv_id_t		m_ptr_work;
@@ -51,7 +52,7 @@ ae2f_inline ae2f_ccpure static util_constant* util_get_constant_node(
 {
 	const aclspv_wrdcount_t	COUNT = (aclspv_wrdcount_t)(h_ctx->m_constant_cache.m_sz / (size_t)sizeof(util_constant));
 	aclspv_wrdcount_t	LEFT	= 0;
-	aclspv_wrdcount_t	RIGHT	= COUNT - 1;
+	aclspv_wrdcount_t	RIGHT	= COUNT;
 
 	if(COUNT) {
 		while(LEFT < RIGHT) {
@@ -64,7 +65,7 @@ ae2f_inline ae2f_ccpure static util_constant* util_get_constant_node(
 			if(((p_util_constant_t)h_ctx->m_constant_cache.m_p)[MIDDLE].m_key < c_key) {
 				LEFT = MIDDLE + 1;
 			} else {
-				RIGHT = MIDDLE - 1;
+				RIGHT = MIDDLE;
 			}
 		}
 
@@ -83,7 +84,8 @@ ae2f_inline static util_constant* util_mk_constant_node(
 {
 	const aclspv_wrdcount_t	COUNT = (aclspv_wrdcount_t)(h_ctx->m_constant_cache.m_sz / (size_t)sizeof(util_constant));
 	aclspv_wrdcount_t	LEFT	= 0;
-	aclspv_wrdcount_t	RIGHT	= COUNT - 1;
+	aclspv_wrdcount_t	RIGHT	= COUNT;
+	size_t			NSIZE;
 
 	if(COUNT) {
 		while(LEFT < RIGHT) {
@@ -95,19 +97,23 @@ ae2f_inline static util_constant* util_mk_constant_node(
 			if(((p_util_constant_t)h_ctx->m_constant_cache.m_p)[MIDDLE].m_key < c_key) {
 				LEFT = MIDDLE + 1;
 			} else {
-				RIGHT = MIDDLE > 0 ? MIDDLE - 1 : 0;
+				RIGHT = MIDDLE;
 			}
 		}
 
 		if(((p_util_constant_t)h_ctx->m_constant_cache.m_p)[LEFT].m_key == c_key)
 			return &((p_util_constant_t)h_ctx->m_constant_cache.m_p)[LEFT];
+
 	}
+
+
+	NSIZE = (size_t)(h_ctx->m_constant_cache.m_sz + (size_t)sizeof(util_constant));
 
 	_aclspv_grow_vec_with_copy(
 			_aclspv_malloc, _aclspv_free
 			, _aclspv_memcpy
 			, L_new, h_ctx->m_constant_cache
-			, (size_t)(h_ctx->m_constant_cache.m_sz + (size_t)sizeof(util_constant))
+			, NSIZE
 			);
 	unless(h_ctx->m_constant_cache.m_p) return ae2f_NIL;
 
@@ -132,7 +138,10 @@ ae2f_inline static aclspv_id_t	util_mk_constant_val_id(const aclspv_wrd_t c_val,
 	util_constant* ae2f_restrict const C = util_mk_constant_node(c_val, h_ctx);
 	unless(C) return 0;
 	unless(C->m_key == c_val) return 0;
+
+
 	if(C->m_const_val_id) return C->m_const_val_id;
+
 
 	unless(util_get_default_id(ID_DEFAULT_U32, h_ctx))
 		return 0;
@@ -144,6 +153,7 @@ ae2f_inline static aclspv_id_t	util_mk_constant_val_id(const aclspv_wrd_t c_val,
 	unless((h_ctx->m_count.m_types = emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, c_val))) return 0;  
 
 	C->m_const_val_id = h_ctx->m_id++;
+
 	return C->m_const_val_id;
 }
 
@@ -515,6 +525,29 @@ ae2f_inline static aclspv_id_t	util_mk_constant_ptr_uniform_id(const aclspv_wrd_
 	C->m_ptr_uniform = h_ctx->m_id++;
 
 	return C->m_ptr_uniform;
+}
+
+ae2f_inline static aclspv_id_t	util_mk_constant_ptr_uniformconstant_id(const aclspv_wrd_t c_wrdcount, h_util_ctx_t h_ctx) {
+	util_constant* ae2f_restrict const C = util_mk_constant_node(c_wrdcount, h_ctx);
+	unless(C) return 0;
+	unless(C->m_key == c_wrdcount) return 0;
+	unless(C->m_struct128_id)
+		C->m_struct128_id = util_mk_constant_struct128_id(sz_to_count(c_wrdcount), h_ctx);
+
+	if(C->m_ptr_uniformconst) return C->m_ptr_uniformconst;
+
+	unless((h_ctx->m_count.m_types = emit_opcode(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvOpTypePointer, 3))) 
+		return 0;
+	unless((h_ctx->m_count.m_types = emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) 
+		return 0;
+	unless((h_ctx->m_count.m_types = emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvStorageClassUniformConstant))) 
+		return 0;
+	unless((h_ctx->m_count.m_types = emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, C->m_struct128_id)))
+		return 0;
+
+	C->m_ptr_uniformconst = h_ctx->m_id++;
+
+	return C->m_ptr_uniformconst;
 }
 
 ae2f_inline static aclspv_id_t	util_mk_constant_ptr_work_id(const aclspv_wrd_t c_wrdcount, h_util_ctx_t h_ctx) {

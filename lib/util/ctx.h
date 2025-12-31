@@ -45,7 +45,7 @@ typedef struct a_aclspv_ctx {
 			m_decorate,
 			m_types,
 			m_vars,
-			m_entpdef;
+			m_fndef;
 	}			m_count;
 
 	struct {
@@ -83,7 +83,7 @@ typedef struct a_aclspv_ctx {
 			m_decorate,
 			m_types,
 			m_vars,
-			m_entpdef;
+			m_fndef;
 	}			m_section;
 
 	/**

@@ -16,6 +16,10 @@
 
 #include "./emit/count_fn.h"
 #include "./emit/decl_glob_obj.h"
+#include "./emit/body.h"
+#include "aclspv/spvty.h"
+#include "util/id.h"
+#include "util/iddef.h"
 
 
 /**
@@ -89,7 +93,28 @@ aclspv_compile(
 
 	clang_visitChildren(CXROOTCUR, emit_decl_glob_obj, &CTX);
 
-	
+	{
+		aclspv_wrdcount_t	IDX = CTX.m_fnlist.m_num_entp;
+		const aclspv_wrd_t	ANCHOR = CTX.m_tmp.m_w3;
+
+		util_get_default_id(ID_DEFAULT_VOID, &CTX);
+		util_get_default_id(ID_DEFAULT_FN_VOID, &CTX);
+
+
+		while(IDX--) {
+			((util_entp_t* ae2f_restrict)CTX.m_fnlist.m_entp.m_p)[IDX].m_id = ANCHOR + IDX;
+		}
+
+		IDX = CTX.m_fnlist.m_num_entp;
+
+		while(IDX--) {
+			CTX.m_tmp.m_w0 = (ID_DEFAULT_FN_VOID);
+			CTX.m_tmp.m_w1 = ((util_entp_t* ae2f_restrict)CTX.m_fnlist.m_entp.m_p)[IDX].m_id;
+			CTX.m_tmp.m_w2 = (ID_DEFAULT_VOID);
+			clang_visitChildren(((util_entp_t* ae2f_restrict)CTX.m_fnlist.m_entp.m_p)[IDX].m_fn, emit_body, &CTX);
+		}
+	}
+
 
 	if((STATE_VAL = CTX.m_state))
 		goto LBL_CLEANUP;
@@ -112,7 +137,7 @@ LBL_CLEANUP:
 	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_capability);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_decorate);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_entp);
-	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_entpdef);
+	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_fndef);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_execmode);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_ext);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_memmodel);
@@ -127,7 +152,7 @@ LBL_CLEANUP:
 	else free(CTX.m_ret.m_p);
 
 	if(rwr_output_count_opt) *rwr_output_count_opt = CTX.m_retcount;
-	
+
 	return STATE_VAL;
 }
 

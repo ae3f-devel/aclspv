@@ -12,16 +12,3 @@
 ## license
 - [this project](./LICENSE)
 - [llvm related programmes](./LICENSE-llvm)
-
-# What is this library to be expected
-- it compiles opencl c into `oclc flavoured llvm ir`.
-- it converts `oclc flavoured llvm ir` to `custom llvm ir`.
-- it emits the `final spir-v` based on `custom llvm ir` in for vulkan 1.0.
-
-# What is not done
-- proper library linking configuration on cmake
-- normal function declaration & definition
-- entry kernel definition
-- storage buffer structure is hard-coded
-- uniform buffer structure is hard-coded
-- workgroup buffer structure is hard-coded.
