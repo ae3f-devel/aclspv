@@ -7,7 +7,7 @@
 #include <assert.h>
 
 #include <util/ctx.h>
-#include <util/wrdemit.h>
+#include <util/emitx.h>
 #include <util/is_kernel.h>
 
 #include <ae2f/c90/StdBool.h>
@@ -83,38 +83,14 @@ static enum CXChildVisitResult emit_count_fn(CXCursor h_cur, CXCursor h_parent, 
 		set_oprnd_count_for_opcode(get_wrd_of_vec(&h_ctx->m_section.m_entp)[POS], h_ctx->m_count.m_entp - POS - 1);
 
 		/** OpExecMode */
-		unless((h_ctx->m_count.m_execmode = 
-					emit_opcode(
-						&h_ctx->m_section.m_execmode
-						, h_ctx->m_count.m_execmode
-						, SpvOpExecutionMode
-						, 5)))	
-			goto LBL_ABRT;
-		unless((h_ctx->m_count.m_execmode = 
-					util_emit_wrd(&h_ctx->m_section.m_execmode
-						, h_ctx->m_count.m_execmode
-						, h_ctx->m_id + h_ctx->m_fnlist.m_num_entp)))			
-			goto LBL_ABRT;
-		unless((h_ctx->m_count.m_execmode = 
-					util_emit_wrd(&h_ctx->m_section.m_execmode
-						, h_ctx->m_count.m_execmode
-						, SpvExecutionModeLocalSize)))
-			goto LBL_ABRT;
-		unless((h_ctx->m_count.m_execmode = 
-					util_emit_wrd(&h_ctx->m_section.m_execmode
-						, h_ctx->m_count.m_execmode
-						, XYZ[0])))
-			goto LBL_ABRT;
-		unless((h_ctx->m_count.m_execmode = 
-					util_emit_wrd(&h_ctx->m_section.m_execmode
-						, h_ctx->m_count.m_execmode
-						, XYZ[1])))
-			goto LBL_ABRT;
-		unless((h_ctx->m_count.m_execmode = 
-					util_emit_wrd(&h_ctx->m_section.m_execmode
-						, h_ctx->m_count.m_execmode
-						, XYZ[2])))
-			goto LBL_ABRT;
+		ae2f_expected_but_else(h_ctx->m_count.m_execmode = util_emitx_6(
+				&h_ctx->m_section.m_execmode
+				, h_ctx->m_count.m_execmode
+				, SpvOpExecutionMode
+				, h_ctx->m_id + h_ctx->m_fnlist.m_num_entp
+				, SpvExecutionModeLocalSize
+				, XYZ[0], XYZ[1], XYZ[2]
+			    )) goto LBL_ABRT;
 
 #if !defined(NDEBUG) || !NDEBUG
 		POS = h_ctx->m_count.m_name;

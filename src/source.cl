@@ -46,6 +46,9 @@ __kernel void KERNEL_0(
 }
 
 __kernel void N_KERNEL_0(__constant uintptr_t* consti32, const uint pushu32) {
-	size_t d = 30;
+	const size_t specid_0 __attribute__((annotate("aclspv_specid(0)"))) = 0;
+	const size_t specid_1 __attribute__((annotate("aclspv_specid(1)"))) = 1;
+
+
 	return;
 }

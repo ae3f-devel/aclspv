@@ -92,10 +92,12 @@ typedef struct a_aclspv_ctx {
 	 * @brief	fully emitted spir-v
 	 * */
 	x_aclspv_vec		m_ret;
+
+	/** 
+	 * @var m_scale_vars 
+	 * @see util_bind 
+	 * */
 	x_aclspv_vec            m_scale_vars;
-#if 1
-	x_aclspv_vec            m_vecid_vars;
-#endif
 
 	/** cache for elements related to unsigned integer constants [lib_build_constant] */
 	x_aclspv_vec		m_constant_cache;

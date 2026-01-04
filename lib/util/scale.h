@@ -8,12 +8,14 @@
 
 #include "./ctx.h"
 #include <assert.h>
+#include <stdio.h>
 
 
 typedef struct x_scale x_scale;
 typedef x_scale* ae2f_restrict h_scale_t;
 
 struct x_scale {
+	size_t			m_id;
 	size_t			m_nxt;
 	size_t			m_buf;
 	size_t			m_sz;
@@ -29,7 +31,9 @@ struct x_scale {
 	((h_scale_t)( (uintptr_t)(*get_scale_header_from_vec(h_alloc)) + (uintptr_t)((h_alloc)->m_p) ))
 
 #define	get_buf_from_scale(h_alloc, c_scale)	\
-	(void* ae2f_restrict)(((uintptr_t)(h_alloc)->m_p) + ((uintptr_t)(c_scale).m_buf))
+	(ae2f_expected((h_alloc)->m_p) \
+	 ? (void* ae2f_restrict)(((uintptr_t)(h_alloc)->m_p) + ((uintptr_t)(c_scale).m_buf)) \
+	 : ((void* ae2f_restrict)ae2f_NIL))
 
 #define	get_nxt_from_scale(h_alloc, c_scale)	\
 	(void* ae2f_restrict)(((uintptr_t)(h_alloc)->m_p) + ((uintptr_t)(c_scale).m_nxt))
@@ -54,6 +58,7 @@ ae2f_inline ae2f_retnew static x_scale* init_scale(
 	get_first_scale_from_vec(h_alloc)->m_buf = SCALE_HEADER_SIZE;
 	get_first_scale_from_vec(h_alloc)->m_sz = c_init_sz;
 	get_first_scale_from_vec(h_alloc)->m_nxt = 0;
+	get_first_scale_from_vec(h_alloc)->m_id = 0;
 
 	assert(get_first_scale_from_vec(h_alloc) == get_last_scale_from_vec(h_alloc));
 	return get_first_scale_from_vec(h_alloc);
@@ -71,19 +76,27 @@ ae2f_inline ae2f_ccconst static x_scale* get_scale_from_vec(
 {
 	size_t i = c_idx;
 	x_scale* ae2f_restrict ret = get_first_scale_from_vec(h_alloc);
+	ae2f_expected_but_else(ret) {
+		assert("non-alloc" && 0);
+		return ae2f_NIL;
+	}
 
-	if (h_alloc->m_sz < SCALE_HEADER_SIZE) {
+	ae2f_unexpected_but_if(h_alloc->m_sz < SCALE_HEADER_SIZE) {
 		assert("misconfigured" && 0);
 		return ae2f_NIL;
 	}
 
 	while(i--) {
-		unless(ret->m_nxt)
+		ae2f_expected_but_else(ret->m_nxt) {
+			assert("exceeded" && 0);
+			ae2f_unreachable();
 			return ae2f_NIL;
+		}
 
 		ret = get_nxt_from_scale(h_alloc, *ret);
 	}
 
+	assert(ret->m_id == c_idx);
 	return ret;
 }
 
@@ -162,6 +175,7 @@ ae2f_retnew ae2f_inline static x_scale* mk_scale_from_vec(
 	nxt->m_buf = lst->m_nxt + (size_t)sizeof(x_scale);
 	nxt->m_sz = c_init_size_opt;
 	nxt->m_nxt = 0;
+	nxt->m_id = lst->m_id + 1;
 
 	assert(get_first_scale_from_vec(h_alloc) < get_last_scale_from_vec(h_alloc));
 	assert(lst->m_buf);

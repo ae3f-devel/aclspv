@@ -80,6 +80,7 @@ static enum CXChildVisitResult emit_decl_glob_obj_visit_fetch(CXCursor h_cur, CX
 #if	!defined(NDEBUG) || !NDEBUG
 
 	CXString	PARAM_NAME, FUNC_NAME;
+	aclspv_wrdcount_t	POS_FOR_LOCAL;
 #endif
 	CXString	PARAM_TY_NAME;
 	CXType		PARAM_TY;
@@ -103,7 +104,6 @@ static enum CXChildVisitResult emit_decl_glob_obj_visit_fetch(CXCursor h_cur, CX
 	/** non-pointer type */
 	unless(PARAM_TY.kind == CXType_Pointer || PARAM_TY.kind == CXType_ConstantArray) {
 		PUSH_SIZE += sz_to_count(clang_Type_getSizeOf(PARAM_TY));
-		++ARG_IDX;
 		return CXChildVisit_Continue;
 	}
 
@@ -112,25 +112,23 @@ static enum CXChildVisitResult emit_decl_glob_obj_visit_fetch(CXCursor h_cur, CX
 
 	/** FETCH BIND */
 
-#define VAR_INFOS		(&((util_bind* ae2f_restrict)CTX->m_vecid_vars.m_p)->m_bindable)
-#define INTERFACE_IDS_MGR	get_last_scale_from_vec(&CTX->m_scale_vars)
-#define	INTERFACE_IDS		((aclspv_wrd_t* ae2f_restrict)get_buf_from_scale(&CTX->m_scale_vars, *INTERFACE_IDS_MGR))
+#define INTERFACES_MGR		get_last_scale_from_vec(&CTX->m_scale_vars)
+#define	INTERFACES		((util_bind* ae2f_restrict)get_buf_from_scale(&CTX->m_scale_vars, INTERFACES_MGR[0]))
+#define	INFO			(&((INTERFACES + ARG_IDX))->m_bindable)
 
-#define	INFO			(VAR_INFOS + BIND_IDX)
+	assert(INTERFACES_MGR->m_id == (size_t)CTX->m_tmp.m_w0);
+	{ ae2f_assume(INTERFACES_MGR->m_id == (size_t)CTX->m_tmp.m_w0); }
 
-	if (CTX->m_vecid_vars.m_sz <= ((size_t)sizeof(util_bind) * (size_t)BIND_IDX)) {
-		_aclspv_grow_vec_with_copy(
-				_aclspv_malloc, _aclspv_free, _aclspv_memcpy, L_new
-				, CTX->m_vecid_vars
-				, CTX->m_vecid_vars.m_sz 
-				? CTX->m_vecid_vars.m_sz << 1 
-				: (size_t)(sizeof(util_bind) << 3)
-				);
+	ae2f_unexpected_but_if(
+			grow_last_scale(&CTX->m_scale_vars, (size_t)(sizeof(util_bind) * (ARG_IDX + 1)))
+			) {
+		CTX->m_state = ACLSPV_COMPILE_ALLOC_FAILED;
+		return CXChildVisit_Break;
+	}
 
-		unless(VAR_INFOS) {
-			CTX->m_state = ACLSPV_COMPILE_ALLOC_FAILED;
-			return CXChildVisit_Break;
-		}
+	ae2f_expected_but_else(CTX->m_scale_vars.m_p) {
+		CTX->m_state = ACLSPV_COMPILE_ALLOC_FAILED;
+		return CXChildVisit_Break;
 	}
 
 	INFO->m_arg_idx		= (aclspv_wrd_t)ARG_IDX;
@@ -139,13 +137,6 @@ static enum CXChildVisitResult emit_decl_glob_obj_visit_fetch(CXCursor h_cur, CX
 	INFO->m_var_elm_type_id	= util_mk_constant_struct_id(1, CTX);
 	INFO->m_var_type_id	= util_mk_constant_ptr_storage_id(1, CTX);
 	INFO->m_set		= 0;
-
-	if(grow_last_scale(&CTX->m_scale_vars, (size_t)count_to_sz(INTERFACE_COUNT + 1))) {
-		CTX->m_state = ACLSPV_COMPILE_ALLOC_FAILED;
-		return CXChildVisit_Break;
-	}
-
-	INTERFACE_IDS[INTERFACE_COUNT] = INFO->m_var_id;
 
 	/** FETCH BIND END */
 #if	!defined(NDEBUG) || !NDEBUG
@@ -170,7 +161,7 @@ LBL_ABRT_NALLOC:
 		strcat(NAME_MERGE, PARAM_NAME.data);
 
 #define EMIT_POS	CTX->m_count.m_name
-		unless((EMIT_POS = emit_opcode(&CTX->m_section.m_name, EMIT_POS, SpvOpName, 0))) 
+		unless((POS_FOR_LOCAL = EMIT_POS = emit_opcode(&CTX->m_section.m_name, EMIT_POS, SpvOpName, 0))) 
 			goto LBL_ABRT_NALLOC;
 		unless((EMIT_POS = util_emit_wrd(&CTX->m_section.m_name, EMIT_POS, INFO->m_var_id)))
 			goto LBL_ABRT_NALLOC;
@@ -178,6 +169,7 @@ LBL_ABRT_NALLOC:
 			goto LBL_ABRT_NALLOC;
 		set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_section.m_name)[POS], EMIT_POS - POS - 1);
 #undef	EMIT_POS
+
 
 		free(NAME_MERGE);
 	}
@@ -188,7 +180,7 @@ LBL_ABRT_NALLOC:
 	clang_disposeString(PARAM_NAME);
 #endif
 	if(PARAM_TY.kind == CXType_ConstantArray)
-		goto LBL_WORKGROUP; /*  clang_disposeString(PARAM_TY_NAME);  is needed */
+		goto LBL_WORKGROUP; 
 
 	if(strstr(PARAM_TY_NAME.data, "__global")) {
 		INFO->m_storage_class = SpvStorageClassStorageBuffer;
@@ -204,38 +196,41 @@ LBL_ABRT_NALLOC:
 
 	CTX->m_state = ACLSPV_COMPILE_ALLOC_FAILED;
 
-	/** Decorations::Descriptorsets */
-	unless((CTX->m_count.m_decorate = emit_opcode(&CTX->m_section.m_decorate, CTX->m_count.m_decorate, SpvOpDecorate, 3))) 
-		return CXChildVisit_Break;
-	unless((CTX->m_count.m_decorate = util_emit_wrd(&CTX->m_section.m_decorate, CTX->m_count.m_decorate, INFO->m_var_id))) 
-		return CXChildVisit_Break;
-	unless((CTX->m_count.m_decorate = util_emit_wrd(&CTX->m_section.m_decorate, CTX->m_count.m_decorate, SpvDecorationDescriptorSet))) 
-		return CXChildVisit_Break;
-	unless((CTX->m_count.m_decorate = util_emit_wrd(&CTX->m_section.m_decorate, CTX->m_count.m_decorate, INFO->m_set))) 
-		return CXChildVisit_Break;
+	ae2f_expected_but_else(CTX->m_count.m_decorate = util_emitx_4(
+				/** Decorations::Descriptorsets */
+				&CTX->m_section.m_decorate
+				, CTX->m_count.m_decorate
+				, SpvOpDecorate
+				, INFO->m_var_id
+				, SpvDecorationDescriptorSet
+				, INFO->m_set
+				)) return CXChildVisit_Break;
 
-	/** Decorations::Bind */
-	unless((CTX->m_count.m_decorate = emit_opcode(&CTX->m_section.m_decorate, CTX->m_count.m_decorate, SpvOpDecorate, 3))) 
-		return CXChildVisit_Break;
-	unless((CTX->m_count.m_decorate = util_emit_wrd(&CTX->m_section.m_decorate, CTX->m_count.m_decorate, INFO->m_var_id))) 
-		return CXChildVisit_Break;
-	unless((CTX->m_count.m_decorate = util_emit_wrd(&CTX->m_section.m_decorate, CTX->m_count.m_decorate, SpvDecorationBinding))) 
-		return CXChildVisit_Break;
-	unless((CTX->m_count.m_decorate = util_emit_wrd(&CTX->m_section.m_decorate, CTX->m_count.m_decorate, INFO->m_binding))) 
-		return CXChildVisit_Break;
+
+
+	ae2f_expected_but_else(CTX->m_count.m_decorate = util_emitx_4(
+				/** Decorations::Binding */
+				&CTX->m_section.m_decorate
+				, CTX->m_count.m_decorate
+				, SpvOpDecorate
+				, INFO->m_var_id
+				, SpvDecorationBinding
+				, INFO->m_binding
+				)) return CXChildVisit_Break;
 
 	if(INFO->m_storage_class == SpvStorageClassUniform) {
-		INFO->m_storage_class = SpvStorageClassUniform;
 		INFO->m_var_type_id = util_mk_constant_ptr_uniform_id(1, CTX);
+		assert(INFO->m_var_type_id);
 	}
 
-	unless(CTX->m_count.m_vars = util_emitx_variable(
-			&CTX->m_section.m_vars
-			, CTX->m_count.m_vars
-			, INFO->m_var_type_id
-			, INFO->m_var_id
-			, INFO->m_storage_class
-			)) return CXChildVisit_Break;
+
+	ae2f_expected_but_else(CTX->m_count.m_vars = util_emitx_variable(
+				&CTX->m_section.m_vars
+				, CTX->m_count.m_vars
+				, INFO->m_var_type_id
+				, INFO->m_var_id
+				, INFO->m_storage_class
+				)) return CXChildVisit_Break;
 
 
 	CTX->m_state = ACLSPV_COMPILE_OK;
@@ -249,12 +244,14 @@ LBL_WORKGROUP_FINI:
 	return CXChildVisit_Continue;
 
 LBL_WORKGROUP:
-#undef	VAR_INFOS
-#define VAR_INFOS		(&((util_bind* ae2f_restrict)CTX->m_vecid_vars.m_p)->m_work)
+#undef	INFO
+#define	INFO			(&((INTERFACES + BIND_IDX))->m_work)
 	unless(strstr(PARAM_TY_NAME.data, "__local")) {
 		CTX->m_state = ACLSPV_COMPILE_MET_INVAL;
 		return CXChildVisit_Break;
 	}
+
+
 	clang_disposeString(PARAM_TY_NAME);
 
 	{
@@ -295,6 +292,7 @@ LBL_WORKGROUP:
 			unless(util_get_default_id(ID_DEFAULT_U32, CTX))
 				return CXChildVisit_Break;
 
+
 			unless(CONST_NODE->m_const_spec_id) {
 				const aclspv_wrdcount_t RETCOUNT_TY = util_emitx_spec_constant(
 						&CTX->m_section.m_types
@@ -313,6 +311,7 @@ LBL_WORKGROUP:
 							, SPECID_WORK
 							) : 0;
 
+
 				ae2f_expected_but_else(RETCOUNT_TY && RETCOUNT_DC) {
 					return CXChildVisit_Break;
 				}
@@ -330,6 +329,7 @@ LBL_WORKGROUP:
 		} else {
 			INFO->m_arr_count_id = util_mk_constant_val_id(NUM_ARR, CTX);
 		}
+
 
 		ae2f_expected_but_else(CTX->m_count.m_types = util_emitx_spec_constant_op2(
 					&CTX->m_section.m_types
@@ -369,15 +369,6 @@ LBL_WORKGROUP:
 					, CTX->m_id + 2
 					)) return CXChildVisit_Break;
 
-
-		ae2f_expected_but_else(CTX->m_count.m_vars = util_emitx_variable(
-					&CTX->m_section.m_vars
-					, CTX->m_count.m_vars
-					, CTX->m_id + 3
-					, CTX->m_id + 4
-					, SpvStorageClassWorkgroup
-					)) return CXChildVisit_Break;
-
 		INFO->m_var_id		= CTX->m_id + 4;
 		INFO->m_var_type_id	= CTX->m_id + 3;
 		INFO->m_var_elm_type_id	= CTX->m_id + 2;
@@ -387,8 +378,7 @@ LBL_WORKGROUP:
 
 		CTX->m_id	+= 5;
 		CTX->m_state	 = ACLSPV_COMPILE_OK;
-
-		INTERFACE_IDS[INTERFACE_COUNT] = INFO->m_var_id;
+		((aclspv_wrd_t* ae2f_restrict)CTX->m_section.m_name.m_p)[POS_FOR_LOCAL] = INFO->m_var_id;
 
 		goto LBL_WORKGROUP_FINI;
 	}
@@ -398,8 +388,8 @@ LBL_WORKGROUP:
 #undef	ARG_IDX
 #undef	INTERFACE_COUNT
 #undef	VAR_INFOS
-#undef	INTERFACE_IDS_MGR
-#undef	INTERFACE_IDS
+#undef	INTERFACES_MGR
+#undef	INTERFACES
 #undef	INFO
 
 	ae2f_unreachable();
@@ -426,7 +416,6 @@ static enum CXChildVisitResult emit_decl_glob_obj(CXCursor h_cur, CXCursor h_cur
 		const int NPARAMS = clang_Cursor_getNumArguments(h_cur_parent);
 
 		CTX->m_state = ACLSPV_COMPILE_ALLOC_FAILED;
-		BUFF[4] = CTX->m_tmp.m_w2;
 
 		if(NPARAMS < 0) {
 			CTX->m_state = ACLSPV_COMPILE_MET_INVAL;
@@ -455,7 +444,6 @@ static enum CXChildVisitResult emit_decl_glob_obj(CXCursor h_cur, CXCursor h_cur
 			return CXChildVisit_Break;
 		}
 
-		CTX->m_tmp.m_w2 = (aclspv_wrd_t)BUFF[4];
 
 		if(CTX->m_tmp.m_w4 < BUFF[0]) {
 			CTX->m_tmp.m_w4 = (aclspv_wrd_t)BUFF[0];
@@ -515,6 +503,7 @@ LBL_DBG_STR_DISPOSE_FAIL:
 #undef	EMIT_POS
 #endif
 
+
 			CTX->m_state = ACLSPV_COMPILE_OK;
 #if 1 
 			((util_entp_t* ae2f_restrict)CTX->m_fnlist.m_entp.m_p)[CTX->m_tmp.m_w0].m_push_ids.m_push_ptr
@@ -523,8 +512,14 @@ LBL_DBG_STR_DISPOSE_FAIL:
 				= PSH_VAR_ID;
 			((util_entp_t* ae2f_restrict)CTX->m_fnlist.m_entp.m_p)[CTX->m_tmp.m_w0].m_push_ids.m_push_struct
 				= util_mk_constant_struct_id((aclspv_wrd_t)BUFF[0], CTX);
+
+
+			((util_entp_t* ae2f_restrict)CTX->m_fnlist.m_entp.m_p)[CTX->m_tmp.m_w0].m_nprm = (aclspv_wrd_t)BUFF[3];
 #endif
 		}
+
+
+		mk_scale_from_vec(&CTX->m_scale_vars, 0);
 
 		++CTX->m_tmp.m_w0;
 	} else {

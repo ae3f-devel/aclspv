@@ -40,6 +40,7 @@ ae2f_inline static aclspv_id_t util_get_default_id(
 			ae2f_unreachable();
 			return 0;
 
+
 		case ID_DEFAULT_VOID:
 			/** OpTypeVoid */
 			ae2f_expected_but_else((ret_count = emit_opcode(&CTX->m_section.m_types, ret_count, SpvOpTypeVoid, 1)))

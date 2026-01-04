@@ -7,6 +7,9 @@
 typedef struct {
 	aclspv_id_t	m_id;
 
+	/** parameter count (excluding push constants) */
+	aclspv_wrd_t	m_nprm;
+
 	struct {
 		aclspv_id_t	m_push_struct;
 		aclspv_id_t	m_push_ptr;

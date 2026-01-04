@@ -28,7 +28,7 @@ void*	f_memcpy(void*, const void*, size_t);
 #include <stdlib.h>
 
 #define _aclspv_free(a, b)	free(a)
-#define _aclspv_malloc(a)	malloc(ae2f_static_cast(size_t, a))
+#define _aclspv_malloc(a)	calloc(1, ae2f_static_cast(size_t, a))
 #define _aclspv_memcpy(a, b, c)	memcpy(a, b, ae2f_static_cast(size_t, c))
 
 
@@ -45,7 +45,7 @@ ae2f_MAC((f_malloc, f_free, ))
 	aclspv_grow_vec(x_aclspv_vec rc_vec, const size_t c_new_sz) {
 		if((c_new_sz) > (rc_vec).m_sz) {
 			f_free((rc_vec).m_p, (c_new_sz));
-			if(((rc_vec).m_p = f_malloc(c_new_sz))) {
+			ae2f_expected_if(((rc_vec).m_p = f_malloc(c_new_sz))) {
 				(rc_vec).m_sz = (c_new_sz);
 			} else {
 				(rc_vec).m_sz = 0ul;
@@ -59,7 +59,7 @@ ae2f_MAC((f_malloc, f_free, f_memcpy, L_new, ))
 			void* ae2f_restrict 
 				L_new = f_malloc(c_new_sz);
 
-			if(L_new) {
+			ae2f_expected_if(L_new) {
 				if((rc_vec).m_p) {
 					f_memcpy(L_new, (rc_vec).m_p, (rc_vec).m_sz);
 					f_free((rc_vec).m_p, (rc_vec).m_sz);

@@ -54,10 +54,8 @@ static ae2f_inline spvsz_t util_emit_wrd(
 				, ((size_t)count_to_sz((c_wrdcount + 1) << 1))
 				);
 
-	ae2f_expected_but_else(h_wrds->m_p) return 0;
-	if(sz_to_count(h_wrds->m_sz) > UINT32_MAX) return 0;
-	if(count_to_sz(c_wrdcount) >= ((spvsz_t)h_wrds->m_sz))
-		return 0;
+	ae2f_expected_but_else(h_wrds->m_p)				return 0;
+	ae2f_unexpected_but_if(sz_to_count(h_wrds->m_sz) > UINT32_MAX)	return 0;
 
 	get_wrd_of_vec(h_wrds)[c_wrdcount] = c_wrd;
 	return c_wrdcount + 1;
