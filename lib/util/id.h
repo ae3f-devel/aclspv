@@ -10,7 +10,6 @@ typedef enum {
 	ID_DEFAULT_U32,
 	ID_DEFAULT_I32,
 	ID_DEFAULT_F32,
-	ID_DEFAULT_PUSH_CONSTANT,
 	ID_DEFAULT_END
 } e_id_default;
 

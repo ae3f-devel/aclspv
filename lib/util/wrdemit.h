@@ -20,8 +20,7 @@ typedef	aclspv_wrdcount_t	spvsz_t;
  * @brief	byte size to word count
  * */
 #define sz_to_count(c_sz)	\
-	(((spvsz_t)(((spvsz_t)(c_sz)) / ((spvsz_t)sizeof(aclspv_wrd_t)))) \
-	+ !!((spvsz_t)(((spvsz_t)(c_sz)) % ((spvsz_t)sizeof(aclspv_wrd_t)))))
+	(((spvsz_t)(c_sz) + (spvsz_t)(sizeof(aclspv_wrd_t)) - 1) / (spvsz_t)(sizeof(aclspv_wrd_t)))
 
 
 /**

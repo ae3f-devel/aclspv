@@ -16,7 +16,7 @@ struct STRUCTURE {
 };
 
 enum {
-	LOCU32_COUNT = 4 
+	LOCU32_COUNT = 15
 };
 
 __constant const int LOCU32_COUNT_0 = 3;
@@ -24,16 +24,20 @@ __constant const int LOCU32_COUNT_0 = 3;
 
 __attribute__((annotate("reqd_work_group_size(2, 2, 2)"))) /** work group size should be specified on constant time. */
 __kernel void KERNEL_0(
-		       uint pushu32, 
+		       uint pushu32,
+
+		       /** this is descriptor set specifier */
 		       __global uint* __attribute__((annotate("aclspv_set(2)"))) globu32, 
 		       /** 
 		        * spec constant id could & must be specified on use. 
 			* this is one of its declaration: array size specified constant.
 			*/
-		       __local double __attribute__((annotate("aclspv_specid(0)"))) 
+		       __local double __attribute__((annotate("aclspv_specid(0)")))
 		       locu32_0[LOCU32_COUNT], /** local(workgroup) must be array */
 		       __global float* globf32, 
 		       float pushf32, 
+
+		       /** Push constant could use fixed array, and compound struct, but they cannot use spec constant-fixed array for it. */
 		       struct STRUCTURE push_struct
 		       )
 {

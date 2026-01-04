@@ -4,6 +4,22 @@
 #include "./wrdemit.h"
 #include <spirv/1.0/spirv.h>
 
+ae2f_inline static spvsz_t	util_emitx_3(
+		x_aclspv_vec* ae2f_restrict const	h_wrds,
+		const spvsz_t				c_wrdcount,
+		const aclspv_wrd_t			c_opcode,
+		const aclspv_wrd_t			c_opr_0,
+		const aclspv_wrd_t			c_opr_1
+		) 
+{
+	ae2f_expected_but_else(util_emit_wrd(h_wrds, c_wrdcount + 2, c_opr_1))
+		return 0;
+
+	get_wrd_of_vec(h_wrds)[c_wrdcount + 1]	= c_opr_0;
+	get_wrd_of_vec(h_wrds)[c_wrdcount]	= opcode_to_wrd(c_opcode, 2);
+
+	return c_wrdcount + 3;
+}
 
 ae2f_inline static spvsz_t	util_emitx_4(
 		x_aclspv_vec* ae2f_restrict const	h_wrds,

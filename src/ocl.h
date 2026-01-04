@@ -9,6 +9,7 @@
 #endif
 #define	ACLSPV_I(t,b)	typedef t i##b;typedef unsigned t u##b, u##t
 ACLSPV_I(char,8);ACLSPV_I(short,16);ACLSPV_I(int,32);ACLSPV_I(long,64);
+#undef	ACLSPV_I
 #define f16	half
 #define f32	float
 #define	f64	double

@@ -30,6 +30,7 @@ typedef struct a_aclspv_ctx {
 		aclspv_wrd_t	m_w1;
 		aclspv_wrd_t	m_w2;
 		aclspv_wrd_t	m_w3;
+		aclspv_wrd_t	m_w4;
 
 		x_aclspv_vec	m_v0;
 	}	m_tmp;

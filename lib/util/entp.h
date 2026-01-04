@@ -8,11 +8,9 @@ typedef struct {
 	aclspv_id_t	m_id;
 
 	struct {
-		aclspv_id_t m_push_struct;
-		aclspv_id_t m_push_ptr;
-		aclspv_id_t m_push_var;
-		aclspv_id_t m_arrty;
-		aclspv_id_t m_arrsz;
+		aclspv_id_t	m_push_struct;
+		aclspv_id_t	m_push_ptr;
+		aclspv_id_t	m_push_var;
 	} m_push_ids;
 
 	CXCursor	m_fn;

@@ -127,6 +127,8 @@ aclspv_compile(
 
 	clang_visitChildren(CXROOTCUR, emit_decl_glob_obj, &CTX);
 
+
+
 	{
 		aclspv_wrdcount_t	IDX = CTX.m_fnlist.m_num_entp;
 		const aclspv_wrd_t	ANCHOR = CTX.m_tmp.m_w3;
