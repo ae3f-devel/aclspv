@@ -256,18 +256,21 @@ LBL_WORKGROUP:
 
 	{
 		aclspv_wrd_t	SPECID_WORK = 0xFFFFFFFF;
-		const aclspv_wrd_t	VAL_2 = util_mk_constant_val_id(
-				2
-				, CTX
-				);
-
-		const aclspv_wrd_t	VAL_3 = util_mk_constant_val_id(
-				3, CTX
-				);
 		const intmax_t NUM_ARR_ORIG	= clang_getArraySize(PARAM_TY);
+		const intmax_t REAL_ARR_ORIG	= clang_Type_getSizeOf(PARAM_TY);
 		const aclspv_wrd_t NUM_ARR	= NUM_ARR_ORIG < 0 || NUM_ARR_ORIG > UINT32_MAX ? 0 : (aclspv_wrd_t)NUM_ARR_ORIG;
-		ae2f_expected_but_else(VAL_2)		return CXChildVisit_Break;
+		const aclspv_wrd_t REAL_ARR	= REAL_ARR_ORIG < 0 || REAL_ARR_ORIG > UINT32_MAX ? 0 : (aclspv_wrd_t)REAL_ARR_ORIG;
+		const aclspv_wrd_t ELM_ARR	= NUM_ARR && REAL_ARR ? REAL_ARR / NUM_ARR : 0;
+		const aclspv_id_t VAL_ELM	= util_mk_constant_val_id(ELM_ARR, CTX);
+		const aclspv_id_t VAL_2		= util_mk_constant_val_id(2, CTX);
 
+		const aclspv_id_t VAL_3		= util_mk_constant_val_id(3, CTX);
+
+		assert(REAL_ARR >= NUM_ARR && !(REAL_ARR % NUM_ARR));
+		{ ae2f_assume(REAL_ARR >= NUM_ARR && !(REAL_ARR % NUM_ARR)); }
+
+		ae2f_expected_but_else(VAL_2)		return CXChildVisit_Break;
+		ae2f_expected_but_else(VAL_ELM)		return CXChildVisit_Break;
 
 		clang_visitChildren(
 				h_cur
@@ -285,13 +288,12 @@ LBL_WORKGROUP:
 
 			CTX->m_state = ACLSPV_COMPILE_ALLOC_FAILED;
 
-			unless(CONST_NODE) {
+			ae2f_expected_but_else(CONST_NODE) {
 				return CXChildVisit_Break;
 			}
 
-			unless(util_get_default_id(ID_DEFAULT_U32, CTX))
+			ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U32, CTX))
 				return CXChildVisit_Break;
-
 
 			unless(CONST_NODE->m_const_spec_id) {
 				const aclspv_wrdcount_t RETCOUNT_TY = util_emitx_spec_constant(
@@ -336,9 +338,9 @@ LBL_WORKGROUP:
 					, CTX->m_count.m_types
 					, ID_DEFAULT_U32
 					, CTX->m_id
-					, SpvOpIAdd
+					, SpvOpIMul
 					, CTX->m_id - 1
-					, VAL_3
+					, VAL_ELM
 					))
 			return CXChildVisit_Break;
 
@@ -347,8 +349,19 @@ LBL_WORKGROUP:
 					, CTX->m_count.m_types
 					, ID_DEFAULT_U32
 					, CTX->m_id + 1
-					, SpvOpShiftRightLogical
+					, SpvOpIAdd
 					, CTX->m_id
+					, VAL_3
+					))
+			return CXChildVisit_Break;
+
+		ae2f_expected_but_else(CTX->m_count.m_types = util_emitx_spec_constant_op2(
+					&CTX->m_section.m_types
+					, CTX->m_count.m_types
+					, ID_DEFAULT_U32
+					, CTX->m_id + 2
+					, SpvOpShiftRightLogical
+					, CTX->m_id + 1
 					, VAL_2
 					)) return CXChildVisit_Break;
 
@@ -357,26 +370,26 @@ LBL_WORKGROUP:
 		ae2f_expected_but_else(CTX->m_count.m_types = util_emitx_type_array(
 					&CTX->m_section.m_types
 					, CTX->m_count.m_types
-					, CTX->m_id + 2
+					, CTX->m_id + 3
 					, ID_DEFAULT_U32
-					, CTX->m_id + 1
+					, CTX->m_id + 2
 					)) return CXChildVisit_Break;
 		ae2f_expected_but_else(CTX->m_count.m_types = util_emitx_type_pointer(
 					&CTX->m_section.m_types
 					, CTX->m_count.m_types
-					, CTX->m_id + 3
+					, CTX->m_id + 4
 					, SpvStorageClassWorkgroup /* c_storage_class */
-					, CTX->m_id + 2
+					, CTX->m_id + 3
 					)) return CXChildVisit_Break;
 
-		INFO->m_var_id		= CTX->m_id + 4;
-		INFO->m_var_type_id	= CTX->m_id + 3;
-		INFO->m_var_elm_type_id	= CTX->m_id + 2;
+		INFO->m_var_id		= CTX->m_id + 5;
+		INFO->m_var_type_id	= CTX->m_id + 4;
+		INFO->m_var_elm_type_id	= CTX->m_id + 3;
 		INFO->m_arg_idx		= (aclspv_wrd_t)ARG_IDX;
 		INFO->m_storage_class	= SpvStorageClassWorkgroup;
 		INFO->m_entp_idx	= CTX->m_tmp.m_w0;
 
-		CTX->m_id	+= 5;
+		CTX->m_id	+= 6;
 		CTX->m_state	 = ACLSPV_COMPILE_OK;
 		((aclspv_wrd_t* ae2f_restrict)CTX->m_section.m_name.m_p)[POS_FOR_LOCAL] = INFO->m_var_id;
 

@@ -41,14 +41,17 @@ __kernel void KERNEL_0(
 		       struct STRUCTURE push_struct
 		       )
 {
+	
 	globu32[get_global_id(0)] += pushu32 + sin(globf32[get_global_id(0)]); 
+	(void)(1 + get_global_id(0));
 	return;
 }
 
 __kernel void N_KERNEL_0(__constant uintptr_t* consti32, const uint pushu32) {
 	const size_t specid_0 __attribute__((annotate("aclspv_specid(0)"))) = 0;
 	const size_t specid_1 __attribute__((annotate("aclspv_specid(1)"))) = 1;
-
-
+	{int a, b;
+	a = specid_1 + specid_0 + pushu32;
+	b = (1 ? specid_1 + specid_0 + pushu32 : 3);}
 	return;
 }

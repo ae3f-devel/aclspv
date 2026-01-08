@@ -64,8 +64,9 @@ ae2f_Macro_Lib_V2(
 	${PROJECT_SOURCE_DIR}/src/ "*.c*"
 	${PROJECT_SOURCE_DIR}/lib/ ".auto.h"
 	${PROJECT_SOURCE_DIR}/cfg/aclspvCore.cmake.in
-	inc ${_aclspv_RELOADED}
+	inc ${_aclspv_RELOADED} 
 	)
+
 
 if(NOT ${_aclspv_RELOADED})
 	ae2f_FileRaw_init(1 100)
@@ -88,7 +89,6 @@ target_link_libraries(${ae3f__aclspvCore__TENT} INTERFACE
 target_link_libraries(${ae3f__aclspvCore__TENT} INTERFACE 
 	SPIRV-Headers::SPIRV-Headers
 	)
-
 
 file(GLOB aclspv-src ${PROJECT_SOURCE_DIR}/lib/*)
 file(GLOB aclspv-src-build ${PROJECT_SOURCE_DIR}/lib/build/*.tar.c)
