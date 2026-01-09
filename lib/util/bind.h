@@ -31,6 +31,12 @@ typedef union {
 		/** extension */
 		aclspv_wrdcount_t	m_arr_count_id;
 	}	m_work;
+
+	struct {
+		util_bind_unified	m_unified;
+
+		aclspv_wrdcount_t	m_location;
+	}	m_io;
 } util_bind;
 
 #endif

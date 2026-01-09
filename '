@@ -10,7 +10,6 @@
 #include "./id.h"
 #include "./ctx.h"
 #include "./emitx.h"
-#include "./constant.h"
 
 ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) unsigned	
 util_is_default_id_int(const e_id_default c_id_default) {
@@ -41,33 +40,6 @@ ae2f_inline static aclspv_id_t util_get_default_id(
 			ae2f_unreachable();
 			return 0;
 
-			{
-				aclspv_wrd_t	STORAGE_CLASS;
-				aclspv_id_t	U32V4;
-
-				ae2f_unexpected_but_if(0) {
-					case ID_DEFAULT_U32V4_PTR_INP:
-						STORAGE_CLASS = SpvStorageClassInput;
-				}
-
-				ae2f_unexpected_but_if(0) {
-					case ID_DEFAULT_U32V4_PTR_OUT:
-						STORAGE_CLASS = SpvStorageClassOutput;
-				}
-
-				ae2f_expected_but_else(U32V4 = util_mk_constant_vec32_id(4, CTX)) {
-					return 0;
-				}
-
-				ae2f_expected_but_else(ret_count = util_emitx_type_pointer(
-							&CTX->m_section.m_types
-							, ret_count
-							, c_id_default
-							, STORAGE_CLASS
-							, U32V4)) 
-					return 0;
-			} break;
-
 
 		case ID_DEFAULT_VOID:
 			/** OpTypeVoid */
@@ -77,16 +49,14 @@ ae2f_inline static aclspv_id_t util_get_default_id(
 				return 0;
 			break;
 
-		case ID_DEFAULT_U64_PTR_FUNC:
-			ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U64, CTX))
-				return 0;
+		case ID_DEFAULT_U64_PTR:
 			ae2f_expected_but_else(ret_count = util_emitx_type_pointer(
 						&CTX->m_section.m_types
 						, ret_count
-						, ID_DEFAULT_U64_PTR_FUNC
+						, ID_DEFAULT_U64_PTR
 						, SpvStorageClassFunction
 						, ID_DEFAULT_U64)) return 0;
-			break;
+			ae2f_fallthrough;
 		case ID_DEFAULT_U64:
 			ae2f_expected_but_else(
 					ret_count = util_emitx_4(
@@ -106,16 +76,14 @@ ae2f_inline static aclspv_id_t util_get_default_id(
 						)) return 0;
 			break;
 
-		case ID_DEFAULT_U32_PTR_FUNC:
-			ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U32, CTX))
-				return 0;
+		case ID_DEFAULT_U32_PTR:
 			ae2f_expected_but_else(ret_count = util_emitx_type_pointer(
 						&CTX->m_section.m_types
 						, ret_count
-						, ID_DEFAULT_U32_PTR_FUNC
+						, ID_DEFAULT_U32_PTR
 						, SpvStorageClassFunction
 						, ID_DEFAULT_U32)) return 0;
-			break;
+			ae2f_fallthrough;
 		case ID_DEFAULT_U32:
 			ae2f_expected_but_else(
 					ret_count = util_emitx_4(
@@ -125,19 +93,9 @@ ae2f_inline static aclspv_id_t util_get_default_id(
 						, ID_DEFAULT_U32
 						, 32, 0))
 				return 0;
+
 			break;
 
-
-		case ID_DEFAULT_I32_PTR_FUNC:
-			ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_I32, CTX))
-				return 0;
-			ae2f_expected_but_else(ret_count = util_emitx_type_pointer(
-						&CTX->m_section.m_types
-						, ret_count
-						, ID_DEFAULT_I32_PTR_FUNC
-						, SpvStorageClassFunction
-						, ID_DEFAULT_I32)) return 0;
-			break;
 		case ID_DEFAULT_I32:
 			ae2f_expected_but_else(
 					ret_count = util_emitx_4(
@@ -149,16 +107,14 @@ ae2f_inline static aclspv_id_t util_get_default_id(
 				return 0;
 			break;
 
-		case ID_DEFAULT_U16_PTR_FUNC:
-			ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U16, CTX))
-				return 0;
+		case ID_DEFAULT_U16_PTR:
 			ae2f_expected_but_else(ret_count = util_emitx_type_pointer(
 						&CTX->m_section.m_types
 						, ret_count
-						, ID_DEFAULT_U16_PTR_FUNC
+						, ID_DEFAULT_U16_PTR
 						, SpvStorageClassFunction
 						, ID_DEFAULT_U16)) return 0;
-			break;
+			ae2f_fallthrough;
 		case ID_DEFAULT_U16:
 			ae2f_expected_but_else(
 					ret_count = util_emitx_4(
@@ -179,16 +135,14 @@ ae2f_inline static aclspv_id_t util_get_default_id(
 
 			break;
 
-		case ID_DEFAULT_U8_PTR_FUNC:
-			ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U8, CTX))
-				return 0;
+		case ID_DEFAULT_U8_PTR:
 			ae2f_expected_but_else(ret_count = util_emitx_type_pointer(
 						&CTX->m_section.m_types
 						, ret_count
-						, ID_DEFAULT_U8_PTR_FUNC
+						, ID_DEFAULT_U8_PTR
 						, SpvStorageClassFunction
 						, ID_DEFAULT_U8)) return 0;
-			break;
+			ae2f_fallthrough;
 		case ID_DEFAULT_U8:
 			ae2f_expected_but_else(
 					ret_count = util_emitx_4(
@@ -208,16 +162,6 @@ ae2f_inline static aclspv_id_t util_get_default_id(
 						)) return 0;
 			break;
 
-		case ID_DEFAULT_F16_PTR_FUNC:
-			ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_F16, CTX))
-				return 0;
-			ae2f_expected_but_else(ret_count = util_emitx_type_pointer(
-						&CTX->m_section.m_types
-						, ret_count
-						, ID_DEFAULT_F16_PTR_FUNC
-						, SpvStorageClassFunction
-						, ID_DEFAULT_F16)) return 0;
-			break;
 		case ID_DEFAULT_F16:
 			ae2f_expected_but_else(ret_count = util_emitx_3(
 						&CTX->m_section.m_types
@@ -236,16 +180,6 @@ ae2f_inline static aclspv_id_t util_get_default_id(
 						)) return 0;
 			break;
 
-		case ID_DEFAULT_F32_PTR_FUNC:
-			ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_F32, CTX))
-				return 0;
-			ae2f_expected_but_else(ret_count = util_emitx_type_pointer(
-						&CTX->m_section.m_types
-						, ret_count
-						, ID_DEFAULT_F32_PTR_FUNC
-						, SpvStorageClassFunction
-						, ID_DEFAULT_F32)) return 0;
-			break;
 		case ID_DEFAULT_F32:
 			ae2f_expected_but_else(ret_count = util_emitx_3(
 						&CTX->m_section.m_types
@@ -256,16 +190,6 @@ ae2f_inline static aclspv_id_t util_get_default_id(
 						)) return 0;
 			break;
 
-		case ID_DEFAULT_F64_PTR_FUNC:
-			ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_F64, CTX))
-				return 0;
-			ae2f_expected_but_else(ret_count = util_emitx_type_pointer(
-						&CTX->m_section.m_types
-						, ret_count
-						, ID_DEFAULT_F64_PTR_FUNC
-						, SpvStorageClassFunction
-						, ID_DEFAULT_F64)) return 0;
-			break;
 		case ID_DEFAULT_F64:
 			ae2f_expected_but_else(ret_count = util_emitx_3(
 						&CTX->m_section.m_types

@@ -124,6 +124,9 @@ aclspv_compile(
 	CTX.m_tmp.m_w3 = CTX.m_id; /** anchor */
 	CTX.m_id += CTX.m_fnlist.m_num_entp + CTX.m_fnlist.m_num_fn;
 
+	clang_visitChildren(CXROOTCUR, emit_iter_entry_point, &CTX);
+
+	CTX.m_tmp.m_w0 = 0;
 	clang_visitChildren(CXROOTCUR, emit_decl_glob_obj, &CTX);
 
 

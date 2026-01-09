@@ -8,6 +8,7 @@
 
 
 ae2f_inline static unsigned util_is_kernel(const CXCursor h_fndecl) {
+	CXString	SPELL_FNDECL;
 	CXSourceRange	RANGE;
 	CXTranslationUnit TU;
 	CXToken*   ae2f_restrict TOKS;
@@ -18,6 +19,8 @@ ae2f_inline static unsigned util_is_kernel(const CXCursor h_fndecl) {
 	RANGE = clang_getCursorExtent(h_fndecl);
 	TU = clang_Cursor_getTranslationUnit(h_fndecl);
 
+	SPELL_FNDECL = clang_getCursorSpelling(h_fndecl);
+
 	TOKS = NULL;
 	NUM_TOKEN = 0;
 
@@ -26,18 +29,22 @@ ae2f_inline static unsigned util_is_kernel(const CXCursor h_fndecl) {
 
 	IDX = NUM_TOKEN;
 
-	while (IDX--) {
-		CXString spelling = clang_getTokenSpelling(TU, TOKS[IDX]);
-		if (strstr(clang_getCString(spelling), "__kernel")) {
-			clang_disposeString(spelling);
+	ae2f_expected_if(TOKS) while (IDX--) {
+		CXString SPELL = clang_getTokenSpelling(TU, TOKS[IDX]);
+
+		unless (strcmp(SPELL_FNDECL.data, SPELL.data))
+			continue;;
+
+		if (strstr(clang_getCString(SPELL), "kernel")) {
+			clang_disposeString(SPELL);
 			break;
 		}
 
-
-		clang_disposeString(spelling);
+		clang_disposeString(SPELL);
 	}
 
 	clang_disposeTokens(TU, TOKS, NUM_TOKEN);
+	clang_disposeString(SPELL_FNDECL);
 	return IDX < NUM_TOKEN;
 }
 

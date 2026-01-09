@@ -7,7 +7,7 @@
 #include "./source.auto.h"
 #include "./ocl.auto.h"
 
-char maincontent[sizeof(A_0) + sizeof(A_1) + sizeof(A_2) + sizeof(A_3) + sizeof(A_4) - 4];
+char maincontent[sizeof(A_0) + sizeof(A_1) + sizeof(A_2) + sizeof(A_3) + sizeof(A_4) + sizeof(A_5) - 5];
 char oclhead[sizeof(B_0) + sizeof(B_1) - 1];
 #if 1
 int main(void) {
@@ -21,6 +21,7 @@ int main(void) {
 	strcat(maincontent, A_2);
 	strcat(maincontent, A_3);
 	strcat(maincontent, A_4);
+	strcat(maincontent, A_5);
 
 	strcpy(oclhead, B_0);
 	strcat(oclhead, B_1);

@@ -16,6 +16,11 @@ typedef struct {
 		aclspv_id_t	m_push_var;
 	} m_push_ids;
 
+	struct {
+		aclspv_id_t	m_num;
+		aclspv_id_t	m_anchour;
+	} m_io;
+
 	CXCursor	m_fn;
 } util_entp_t;
 

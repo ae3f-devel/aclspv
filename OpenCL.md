@@ -14,12 +14,11 @@
 
 # Possible required extensions
 - SPV_KHR_storage_buffer_storage_class
-    > by default
-
+    > by default: when bindable happens
 
 
 # Entry Points
-> with `__kernel`, void returning function shall be entry point.  
+> Either with `__kernel` or `kernel`, void returning function shall be entry point.  
 - Execution model will be `GLCompute` by default.
 - Bindable object's bind numbers will be in order of its position, left to right, incremented.
 - Arguments which is not pointer or an array will be merged into one push constant with 32-bit aligned.
@@ -76,10 +75,30 @@ aclspv_specid(specid)
 aclspv_set(set)  
 > Specifies the descriptor sets of bindable object.  
 - Could be used on bindable objects.
+- `set` must be a 32-bit integer as decimal
 
 aclspv_wrkgroup_size(x, y, z)  
 > Specifies the entry point's workgroup size.  
-- has `reqd_work_group_size(x, y, z)` as alternatives.
+- Has `reqd_work_group_size(x, y, z)` as alternatives.  
+- `x`, `y`, `z` must be a 32-bit integer as decimal literal.
+- This attribute could be ignored when its execution model is not either `Kernel` or `GLCompute`.
+
+aclspv_execmodel(model)  
+> Specifies the execution model of the entry point.  
+> Solution for other than `GLCompute`, `Fragment`, `Vertex` will not implicitly be developed.  
+> Solution for other than `Fragment`, `Vertex` will not be actively developed.  
+- `model` must be a 32-bit integer as decimal literal.
+- Possible inputs are defined as enum `SpvExecutionModel_` on spirv-header.
+- When not specified, defaults to `GLCompute`.
+
+aclspv_storage_class(class)  
+> Specifies the storage class for the target variable.  
+- `class` must be a 32-bit integer as decimal literal.
+- Possible inputs are defined as enum `SpvStorageClass_` on spirv-header.
+
+aclspv_location(location)
+> Specifies the location of `input` or `output`  
+- When not specified, every input our output's location will be 0.
 
 # Restriction
 > Some statements / extensions may not be planned to be supported for now.

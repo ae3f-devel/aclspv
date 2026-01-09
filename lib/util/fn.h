@@ -13,6 +13,6 @@ typedef struct {
 
 	/* @brief LLVM function reference */
 	CXCursor	m_fn;
-} lib_build_fn_t;
+} lib_build_fn_t, util_fn_t;
 
 #endif

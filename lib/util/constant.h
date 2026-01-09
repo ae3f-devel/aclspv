@@ -1,10 +1,21 @@
 #ifndef	lib_build_constant_h
 #define lib_build_constant_h
 
-#include "./iddef.h"
-
 #include <string.h>
+
+#include <ae2f/Keys.h>
 #include <ae2f/c90/StdInt.h>
+
+#include <aclspv/spvty.h>
+
+#include "./id.h"
+#include "./ctx.h"
+
+/** TODO: make this modular. this is risky */
+ae2f_inline static aclspv_id_t util_get_default_id(
+		const e_id_default	c_id_default,
+		h_util_ctx_t	h_ctx
+		);
 
 typedef struct {
 	aclspv_wrdcount_t	m_key;
