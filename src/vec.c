@@ -41,7 +41,7 @@ ae2f_MAC((f_free, )) aclspv_stop_vec(x_aclspv_vec	s_vec) {
 	f_free((s_vec).m_p, (s_vec).m_sz);
 }
 
-ae2f_MAC((f_malloc, f_free, )) 
+ae2f_MAC((f_malloc, f_free, ))
 	aclspv_grow_vec(x_aclspv_vec rc_vec, const size_t c_new_sz) {
 		if((c_new_sz) > (rc_vec).m_sz) {
 			f_free((rc_vec).m_p, (c_new_sz));

@@ -1,5 +1,5 @@
 
-#include <util/wrdemit.h>
+#include <util/emitx.h>
 #include <util/id.h>
 
 #include <aclspv.h>
@@ -17,6 +17,8 @@ ae2f_inline static e_aclspv_compile_t impl_conf(
 		const h_util_ctx_t		h_ctx
 		)
 {
+	aclspv_wrd_t	POS = 0;
+
 	assert(h_ctx);
 	h_ctx->m_id = ID_DEFAULT_END;
 	
@@ -33,41 +35,47 @@ ae2f_inline static e_aclspv_compile_t impl_conf(
 
 	/*** Shader Capability **/
 
-	unless(wrd_caps_count = emit_opcode(&wrd_caps, 0, SpvOpCapability, 1))
+	ae2f_expected_but_else(wrd_caps_count = util_emitx_2(
+				&wrd_caps
+				, wrd_caps_count
+				, SpvOpCapability
+				, SpvCapabilityShader))
 		return ACLSPV_COMPILE_ALLOC_FAILED;
 
-	assert((0[(aclspv_wrd_t* ae2f_restrict)h_ctx->m_section.m_capability.m_p] & SpvOpCapability) == SpvOpCapability);
+	unless(h_ctx->m_is_logical) {
+		ae2f_expected_but_else(wrd_caps_count = util_emitx_2(
+					&wrd_caps
+					, wrd_caps_count
+					, SpvOpCapability
+					, SpvCapabilityAddresses))
+			return ACLSPV_COMPILE_ALLOC_FAILED;
+	}
 
-	unless(wrd_caps_count = util_emit_wrd(&wrd_caps, wrd_caps_count, SpvCapabilityShader))
-		return ACLSPV_COMPILE_ALLOC_FAILED;
-	assert(wrd_caps.m_p);
-
-	assert(0[(aclspv_wrd_t* ae2f_restrict)wrd_caps.m_p]);
+	unless(h_ctx->m_is_for_gl) {
+		ae2f_expected_but_else(wrd_caps_count = util_emitx_2(
+					&wrd_caps
+					, wrd_caps_count
+					, SpvOpCapability
+					, SpvCapabilityVulkanMemoryModel))
+			return ACLSPV_COMPILE_ALLOC_FAILED;
+	}
 
 	/*** Extension Default **/
-	unless(wrd_ext_count = emit_opcode(&wrd_ext, 0, SpvOpExtension, 0))
+	POS = wrd_ext_count;
+	unless(wrd_ext_count = emit_opcode(&wrd_ext, wrd_ext_count, SpvOpExtension, 0))
 		return ACLSPV_COMPILE_ALLOC_FAILED;
 	unless(wrd_ext_count = util_emit_str(&wrd_ext, wrd_ext_count, "SPV_KHR_storage_buffer_storage_class"))
 		return ACLSPV_COMPILE_ALLOC_FAILED;
-
-	set_oprnd_count_for_opcode(get_wrd_of_vec(&wrd_ext)[0], (aclspv_wrd_t)(wrd_ext_count - 1));
+	set_oprnd_count_for_opcode(get_wrd_of_vec(&wrd_ext)[POS], (aclspv_wrd_t)(wrd_ext_count - POS - 1));
 
 	/*** Memory Model **/
-	unless((h_ctx->m_count.m_memmodel = emit_opcode(
-					&h_ctx->m_section.m_memmodel 
-					, 0, SpvOpMemoryModel, 2)))
-		return ACLSPV_COMPILE_ALLOC_FAILED;
-
-	unless((h_ctx->m_count.m_memmodel = util_emit_wrd(
-					&h_ctx->m_section.m_memmodel
-					, h_ctx->m_count.m_memmodel, SpvAddressingModelLogical 
-					)))
-		return ACLSPV_COMPILE_ALLOC_FAILED;
-
-	unless((h_ctx->m_count.m_memmodel = util_emit_wrd(
-					&h_ctx->m_section.m_memmodel
-					, h_ctx->m_count.m_memmodel, SpvMemoryModelGLSL450 
-					)))
+	ae2f_expected_but_else(h_ctx->m_count.m_memmodel = util_emitx_3(
+				&h_ctx->m_section.m_memmodel
+				, 0, SpvOpMemoryModel
+				, h_ctx->m_is_logical 
+				? SpvAddressingModelLogical
+				: h_ctx->m_is_buffer_64 ? SpvAddressingModelPhysical64 : SpvAddressingModelPhysical32 
+				, h_ctx->m_is_for_gl ? SpvMemoryModelGLSL450 : SpvMemoryModelVulkan))
 		return ACLSPV_COMPILE_ALLOC_FAILED;
 
 	return ACLSPV_COMPILE_OK;

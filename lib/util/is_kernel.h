@@ -10,8 +10,8 @@
 ae2f_inline static unsigned util_is_kernel(const CXCursor h_fndecl) {
 	CXSourceRange	RANGE;
 	CXTranslationUnit TU;
-	CXToken *  TOKS;
-	unsigned NUM_TOKEN, FOUND, IDX;
+	CXToken*   ae2f_restrict TOKS;
+	unsigned NUM_TOKEN, IDX;
 	if (clang_getCursorKind(h_fndecl) != CXCursor_FunctionDecl)
 		return 0;
 
@@ -20,23 +20,25 @@ ae2f_inline static unsigned util_is_kernel(const CXCursor h_fndecl) {
 
 	TOKS = NULL;
 	NUM_TOKEN = 0;
-	FOUND = 0;
-	IDX = 0;
 
-	clang_tokenize(TU, RANGE, &TOKS, &NUM_TOKEN);
+	clang_tokenize(TU, RANGE, (CXToken**)&TOKS, &NUM_TOKEN);
 
-	for (; IDX < NUM_TOKEN; ++IDX) {
+
+	IDX = NUM_TOKEN;
+
+	while (IDX--) {
 		CXString spelling = clang_getTokenSpelling(TU, TOKS[IDX]);
 		if (strstr(clang_getCString(spelling), "__kernel")) {
-			FOUND = 1;
 			clang_disposeString(spelling);
 			break;
 		}
+
+
 		clang_disposeString(spelling);
 	}
 
 	clang_disposeTokens(TU, TOKS, NUM_TOKEN);
-	return FOUND;
+	return IDX < NUM_TOKEN;
 }
 
 #endif

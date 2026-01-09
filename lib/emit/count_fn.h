@@ -11,7 +11,7 @@
 #include <util/is_kernel.h>
 
 #include <ae2f/c90/StdBool.h>
-#include <spirv/1.0/spirv.h>
+#include <spirv/unified1/spirv.h>
 
 static enum CXChildVisitResult emit_count_fn_wrdgroup_attr(CXCursor h_cur, CXCursor h_parent, CXClientData wr_data) {
 	CXString	ATTR_KIND;

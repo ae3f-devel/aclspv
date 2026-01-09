@@ -2,6 +2,22 @@
 > `aclspv` uses dialect of OpenCL C.  
 > This page describes the specification of `aclspv`'s target language.
 
+# Possible required capabilitties
+- Shader
+    > by default
+
+- Address
+    > when `m_is_logical` is off
+
+- VulkanMemoryModel
+    > when `m_is_for_gl` is off
+
+# Possible required extensions
+- SPV_KHR_storage_buffer_storage_class
+    > by default
+
+
+
 # Entry Points
 > with `__kernel`, void returning function shall be entry point.  
 - Execution model will be `GLCompute` by default.
@@ -15,19 +31,26 @@ __global
 - Only for entry points
 - Scope will be modular
 - Must be used as an argument of `Entry Points`.
+- 32-bit alignment is adviced.
+- always parsed as `u32*` (you will not care)
 
 __local  
 - Has to be constant array and maps to `Workgroup` in Vulkan.
 - Not binded by host.
 - Its size could be `specified`. See `aclspv_set(set)`.
 - Scope will be modular
+- 32-bit alignment is adviced.
+- always parsed as `u32[(COUNT + 3) / 4]` (you will not care)
 
 __constant  
 - Maps to `Uniform` in Vulkan when used as an argument of `Entry Points`.
+    - Bindable
+    - Scope will be modular
+    - Only for entry points
+    - 128-bit alignment is adviced.
+    - always parsed as `vec4*` (you will not care)
+
 - Maps to constant literals in other use cases.
-- Bindable
-- Only for entry points
-- Scope will be modular
 
 # Attributes
 > Some compiler attributes are available for vulkan-specific behaviours.  
@@ -36,10 +59,12 @@ __constant
 aclspv_specid(specid)  
 > Make constant value modifiable on vulkan pipeline.  
 > See [shader stage create info](https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineShaderStageCreateInfo.html)  
+- if `specid` is `0xFFFFFFFF`, it will be seen undefined.
 - Maps to `OpSpecConstant` with id of `specid`
 - Result type must be scalar Integer or Floating point type.
 - Follows the first specified value & data type.
 - Default value must be specified on first use.
+- Ignores the initialising value when specid is found.
 - Must be specified on use. E.g:
     - Setting a size of an constant array
     - Initialising a non-constant variable
@@ -58,6 +83,7 @@ aclspv_wrkgroup_size(x, y, z)
 
 # Restriction
 > Some statements / extensions may not be planned to be supported for now.
-- `goto` statements (i have no idea how would I serve this sorry)
 - `VK_KHR_relaxed_block_layout` behaviour (free alignment)
 - Non plain-old-data types
+- `OpenCL` memory model
+- `Simple` memory model

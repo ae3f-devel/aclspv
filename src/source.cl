@@ -21,6 +21,9 @@ enum {
 
 __constant const int LOCU32_COUNT_0 = 3;
 
+#if 1
+void not_kernel(void) {}
+#endif
 
 __attribute__((annotate("reqd_work_group_size(2, 2, 2)"))) /** work group size should be specified on constant time. */
 __kernel void KERNEL_0(
@@ -53,5 +56,24 @@ __kernel void N_KERNEL_0(__constant uintptr_t* consti32, const uint pushu32) {
 	{int a, b;
 	a = specid_1 + specid_0 + pushu32;
 	b = (1 ? specid_1 + specid_0 + pushu32 : 3);}
+
+#if 1
+	goto AGOTO;
+AGOTO:
+
+#endif
 	return;
+}
+
+__kernel void do_none(void)
+{
+    size_t g = get_global_id(0);
+}
+
+__kernel void do_add_sub(__global short4 *add_out, __global short4 *sub_out,
+                       __global short4 *x, __global short4 *y)
+{
+    size_t g = get_global_id(0);
+    add_out[g] = x[g] + y[g];
+    sub_out[g] = x[g] - y[g];
 }

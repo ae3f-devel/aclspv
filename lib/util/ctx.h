@@ -10,27 +10,75 @@
 #define	_free(a, b)	free(a)
 
 typedef struct a_aclspv_ctx {
+	aclspv_wrd_t		m_has_function_ret : 1;
+	aclspv_wrd_t		m_is_buffer_64 : 1;
+	aclspv_wrd_t		m_not_dbg : 1;
+	aclspv_wrd_t		m_is_for_gl : 1;
+
+	/**
+	 * @brief	when on, ignores `m_is_buffer_64`.
+	 * */
+	aclspv_wrd_t		m_is_logical : 1;
+
 	e_aclspv_compile_t	m_state;
 
 	/**
 	 * @var		m_ret
 	 * @brief	word count for m_ret
 	 * */
-	aclspv_wrdcount_t	m_retcount;
+	aclspv_wrdcount_t	m_num_ret;
+
+	/** 
+	 * @brief
+	 * number of `m_cursors`.	\n
+	 * for its use see util/cursor.h
+	 *
+	 * @details
+	 * reset on every function
+	 * */
+	aclspv_wrdcount_t	m_num_cursor;
 
 	/**
 	 * @var		m_id
 	 * @brief	id
 	 * */
 	aclspv_id_t		m_id;
-	aclspv_id_t		m_id_defaults[ID_DEFAULT_END];
+
+	/**
+	 * @var		m_ret
+	 * @brief	fully emitted spir-v
+	 * */
+	x_aclspv_vec		m_ret;
+
+	/** 
+	 * @var m_scale_vars 
+	 * @see util_bind 
+	 * */
+	x_aclspv_vec            m_scale_vars;
+
+	/** cache for elements related to unsigned integer constants [lib_build_constant] */
+	x_aclspv_vec		m_constant_cache;
+
+	/** 
+	 * cache for function types 
+	 * */
+	x_aclspv_vec		m_fnty;
+
+	/** 
+	 * @brief
+	 * cache for cursors for parsing one function 
+	 * for its use see util/cursor.h
+	 *
+	 * @details
+	 * reset on every function
+	 * */
+	x_aclspv_vec		m_cursors;
 
 	struct {
 		aclspv_wrd_t	m_w0;
 		aclspv_wrd_t	m_w1;
 		aclspv_wrd_t	m_w2;
 		aclspv_wrd_t	m_w3;
-		aclspv_wrd_t	m_w4;
 
 		x_aclspv_vec	m_v0;
 	}	m_tmp;
@@ -87,20 +135,7 @@ typedef struct a_aclspv_ctx {
 			m_fndef;
 	}			m_section;
 
-	/**
-	 * @var		m_ret
-	 * @brief	fully emitted spir-v
-	 * */
-	x_aclspv_vec		m_ret;
-
-	/** 
-	 * @var m_scale_vars 
-	 * @see util_bind 
-	 * */
-	x_aclspv_vec            m_scale_vars;
-
-	/** cache for elements related to unsigned integer constants [lib_build_constant] */
-	x_aclspv_vec		m_constant_cache;
+	aclspv_id_t		m_id_defaults[ID_DEFAULT_END];
 } x_aclspv_ctx;
 
 typedef x_aclspv_ctx* ae2f_restrict h_aclspv_ctx_t;

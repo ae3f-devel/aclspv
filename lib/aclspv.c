@@ -46,8 +46,6 @@ aclspv_compile(
 
 	unsigned	CXTU_IDX_ERR;
 #define	STATE_VAL	CTX.m_state
-	
-
 
 	assert(rdwr_unsaved);
 	assert(rwr_output);
@@ -93,7 +91,9 @@ aclspv_compile(
 			case CXDiagnostic_Fatal:
 				puts("FTAL");
 				break;
-			default: ae2f_unreachable();
+			default:
+				assert(0);
+				ae2f_unreachable();
 		}
 
 		clang_disposeString(TXT);
@@ -141,7 +141,6 @@ aclspv_compile(
 		}
 
 		IDX = CTX.m_fnlist.m_num_entp;
-
 		while((IDX--)) {
 			/**
 			 * IDX must be w0 at the end
@@ -174,7 +173,6 @@ aclspv_compile(
 						, ID_DEFAULT_FN_VOID
 						)) goto LBL_CLEANUP;
 
-			/** TODO: cache this */
 			ae2f_expected_but_else(CTX.m_count.m_fndef = util_emitx_2(
 						&CTX.m_section.m_fndef
 						, CTX.m_count.m_fndef
@@ -182,21 +180,13 @@ aclspv_compile(
 						, CTX.m_id++))
 				goto LBL_CLEANUP;
 
-
-
-
 			IDX = (aclspv_wrd_t)FNSCALE->m_sz / (size_t)sizeof(util_bind);
 
 			while(IDX--) {
 				const util_bind* ae2f_restrict const BUFFER = get_buf_from_scale(&CTX.m_scale_vars, FNSCALE[0]);
-
 				assert(CTX.m_scale_vars.m_p);
 				assert(BUFFER);
 
-				(void)SpvStorageClassPrivate;
-				(void)SpvStorageClassUniform;
-				(void)SpvStorageClassPushConstant;
-				(void)SpvStorageClassStorageBuffer;
 				unless(BUFFER[IDX].m_unified.m_storage_class == SpvStorageClassWorkgroup)
 					continue;
 
@@ -212,10 +202,20 @@ aclspv_compile(
 
 
 #undef	FNINFO
+
+			CTX.m_has_function_ret = 0;
 			clang_visitChildren(((util_entp_t* ae2f_restrict)CTX.m_fnlist.m_entp.m_p)[IDX].m_fn
 					, emit_entp_body
 					, &CTX);
 			ae2f_unexpected_but_if(STATE_VAL) goto LBL_CLEANUP;
+
+			unless(CTX.m_has_function_ret) {
+				ae2f_expected_but_else(CTX.m_count.m_fndef = emit_opcode(
+							&CTX.m_section.m_fndef
+							, CTX.m_count.m_fndef
+							, SpvOpReturn, 0
+							)) goto LBL_CLEANUP;
+			}
 
 			ae2f_expected_but_else(CTX.m_count.m_fndef = emit_opcode(
 						&CTX.m_section.m_fndef
@@ -242,6 +242,8 @@ aclspv_compile(
 LBL_CLEANUP:
 	clang_disposeTranslationUnit(CXTU);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_constant_cache);
+	_aclspv_stop_vec(_aclspv_free, CTX.m_fnty);
+	_aclspv_stop_vec(_aclspv_free, CTX.m_cursors);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_scale_vars);
 
 	_aclspv_stop_vec(_aclspv_free, CTX.m_fnlist.m_entp);
@@ -266,7 +268,7 @@ LBL_CLEANUP:
 	if(ae2f_expected(rwr_output)) *rwr_output = CTX.m_ret.m_p;
 	else free(CTX.m_ret.m_p);
 
-	if(ae2f_expected(rwr_output_count_opt)) *rwr_output_count_opt = CTX.m_retcount;
+	if(ae2f_expected(rwr_output_count_opt)) *rwr_output_count_opt = CTX.m_num_ret;
 
 	return STATE_VAL;
 }
