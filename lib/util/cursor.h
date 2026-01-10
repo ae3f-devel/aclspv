@@ -7,6 +7,8 @@
 #include <assert.h>
 #include "../vec.auto.h"
 
+#include "./bind.h"
+
 typedef struct {
 	/**
 	 * @var		m_cursor
@@ -93,9 +95,16 @@ typedef struct {
 			/** @brief label id for goto */
 			aclspv_id_t	m_id;
 		} m_goto_lbl;
+
+		struct {
+			util_bind	m_info;
+		} m_prm_decl;
 	} m_data;
 } util_cursor;
 
+/**
+ * find cursor
+ * */
 ae2f_inline static aclspv_wrdcount_t util_find_cursor(
 		const aclspv_wrdcount_t			c_num_cursor, 
 		const util_cursor* ae2f_restrict const	rd_cursors,

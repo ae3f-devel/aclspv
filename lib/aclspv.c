@@ -184,29 +184,34 @@ aclspv_compile(
 				goto LBL_CLEANUP;
 
 			IDX = (aclspv_wrd_t)FNSCALE->m_sz / (size_t)sizeof(util_bind);
+			CTX.m_num_cursor	= IDX;
 
 			while(IDX--) {
 				const util_bind* ae2f_restrict const BUFFER = get_buf_from_scale(&CTX.m_scale_vars, FNSCALE[0]);
+				const aclspv_wrd_t CURSOR_IDX = util_mk_cursor_base(
+						CTX.m_num_cursor
+						, &CTX.m_cursors
+						, BUFFER[IDX].m_unified.m_cursor
+						);
+
 				assert(CTX.m_scale_vars.m_p);
 				assert(BUFFER);
 
-				unless(BUFFER[IDX].m_unified.m_storage_class == SpvStorageClassWorkgroup)
-					continue;
+				ae2f_unexpected_but_if(CURSOR_IDX == CTX.m_num_cursor + 1)
+					goto LBL_CLEANUP;
 
-				ae2f_expected_but_else(CTX.m_count.m_vars = util_emitx_variable(
-							&CTX.m_section.m_vars
-							, CTX.m_count.m_vars
-							, BUFFER[IDX].m_unified.m_var_type_id
-							, BUFFER[IDX].m_unified.m_var_id
-							, SpvStorageClassWorkgroup
-							)) goto LBL_CLEANUP;
+				if(CURSOR_IDX == CTX.m_num_cursor)
+					++CTX.m_num_cursor;
+
+				CURSOR_IDX[(util_cursor* ae2f_restrict)CTX.m_cursors.m_p]
+					.m_data.m_prm_decl.m_info = BUFFER[IDX];
 			}
 			IDX = CTX.m_tmp.m_w0;
 
 
 #undef	FNINFO
 
-			CTX.m_has_function_ret = 0;
+			CTX.m_has_function_ret	= 0;
 			clang_visitChildren(((util_entp_t* ae2f_restrict)CTX.m_fnlist.m_entp.m_p)[IDX].m_fn
 					, emit_entp_body
 					, &CTX);
@@ -245,7 +250,7 @@ aclspv_compile(
 LBL_CLEANUP:
 	clang_disposeTranslationUnit(CXTU);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_constant_cache);
-	_aclspv_stop_vec(_aclspv_free, CTX.m_fnty);
+	_aclspv_stop_vec(_aclspv_free, CTX.m_type_uniques);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_cursors);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_scale_vars);
 

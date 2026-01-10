@@ -37,6 +37,17 @@ typedef union {
 
 		aclspv_wrdcount_t	m_location;
 	}	m_io;
+
+	struct {
+		/** unused except for m_arg_idx, m_storage_class */
+		util_bind_unified	m_unified;
+		/** as word count */
+		aclspv_wrd_t		m_size;
+		/** as word count */
+		aclspv_wrd_t		m_pad;
+	}	
+	/** push constant */
+	m_pshconst;
 } util_bind;
 
 #endif

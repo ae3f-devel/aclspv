@@ -51,7 +51,7 @@ __kernel void KERNEL_0(
 
 
 __attribute__((annotate("aclspv_execmodel(0)")))
-__kernel void N_KERNEL_0(__constant uintptr_t* consti32, __attribute__((annotate("aclspv_storage_class(3)"))) const uint* u32out) {
+__kernel void N_KERNEL_0(__constant uintptr_t* consti32, __attribute__((annotate("aclspv_storage_class(3)"))) __global const uint* u32out) {
 	const size_t specid_0 __attribute__((annotate("aclspv_specid(0)"))) = 0;
 	const size_t specid_1 __attribute__((annotate("aclspv_specid(1)"))) = 1;
 	int a, b;

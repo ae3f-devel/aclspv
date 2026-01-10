@@ -1,3 +1,4 @@
+#include "aclspv/spvty.h"
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -64,6 +65,10 @@ static enum CXChildVisitResult emit_decl_glob_obj_visit_fetch(CXCursor h_cur, CX
 #define	ARG_IDX		((uintptr_t* ae2f_restrict)h_data)[3]
 #define	INTERFACE_COUNT	((uintptr_t* ae2f_restrict)h_data)[4]
 #define	IO_ARG_IDX	((uintptr_t* ae2f_restrict)h_data)[5]
+#define	PSH_CONSTANT_ID	((uintptr_t* ae2f_restrict)h_data)[6]
+#define INTERFACES_MGR		get_last_scale_from_vec(&CTX->m_scale_vars)
+#define	INTERFACES		((util_bind* ae2f_restrict)get_buf_from_scale(&CTX->m_scale_vars, INTERFACES_MGR[0]))
+#define	INFO			(((INTERFACES + ARG_IDX)))
 
 	unless(h_cur.kind == CXCursor_ParmDecl) {
 		return CXChildVisit_Continue;
@@ -75,21 +80,7 @@ static enum CXChildVisitResult emit_decl_glob_obj_visit_fetch(CXCursor h_cur, CX
 		return CXChildVisit_Break;
 	}
 
-	/** non-pointer type */
-	unless(PARAM_TY.kind == CXType_Pointer || PARAM_TY.kind == CXType_ConstantArray) {
-		PUSH_SIZE += sz_to_count(clang_Type_getSizeOf(PARAM_TY));
-		return CXChildVisit_Continue;
-	}
-
-	PARAM_TY_NAME	= clang_getTypeSpelling(PARAM_TY);
-
-
 	/** FETCH BIND */
-
-#define INTERFACES_MGR		get_last_scale_from_vec(&CTX->m_scale_vars)
-#define	INTERFACES		((util_bind* ae2f_restrict)get_buf_from_scale(&CTX->m_scale_vars, INTERFACES_MGR[0]))
-#define	INFO			(((INTERFACES + ARG_IDX)))
-
 	assert(INTERFACES_MGR->m_id == (size_t)CTX->m_tmp.m_w0);
 	{ ae2f_assume(INTERFACES_MGR->m_id == (size_t)CTX->m_tmp.m_w0); }
 
@@ -100,18 +91,27 @@ static enum CXChildVisitResult emit_decl_glob_obj_visit_fetch(CXCursor h_cur, CX
 		return CXChildVisit_Break;
 	}
 
-	ae2f_expected_but_else(CTX->m_scale_vars.m_p) {
-		CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
-		return CXChildVisit_Break;
+	INFO->m_unified.m_arg_idx		= (aclspv_wrd_t)ARG_IDX;
+	INFO->m_unified.m_cursor		= h_cur;
+	INFO->m_unified.m_entp_idx		= CTX->m_tmp.m_w0;
+
+	/** not pointer|array type -> is push constant! */
+	unless(PARAM_TY.kind == CXType_Pointer || PARAM_TY.kind == CXType_ConstantArray) {
+		unless(PUSH_SIZE) {
+			PSH_CONSTANT_ID = CTX->m_id++;
+		}
+
+		INFO->m_unified.m_var_id	= (aclspv_wrd_t)PSH_CONSTANT_ID;
+		INFO->m_pshconst.m_pad		= (aclspv_wrd_t)PUSH_SIZE;
+		INFO->m_pshconst.m_size		= sz_to_count(clang_Type_getSizeOf(PARAM_TY));
+
+		PUSH_SIZE += INFO->m_pshconst.m_size;
+		return CXChildVisit_Continue;
 	}
 
-	INFO->m_unified.m_arg_idx		= (aclspv_wrd_t)ARG_IDX;
 	INFO->m_unified.m_var_id		= CTX->m_id++;
 	INFO->m_unified.m_var_elm_type_id	= util_mk_constant_struct_id(1, CTX);
 	INFO->m_unified.m_var_type_id		= util_mk_constant_ptr_storage_id(1, CTX);
-	INFO->m_unified.m_cursor		= h_cur;
-	INFO->m_unified.m_entp_idx		= CTX->m_tmp.m_w0;
-	INFO->m_unified.m_arg_idx		= (aclspv_wrd_t)ARG_IDX;
 
 	INFO->m_bindable.m_set			= 0;
 	INFO->m_bindable.m_binding		= (aclspv_wrd_t)BIND_IDX;
@@ -131,7 +131,6 @@ LBL_ABRT_NALLOC:
 			free(NAME_MERGE);
 			clang_disposeString(FUNC_NAME);
 			clang_disposeString(PARAM_NAME);
-			clang_disposeString(PARAM_TY_NAME);
 			return CXChildVisit_Break;
 		}
 
@@ -158,22 +157,25 @@ LBL_ABRT_NALLOC:
 	clang_disposeString(FUNC_NAME);
 	clang_disposeString(PARAM_NAME);
 #endif
+
+	INFO->m_unified.m_storage_class = SpvStorageClassMax;
+
+	PARAM_TY_NAME	= clang_getTypeSpelling(PARAM_TY);
+
 	if(PARAM_TY.kind == CXType_ConstantArray)
 		INFO->m_unified.m_storage_class = SpvStorageClassWorkgroup;
 	else if(strstr(PARAM_TY_NAME.data, "global")) {
 		INFO->m_unified.m_storage_class = SpvStorageClassStorageBuffer;
 	} else if (strstr(PARAM_TY_NAME.data, "constant")) {
 		INFO->m_unified.m_storage_class = SpvStorageClassUniform;
-	} else {
-		INFO->m_unified.m_storage_class = SpvStorageClassMax;
+	} 
 
-		/** ATTRIBUTE HARD CODED? */
-		clang_visitChildren(
-				h_cur
-				, attr_storage_class
-				, &INFO->m_unified.m_storage_class
-				);
-	}
+	/** ATTRIBUTE HARD CODED? */
+	clang_visitChildren(
+			h_cur
+			, attr_storage_class
+			, &INFO->m_unified.m_storage_class
+			);
 
 	clang_disposeString(PARAM_TY_NAME);
 
@@ -382,6 +384,14 @@ LBL_ABRT_NALLOC:
 
 				((aclspv_wrd_t* ae2f_restrict)CTX->m_section.m_name.m_p)[POS_FOR_LOCAL] 
 					= INFO->m_unified.m_var_id;
+
+				ae2f_expected_but_else(CTX->m_count.m_vars = util_emitx_variable(
+							&CTX->m_section.m_vars
+							, CTX->m_count.m_vars
+							, INFO->m_unified.m_var_type_id
+							, INFO->m_unified.m_var_id
+							, SpvStorageClassWorkgroup
+							)) return CXChildVisit_Break;
 			}
 
 			break;
@@ -459,13 +469,14 @@ static enum CXChildVisitResult emit_decl_glob_obj(CXCursor h_cur, CXCursor h_cur
 		return CXChildVisit_Recurse;
 
 	if(util_is_kernel(h_cur_parent)) {
-		uintptr_t BUFF[6] = {
+		uintptr_t BUFF[7] = {
 			0 /* push constant size */ , 
 			0 /* bind index */, 
 			0 /* ctx */,
 			0 /* argument index */,
 			0 /* interface count */,
-			0 /* io argument count */
+			0 /* io argument count */,
+			0 /* push constant id when push constant size is not 0 */
 		};
 
 		const int NPARAMS = clang_Cursor_getNumArguments(h_cur_parent);
@@ -501,7 +512,7 @@ static enum CXChildVisitResult emit_decl_glob_obj(CXCursor h_cur, CXCursor h_cur
 
 		if(BUFF[0]) {
 			const aclspv_id_t PSH_PTR_ID 	= util_mk_constant_ptr_psh_id((aclspv_wrd_t)BUFF[0], CTX);
-			const aclspv_id_t PSH_VAR_ID	= CTX->m_id++;
+			const aclspv_id_t PSH_VAR_ID	= (aclspv_wrd_t)BUFF[6];
 
 #if	!defined(NDEBUG) || !NDEBUG
 			const aclspv_wrdcount_t	POS = CTX->m_count.m_name;

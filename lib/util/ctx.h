@@ -38,6 +38,9 @@ typedef struct a_aclspv_ctx {
 	 * */
 	aclspv_wrdcount_t	m_num_cursor;
 
+	/** @see `m_type_uniques` */
+	aclspv_wrdcount_t	m_num_type_uniques;
+
 	/**
 	 * @var		m_id
 	 * @brief	id
@@ -58,11 +61,6 @@ typedef struct a_aclspv_ctx {
 
 	/** cache for elements related to unsigned integer constants [lib_build_constant] */
 	x_aclspv_vec		m_constant_cache;
-
-	/** 
-	 * cache for function types 
-	 * */
-	x_aclspv_vec		m_fnty;
 
 	/** 
 	 * @brief
