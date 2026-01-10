@@ -195,6 +195,13 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 
 				CURSOR.m_data.m_var_simple.m_id = CTX->m_id++;
 				___mkname_on_dbg(CURSOR.m_data.m_var_simple.m_id);
+
+				/**
+				 * TODO:
+				 * So far I have defined the variable but not with the initialiser.
+				 * Make initialising part if possible.
+				 * */
+				CURSOR.m_data.m_var_simple.m_is_undefined = 1;
 #undef	CURSOR
 
 			}

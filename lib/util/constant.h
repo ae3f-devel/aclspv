@@ -597,8 +597,9 @@ ae2f_inline static aclspv_id_t	util_mk_constant_structpriv_id(const aclspv_wrd_t
 	util_constant* ae2f_restrict const C = util_mk_constant_node(c_wrdcount, h_ctx);
 	ae2f_expected_but_else(C) return 0;
 	ae2f_expected_but_else(C->m_key == c_wrdcount) return 0;
-	ae2f_expected_but_else(C->m_vec32_id)
-		util_mk_constant_vec32_id(c_wrdcount, h_ctx);
+	ae2f_expected_but_else(C->m_arr32_id)
+		ae2f_expected_but_else(C->m_arr32_id = util_mk_constant_arr32_id(c_wrdcount, h_ctx))
+		return 0;
 
 	if(C->m_structpriv_id) return C->m_structpriv_id;
 
@@ -607,7 +608,7 @@ ae2f_inline static aclspv_id_t	util_mk_constant_structpriv_id(const aclspv_wrd_t
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types
 					, h_ctx->m_count.m_types, h_ctx->m_id))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types
-					, h_ctx->m_count.m_types, C->m_vec32_id))) return 0;
+					, h_ctx->m_count.m_types, C->m_arr32_id))) return 0;
 
 	C->m_structpriv_id = h_ctx->m_id++;
 	return C->m_structpriv_id;
@@ -655,10 +656,10 @@ ae2f_inline static aclspv_id_t	util_mk_constant_ptr_func(const aclspv_wrd_t c_wr
 	aclspv_id_t	ID;
 	_util_mk_constant_ptr_tmpl(
 			L_new, m_ptr_func
-			, m_struct_id
+			, m_structpriv_id
 			, ID, c_wrdcount
 			, h_ctx
-			, util_mk_constant_struct_id
+			, util_mk_constant_structpriv_id
 			, SpvStorageClassFunction);
 	return ID;
 }

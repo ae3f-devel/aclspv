@@ -42,6 +42,9 @@ ae2f_inline static e_aclspv_compile_t impl_conf(
 				, SpvCapabilityShader))
 		return ACLSPV_COMPILE_ALLOC_FAILED;
 
+
+	h_ctx->m_is_for_gl = 1;
+	h_ctx->m_is_logical = 1;
 	unless(h_ctx->m_is_logical) {
 		ae2f_expected_but_else(wrd_caps_count = util_emitx_2(
 					&wrd_caps
@@ -58,6 +61,14 @@ ae2f_inline static e_aclspv_compile_t impl_conf(
 					, SpvOpCapability
 					, SpvCapabilityVulkanMemoryModel))
 			return ACLSPV_COMPILE_ALLOC_FAILED;
+
+		POS = wrd_ext_count;
+		unless(wrd_ext_count = emit_opcode(&wrd_ext, wrd_ext_count, SpvOpExtension, 0))
+			return ACLSPV_COMPILE_ALLOC_FAILED;
+		unless(wrd_ext_count = util_emit_str(&wrd_ext, wrd_ext_count
+					, "SPV_KHR_vulkan_memory_model"))
+			return ACLSPV_COMPILE_ALLOC_FAILED;
+		set_oprnd_count_for_opcode(get_wrd_of_vec(&wrd_ext)[POS], (aclspv_wrd_t)(wrd_ext_count - POS - 1));
 	}
 
 	/*** Extension Default **/
