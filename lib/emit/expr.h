@@ -25,6 +25,12 @@
 
 static aclspv_id_t emit_expr_type(CXType type, h_util_ctx_t CTX);
 
+static enum CXChildVisitResult emit_expr(
+		CXCursor h_cur,
+		CXCursor h_parent,
+		CXClientData h_ctx
+		);
+
 static aclspv_id_t emit_expr_binary(
 		CXCursor h_cur,
 		CXCursor h_parent,
@@ -32,6 +38,8 @@ static aclspv_id_t emit_expr_binary(
 		)
 {
 	aclspv_id_t	RESULT_ID = 0;
+	aclspv_id_t	LHS_ID = 0;
+	aclspv_id_t	RHS_ID = 0;
 	CXType		LHS_TYPE, RHS_TYPE, RESULT_TYPE;
 	CXCursor	LHS_CURSOR, RHS_CURSOR;
 	CXString	OP_SPELLING;
@@ -46,6 +54,30 @@ static aclspv_id_t emit_expr_binary(
 	RESULT_TYPE = clang_getCanonicalType(clang_getCursorType(h_cur));
 
 	(void)h_parent;
+
+	ae2f_expected_if(LHS_CURSOR.kind) {
+		aclspv_wrdcount_t LHS_IDX = util_mk_cursor_base(CTX->m_num_cursor, &CTX->m_cursors, LHS_CURSOR);
+		if(LHS_IDX < CTX->m_num_cursor) {
+			clang_visitChildren(LHS_CURSOR, emit_expr, CTX);
+			LHS_ID = ((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[LHS_IDX].m_data.m_var_simple.m_id;
+		}
+	}
+
+	ae2f_expected_if(RHS_CURSOR.kind) {
+		aclspv_wrdcount_t RHS_IDX = util_mk_cursor_base(CTX->m_num_cursor, &CTX->m_cursors, RHS_CURSOR);
+		if(RHS_IDX < CTX->m_num_cursor) {
+			clang_visitChildren(RHS_CURSOR, emit_expr, CTX);
+			RHS_ID = ((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[RHS_IDX].m_data.m_var_simple.m_id;
+		}
+	}
+
+
+	ae2f_expected_if(LHS_ID && RHS_ID) {
+	} else {
+		CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
+		return 0;
+	}
+
 
 	switch((uintmax_t)OP_KIND) {
 		case CXBinaryOperator_Add: {
@@ -62,8 +94,8 @@ static aclspv_id_t emit_expr_binary(
 						, OPCODE
 						, emit_expr_type(RESULT_TYPE, CTX)
 						, CTX->m_id
-						, 0
-						, 0
+						, LHS_ID
+						, RHS_ID
 						)) return 0;
 			RESULT_ID = CTX->m_id++;
 			break;
@@ -83,8 +115,8 @@ static aclspv_id_t emit_expr_binary(
 						, OPCODE
 						, emit_expr_type(RESULT_TYPE, CTX)
 						, CTX->m_id
-						, 0
-						, 0
+						, LHS_ID
+						, RHS_ID
 						)) return 0;
 			RESULT_ID = CTX->m_id++;
 			break;
@@ -104,8 +136,8 @@ static aclspv_id_t emit_expr_binary(
 						, OPCODE
 						, emit_expr_type(RESULT_TYPE, CTX)
 						, CTX->m_id
-						, 0
-						, 0
+						, LHS_ID
+						, RHS_ID
 						)) return 0;
 			RESULT_ID = CTX->m_id++;
 			break;
@@ -127,8 +159,8 @@ static aclspv_id_t emit_expr_binary(
 						, OPCODE
 						, emit_expr_type(RESULT_TYPE, CTX)
 						, CTX->m_id
-						, 0
-						, 0
+						, LHS_ID
+						, RHS_ID
 						)) return 0;
 			RESULT_ID = CTX->m_id++;
 			break;
@@ -148,8 +180,8 @@ static aclspv_id_t emit_expr_binary(
 						, OPCODE
 						, emit_expr_type(RESULT_TYPE, CTX)
 						, CTX->m_id
-						, 0
-						, 0
+						, LHS_ID
+						, RHS_ID
 						)) return 0;
 			RESULT_ID = CTX->m_id++;
 			break;
@@ -212,21 +244,50 @@ static aclspv_id_t emit_expr_array_subscript(
 		)
 {
 	CXType			ELEMENT_TYPE;
+	CXType			POINTER_TYPE;
 	aclspv_id_t		RESULT_ID = 0;
+	aclspv_id_t		BASE_ID = 0;
+	aclspv_id_t		INDEX_ID = 0;
+	CXCursor		BASE_CURSOR, INDEX_CURSOR;
+	aclspv_wrdcount_t	BASE_IDX;
+	aclspv_wrdcount_t	INDEX_IDX;
 
 	(void)h_parent;
 
-	(void)clang_Cursor_getArgument(h_cur, 0);
-	(void)clang_Cursor_getArgument(h_cur, 1);
-	ELEMENT_TYPE = clang_getCanonicalType(clang_getCursorType(h_cur));
+	BASE_CURSOR = clang_Cursor_getArgument(h_cur, 0);
+	INDEX_CURSOR = clang_Cursor_getArgument(h_cur, 1);
 
-	ae2f_expected_but_else(CTX->m_count.m_fndef = util_emitx_4(
+	ae2f_expected_if(BASE_CURSOR.kind && INDEX_CURSOR.kind) {
+		BASE_IDX = util_mk_cursor_base(CTX->m_num_cursor, &CTX->m_cursors, BASE_CURSOR);
+		if(BASE_IDX < CTX->m_num_cursor) {
+			clang_visitChildren(BASE_CURSOR, emit_expr, CTX);
+			BASE_ID = ((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[BASE_IDX].m_data.m_var_simple.m_id;
+		}
+
+		INDEX_IDX = util_mk_cursor_base(CTX->m_num_cursor, &CTX->m_cursors, INDEX_CURSOR);
+		if(INDEX_IDX < CTX->m_num_cursor) {
+			clang_visitChildren(INDEX_CURSOR, emit_expr, CTX);
+			INDEX_ID = ((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[INDEX_IDX].m_data.m_var_simple.m_id;
+		}
+	}
+
+	ae2f_expected_if(BASE_ID && INDEX_ID) {
+	} else {
+		CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
+		return 0;
+	}
+
+	ELEMENT_TYPE = clang_getCanonicalType(clang_getCursorType(h_cur));
+	POINTER_TYPE = clang_getPointeeType(ELEMENT_TYPE);
+
+	ae2f_expected_but_else(CTX->m_count.m_fndef = util_emitx_5(
 				&CTX->m_section.m_fndef
 				, CTX->m_count.m_fndef
 				, SpvOpAccessChain
-				, emit_expr_type(ELEMENT_TYPE, CTX)
+				, emit_expr_type(POINTER_TYPE, CTX)
 				, CTX->m_id
-				, 0
+				, BASE_ID
+				, INDEX_ID
 				)) return 0;
 
 	RESULT_ID = CTX->m_id++;
@@ -429,14 +490,23 @@ static enum CXChildVisitResult emit_expr(
 
 		default:
 			return CXChildVisit_Recurse;
-	}
+		}
 
-	ae2f_expected_but_else(EXPR_ID) {
-		return CXChildVisit_Break;
-	}
+		unless(EXPR_ID) {
+			aclspv_wrdcount_t CURSOR_IDX = util_find_cursor(
+					CTX->m_num_cursor
+					, CTX->m_cursors.m_p
+					, h_cur
+					);
 
-	CTX->m_err = ACLSPV_COMPILE_OK;
-	return CXChildVisit_Continue;
+			if(CURSOR_IDX < CTX->m_num_cursor) {
+				((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[CURSOR_IDX].m_data.m_var_simple.m_id = EXPR_ID;
+			}
+			return CXChildVisit_Break;
+		}
+
+		CTX->m_err = ACLSPV_COMPILE_OK;
+		return CXChildVisit_Continue;
 
 #undef	CTX
 }

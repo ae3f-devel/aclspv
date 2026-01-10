@@ -54,9 +54,9 @@ __attribute__((annotate("aclspv_execmodel(0)")))
 __kernel void N_KERNEL_0(__constant uintptr_t* consti32, __attribute__((annotate("aclspv_storage_class(3)"))) const uint* u32out) {
 	const size_t specid_0 __attribute__((annotate("aclspv_specid(0)"))) = 0;
 	const size_t specid_1 __attribute__((annotate("aclspv_specid(1)"))) = 1;
-	{int a, b;
+	int a, b;
 	a = specid_1 + specid_0 + u32out[0];
-	b = (1 ? specid_1 + specid_0 + u32out[0] : 3);}
+	b = (1 ? specid_1 + specid_0 + u32out[0] : 3);
 
 	goto AGOTO;
 AGOTO:
@@ -66,6 +66,7 @@ AGOTO:
 kernel void do_none(void)
 {
     size_t g = get_global_id(0);
+    struct { char a; int b; } C;
 }
 
 #if 0

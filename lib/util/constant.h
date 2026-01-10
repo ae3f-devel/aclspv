@@ -10,6 +10,9 @@
 
 #include "./id.h"
 #include "./ctx.h"
+#include "./emitx.h"
+
+#include "./constant/ptr.auto.h"
 
 /** TODO: make this modular. this is risky */
 ae2f_inline static aclspv_id_t util_get_default_id(
@@ -48,6 +51,7 @@ typedef struct {
 
 	/** storage buffer pointer id */
 	aclspv_id_t		m_ptr_storage;
+	aclspv_id_t		m_ptr_func;
 
 	/** uniform pointer id */
 	aclspv_id_t		m_ptr_uniform;
@@ -447,7 +451,7 @@ ae2f_inline static aclspv_id_t	util_mk_constant_arr128_id(const aclspv_wrd_t c_a
 	assert(C->m_const_val_id);
 
 	/** OpArray */
-	ae2f_expected_but_else(h_ctx->m_count.m_types = util_emitx_4(
+	ae2f_expected_but_else(h_ctx->m_count.m_types = (aclspv_wrd_t)util_emitx_4(
 				&h_ctx->m_section.m_types
 				, h_ctx->m_count.m_types
 				, SpvOpTypeArray
@@ -610,75 +614,53 @@ ae2f_inline static aclspv_id_t	util_mk_constant_structpriv_id(const aclspv_wrd_t
 }
 
 
-ae2f_inline static aclspv_id_t	util_mk_constant_ptr_psh_id(const aclspv_wrd_t c_wrdcount, h_util_ctx_t h_ctx) {
-	util_constant* ae2f_restrict const C = util_mk_constant_node(c_wrdcount, h_ctx);
-	ae2f_expected_but_else(C) return 0;
-	ae2f_expected_but_else(C->m_key == c_wrdcount) return 0;
-	ae2f_expected_but_else(C->m_struct_id)
-		C->m_struct_id = util_mk_constant_struct_id(c_wrdcount, h_ctx);
+ae2f_inline static aclspv_id_t	util_mk_constant_ptr_psh_id(const aclspv_wrd_t c_wrdcount, const h_util_ctx_t h_ctx) {
 
-	if(C->m_ptr_psh) return C->m_ptr_psh;
-
-	ae2f_expected_but_else((h_ctx->m_count.m_types = emit_opcode(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvOpTypePointer, 3))) 
-		return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) 
-		return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvStorageClassPushConstant))) 
-		return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, C->m_struct_id)))
-		return 0;
-
-	C->m_ptr_psh = h_ctx->m_id++;
-
-	return C->m_ptr_psh;
+	aclspv_id_t	ID;
+	_util_mk_constant_ptr_tmpl(
+			L_new, m_ptr_psh
+			, m_struct_id
+			, ID, c_wrdcount
+			, h_ctx
+			, util_mk_constant_struct_id
+			, SpvStorageClassPushConstant);
+	return ID;
 }
 
 ae2f_inline static aclspv_id_t	util_mk_constant_ptr_storage_id(const aclspv_wrd_t c_wrdcount, h_util_ctx_t h_ctx) {
-	util_constant* ae2f_restrict const C = util_mk_constant_node(c_wrdcount, h_ctx);
-	ae2f_expected_but_else(C) return 0;
-	ae2f_expected_but_else(C->m_key == c_wrdcount) return 0;
-	ae2f_expected_but_else(C->m_struct_id)
-		C->m_struct_id = util_mk_constant_struct_id(c_wrdcount, h_ctx);
-
-	if(C->m_ptr_storage) return C->m_ptr_storage;
-
-	ae2f_expected_but_else((h_ctx->m_count.m_types = emit_opcode(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvOpTypePointer, 3))) 
-		return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) 
-		return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvStorageClassStorageBuffer))) 
-		return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, C->m_struct_id)))
-		return 0;
-
-	C->m_ptr_storage = h_ctx->m_id++;
-
-	return C->m_ptr_storage;
+	aclspv_id_t	ID;
+	_util_mk_constant_ptr_tmpl(
+			L_new, m_ptr_storage
+			, m_struct_id
+			, ID, c_wrdcount
+			, h_ctx
+			, util_mk_constant_struct_id
+			, SpvStorageClassStorageBuffer);
+	return ID;
 }
 
 ae2f_inline static aclspv_id_t	util_mk_constant_ptr_id(const aclspv_wrd_t c_wrdcount, h_util_ctx_t h_ctx) {
-	util_constant* ae2f_restrict const C = util_mk_constant_node(c_wrdcount, h_ctx);
+	aclspv_id_t	ID;
+	_util_mk_constant_ptr_tmpl(
+			L_new, m_ptr
+			, m_structpriv_id
+			, ID, c_wrdcount
+			, h_ctx
+			, util_mk_constant_structpriv_id
+			, SpvStorageClassPrivate);
+	return ID;
+}
 
-	ae2f_expected_but_else(C) return 0;
-	ae2f_expected_but_else(C->m_key == c_wrdcount) return 0;
-	ae2f_expected_but_else(C->m_structpriv_id)
-		C->m_structpriv_id = util_mk_constant_structpriv_id(c_wrdcount, h_ctx);
-
-	if(C->m_ptr) return C->m_ptr;
-
-
-	ae2f_expected_but_else((h_ctx->m_count.m_types = emit_opcode(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvOpTypePointer, 3))) 
-		return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) 
-		return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvStorageClassPrivate))) 
-		return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, C->m_structpriv_id)))
-		return 0;
-
-	C->m_ptr = h_ctx->m_id++;
-
-	return C->m_ptr;
+ae2f_inline static aclspv_id_t	util_mk_constant_ptr_func(const aclspv_wrd_t c_wrdcount, h_util_ctx_t h_ctx) {
+	aclspv_id_t	ID;
+	_util_mk_constant_ptr_tmpl(
+			L_new, m_ptr_func
+			, m_struct_id
+			, ID, c_wrdcount
+			, h_ctx
+			, util_mk_constant_struct_id
+			, SpvStorageClassFunction);
+	return ID;
 }
 
 ae2f_inline static aclspv_id_t	util_mk_constant_ptr_uniform_id(const aclspv_wrd_t c_wrdcount, h_util_ctx_t h_ctx) {
@@ -752,27 +734,15 @@ ae2f_inline static aclspv_id_t	util_mk_constant_ptr_workspec_id(const aclspv_wrd
 }
 
 ae2f_inline static aclspv_id_t	util_mk_constant_ptr_work_id(const aclspv_wrd_t c_wrdcount, h_util_ctx_t h_ctx) {
-	util_constant* ae2f_restrict C = util_mk_constant_node(c_wrdcount, h_ctx);
-	ae2f_expected_but_else(C)			return 0;
-	ae2f_expected_but_else(C->m_key == c_wrdcount)	return 0;
-	ae2f_expected_but_else(C->m_structpriv_id)
-		(void)util_mk_constant_structpriv_id(c_wrdcount, h_ctx);
-
-	if(C->m_ptr_work) return C->m_ptr_work;
-
-
-	ae2f_expected_but_else((h_ctx->m_count.m_types = emit_opcode(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvOpTypePointer, 3))) 
-		return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) 
-		return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvStorageClassWorkgroup))) 
-		return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, C->m_structpriv_id)))
-		return 0;
-
-	C->m_ptr_work = h_ctx->m_id++;
-
-	return C->m_ptr_work;
+	aclspv_id_t	ID;
+	_util_mk_constant_ptr_tmpl(
+			L_new, m_ptr_work
+			, m_structpriv_id
+			, ID, c_wrdcount
+			, h_ctx
+			, util_mk_constant_structpriv_id
+			, SpvStorageClassWorkgroup);
+	return ID;
 }
 
 ae2f_inline static aclspv_id_t	util_mk_constant_ptr_by_enum(const aclspv_wrd_t c_wrdcount, h_util_ctx_t h_ctx, enum SpvStorageClass_ c_class) {

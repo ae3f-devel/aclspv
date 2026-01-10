@@ -363,6 +363,7 @@ LBL_ABRT_NALLOC:
 							, ID_DEFAULT_U32
 							, CTX->m_id + 2
 							)) return CXChildVisit_Break;
+
 				ae2f_expected_but_else(CTX->m_count.m_types = util_emitx_type_pointer(
 							&CTX->m_section.m_types
 							, CTX->m_count.m_types
