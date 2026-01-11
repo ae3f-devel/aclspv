@@ -90,6 +90,7 @@ typedef struct a_aclspv_ctx {
 		aclspv_wrd_t	m_w3;
 
 		x_aclspv_vec	m_v0;
+		x_aclspv_vec	m_v1;
 	}	m_tmp;
 
 	struct {
@@ -103,7 +104,8 @@ typedef struct a_aclspv_ctx {
 			m_decorate,
 			m_types,
 			m_vars,
-			m_fndef;
+			m_fndef,
+			m_fnimpl;
 	}			m_count;
 
 	struct {
@@ -141,7 +143,8 @@ typedef struct a_aclspv_ctx {
 			m_decorate,
 			m_types,
 			m_vars,
-			m_fndef;
+			m_fndef,
+			m_fnimpl;
 	}			m_section;
 
 	aclspv_id_t		m_id_defaults[ID_DEFAULT_END];

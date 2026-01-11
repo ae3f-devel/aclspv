@@ -13,12 +13,204 @@
 #include "./constant.h"
 
 ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) unsigned	
-util_is_default_id_int(const e_id_default c_id_default) {
-	if(c_id_default == ID_DEFAULT_U8)	return 1;
-	if(c_id_default == ID_DEFAULT_U16)	return 1;
-	if(c_id_default == ID_DEFAULT_U32)	return 1;
+util_default_is_unsigned(const e_id_default c_id_default) {
+	switch(c_id_default) {
+		case ID_DEFAULT_U8:
+		case ID_DEFAULT_U16:
+		case ID_DEFAULT_U32:
+		case ID_DEFAULT_U64:
+			return 1;
 
-	return 0;
+		case ID_DEFAULT_I32:
+		case ID_DEFAULT_F16:
+		case ID_DEFAULT_F32:
+		case ID_DEFAULT_F64:
+		case ID_DEFAULT_END:
+		case ID_DEFAULT_VOID:
+		case ID_DEFAULT_FN_VOID:
+		case ID_DEFAULT_U8_PTR_FUNC:
+		case ID_DEFAULT_F16_PTR_FUNC:
+		case ID_DEFAULT_F32_PTR_FUNC:
+		case ID_DEFAULT_F64_PTR_FUNC:
+		case ID_DEFAULT_I32_PTR_FUNC:
+		case ID_DEFAULT_U16_PTR_FUNC:
+		case ID_DEFAULT_U32_PTR_FUNC:
+		case ID_DEFAULT_U64_PTR_FUNC:
+		case ID_DEFAULT_U32V4_PTR_INP:
+		case ID_DEFAULT_U32V4_PTR_OUT:
+		default:
+			return 0;
+	}
+}
+
+ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) unsigned	
+util_default_is_signed(const e_id_default c_id_default) {
+	switch(c_id_default) {
+		case ID_DEFAULT_I32:
+			return 1;
+
+		case ID_DEFAULT_F16:
+		case ID_DEFAULT_F32:
+		case ID_DEFAULT_F64:
+		case ID_DEFAULT_U8:
+		case ID_DEFAULT_U16:
+		case ID_DEFAULT_U32:
+		case ID_DEFAULT_U64:
+		case ID_DEFAULT_END:
+		case ID_DEFAULT_VOID:
+		case ID_DEFAULT_FN_VOID:
+		case ID_DEFAULT_U8_PTR_FUNC:
+		case ID_DEFAULT_F16_PTR_FUNC:
+		case ID_DEFAULT_F32_PTR_FUNC:
+		case ID_DEFAULT_F64_PTR_FUNC:
+		case ID_DEFAULT_I32_PTR_FUNC:
+		case ID_DEFAULT_U16_PTR_FUNC:
+		case ID_DEFAULT_U32_PTR_FUNC:
+		case ID_DEFAULT_U64_PTR_FUNC:
+		case ID_DEFAULT_U32V4_PTR_INP:
+		case ID_DEFAULT_U32V4_PTR_OUT:
+		default:
+			return 0;
+	}
+}
+
+ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) unsigned	
+util_default_is_int(const e_id_default c_id_default) {
+	return util_default_is_unsigned(c_id_default) || util_default_is_signed(c_id_default);
+}
+
+ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) unsigned	
+util_default_is_float(const e_id_default c_id_default) {
+	switch(c_id_default) {
+		case ID_DEFAULT_F16:
+		case ID_DEFAULT_F32:
+		case ID_DEFAULT_F64:
+			return 1;
+
+		case ID_DEFAULT_U8:
+		case ID_DEFAULT_U16:
+		case ID_DEFAULT_I32:
+		case ID_DEFAULT_U32:
+		case ID_DEFAULT_U64:
+		case ID_DEFAULT_END:
+		case ID_DEFAULT_VOID:
+		case ID_DEFAULT_FN_VOID:
+		case ID_DEFAULT_U8_PTR_FUNC:
+		case ID_DEFAULT_F16_PTR_FUNC:
+		case ID_DEFAULT_F32_PTR_FUNC:
+		case ID_DEFAULT_F64_PTR_FUNC:
+		case ID_DEFAULT_I32_PTR_FUNC:
+		case ID_DEFAULT_U16_PTR_FUNC:
+		case ID_DEFAULT_U32_PTR_FUNC:
+		case ID_DEFAULT_U64_PTR_FUNC:
+		case ID_DEFAULT_U32V4_PTR_INP:
+		case ID_DEFAULT_U32V4_PTR_OUT:
+		default:
+			return 0;
+	}
+}
+
+ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) unsigned	
+util_is_default(const e_id_default c_id_default) {
+	switch(c_id_default) {
+		case ID_DEFAULT_F16:
+		case ID_DEFAULT_F32:
+		case ID_DEFAULT_F64:
+		case ID_DEFAULT_U8:
+		case ID_DEFAULT_U16:
+		case ID_DEFAULT_I32:
+		case ID_DEFAULT_U32:
+		case ID_DEFAULT_U64:
+		case ID_DEFAULT_END:
+		case ID_DEFAULT_VOID:
+		case ID_DEFAULT_FN_VOID:
+		case ID_DEFAULT_U8_PTR_FUNC:
+		case ID_DEFAULT_F16_PTR_FUNC:
+		case ID_DEFAULT_F32_PTR_FUNC:
+		case ID_DEFAULT_F64_PTR_FUNC:
+		case ID_DEFAULT_I32_PTR_FUNC:
+		case ID_DEFAULT_U16_PTR_FUNC:
+		case ID_DEFAULT_U32_PTR_FUNC:
+		case ID_DEFAULT_U64_PTR_FUNC:
+		case ID_DEFAULT_U32V4_PTR_INP:
+		case ID_DEFAULT_U32V4_PTR_OUT:
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) unsigned	
+util_default_is_number(const e_id_default c_id_default) {
+	return util_default_is_int(c_id_default) || util_default_is_float(c_id_default);
+}
+
+ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) e_id_default
+util_default_float(unsigned bit_width) {
+	switch(bit_width) {
+		case 16:
+			return ID_DEFAULT_F16;
+		case 32:
+			return ID_DEFAULT_F32;
+		case 64:
+			return ID_DEFAULT_F64;
+		default:
+			return ID_DEFAULT_END;
+	}
+}
+
+
+ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) e_id_default
+util_default_unsigned(unsigned bit_width) {
+	switch(bit_width) {
+		case 8:
+			return ID_DEFAULT_U8;
+		case 16:
+			return ID_DEFAULT_U16;
+		case 32:
+			return ID_DEFAULT_U32;
+		case 64:
+			return ID_DEFAULT_U64;
+		default:
+			return ID_DEFAULT_END;
+	}
+}
+
+ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) unsigned	
+util_default_bit_width(const e_id_default c_id_default) {
+	switch(c_id_default) {
+		case ID_DEFAULT_U8:
+			return 8;
+
+		case ID_DEFAULT_U16:
+		case ID_DEFAULT_F16:
+			return 16;
+
+		case ID_DEFAULT_I32:
+		case ID_DEFAULT_F32:
+		case ID_DEFAULT_U32:
+			return 32;
+
+		case ID_DEFAULT_F64:
+		case ID_DEFAULT_U64:
+			return 64;
+
+		case ID_DEFAULT_END:
+		case ID_DEFAULT_VOID:
+		case ID_DEFAULT_FN_VOID:
+		case ID_DEFAULT_U8_PTR_FUNC:
+		case ID_DEFAULT_F16_PTR_FUNC:
+		case ID_DEFAULT_F32_PTR_FUNC:
+		case ID_DEFAULT_F64_PTR_FUNC:
+		case ID_DEFAULT_I32_PTR_FUNC:
+		case ID_DEFAULT_U16_PTR_FUNC:
+		case ID_DEFAULT_U32_PTR_FUNC:
+		case ID_DEFAULT_U64_PTR_FUNC:
+		case ID_DEFAULT_U32V4_PTR_INP:
+		case ID_DEFAULT_U32V4_PTR_OUT:
+		default:
+			return 0;
+	}
 }
 
 ae2f_inline static aclspv_id_t util_get_default_id(

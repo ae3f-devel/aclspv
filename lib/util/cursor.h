@@ -8,6 +8,8 @@
 #include "../vec.auto.h"
 
 #include "./bind.h"
+#include "./ctx.h"
+#include "./emitx.h"
 
 typedef struct {
 	/**
@@ -29,6 +31,8 @@ typedef struct {
 			 * the id of variable 
 			 * */
 			aclspv_id_t	m_id;
+			aclspv_id_t	m_type_id;
+			aclspv_id_t	m_ptr_type_id;
 
 			/**
 			 * @var	m_init_val_0
@@ -69,18 +73,17 @@ typedef struct {
 			aclspv_wrd_t	m_is_undefined		: 1;
 
 			/**
-			 * @var	m_is_used
-			 * @brief
-			 * has this variable's value been used lately?
-			 * */
-			aclspv_wrd_t	m_is_used		: 1;
-
-			/**
 			 * @var	m_is_integer
 			 * @brief
 			 * is this integer?
 			 * */
 			aclspv_wrd_t	m_is_integer		: 1;
+
+			/** have met branch? */
+			aclspv_wrd_t	m_met_branch		: 1;
+
+			/** is function actually allocated? */
+			aclspv_wrd_t	m_is_allocated		: 1;
 
 			/**
 			 * @var	m_fits_32bit
@@ -89,16 +92,22 @@ typedef struct {
 			 * */
 			aclspv_wrd_t	m_fits_32bit		: 1;
 			aclspv_wrd_t	m_fits_64bit		: 1;
-		} m_var_simple;
+		} 
+		/** when cursor kind is vardecl */
+		m_var_simple;
 
 		struct {
 			/** @brief label id for goto */
 			aclspv_id_t	m_id;
-		} m_goto_lbl;
+		} 
+		/** when cursor kind is goto label */
+		m_goto_lbl;
 
 		struct {
 			util_bind	m_info;
-		} m_prm_decl;
+		} 
+		/** when cursor kind is param decl */
+		m_prm_decl;
 	} m_data;
 } util_cursor;
 
@@ -125,6 +134,7 @@ ae2f_inline static aclspv_wrdcount_t util_find_cursor(
 	return c_num_cursor;
 }
 
+/** after allocation, the allocated node will be empty except for `c_cursor_to_add` since that's the key. */
 ae2f_inline static aclspv_wrdcount_t util_mk_cursor_base(
 		const aclspv_wrdcount_t			c_num_cursor,
 		x_aclspv_vec* const ae2f_restrict	h_cursors,
@@ -153,16 +163,34 @@ ae2f_inline static aclspv_wrdcount_t util_mk_cursor_base(
 	return c_num_cursor;
 }
 
-ae2f_inline static void util_tell_cursor_lbl(const aclspv_wrdcount_t c_num_cursor, util_cursor* ae2f_restrict const wr_cursor) {
+ae2f_inline static e_aclspv_compile_t util_tell_cursor_lbl(
+		const aclspv_wrdcount_t c_num_cursor, 
+		util_cursor* ae2f_restrict const wr_cursor, 
+		const h_util_ctx_t h_ctx
+		) {
 	aclspv_wrdcount_t	IDX = c_num_cursor;
 	assert(wr_cursor || !c_num_cursor);
 	{ ae2f_assume(wr_cursor || !c_num_cursor); }
 	ae2f_expected_if(wr_cursor) while(IDX--) {
+#define	CURSORDATA	wr_cursor[IDX].m_data.m_var_simple
 		if(wr_cursor[IDX].m_cursor.kind == CXCursor_VarDecl) {
-			wr_cursor[IDX].m_data.m_var_simple.m_is_undefined	= 0;
-			wr_cursor[IDX].m_data.m_var_simple.m_is_predictable	= 0;
+			CURSORDATA.m_met_branch	= 1;
+			unless(CURSORDATA.m_is_allocated) {
+				CURSORDATA.m_is_allocated = 1;
+
+				ae2f_expected_but_else(h_ctx->m_count.m_fndef = util_emitx_variable(
+							&h_ctx->m_section.m_fndef
+							, h_ctx->m_count.m_fndef
+							, CURSORDATA.m_ptr_type_id
+							, CURSORDATA.m_id
+							, SpvStorageClassFunction))
+					return ACLSPV_COMPILE_ALLOC_FAILED;
+			}
 		}
+#undef	CURSORDATA
 	}
+
+	return ACLSPV_COMPILE_OK;
 }
 
 

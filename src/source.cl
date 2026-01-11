@@ -44,9 +44,11 @@ __kernel void KERNEL_0(
 		       struct STRUCTURE push_struct
 		       )
 {
+#if 0
 	globu32[get_global_id(0)] += pushu32 + sin(globf32[get_global_id(0)]); 
 	(void)(1 + get_global_id(0));
 	return;
+#endif
 }
 
 
@@ -54,9 +56,21 @@ __attribute__((annotate("aclspv_execmodel(0)")))
 __kernel void N_KERNEL_0(__constant uintptr_t* consti32, __attribute__((annotate("aclspv_storage_class(3)"))) __global const uint* u32out) {
 	const size_t specid_0 __attribute__((annotate("aclspv_specid(0)"))) = 0;
 	const size_t specid_1 __attribute__((annotate("aclspv_specid(1)"))) = 1;
-	int a, b;
-	a = specid_1 + specid_0 + u32out[0];
-	b = (1 ? specid_1 + specid_0 + u32out[0] : 3);
+	int a;
+	float b;
+
+
+	3;
+	a;
+	3 + 4 + 3;
+
+	#if 1
+	a + 3;
+	a + 4.0 + 3;
+
+	b;
+	b + 3;
+	#endif
 
 	goto AGOTO;
 AGOTO:

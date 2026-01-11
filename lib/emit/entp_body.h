@@ -16,6 +16,7 @@
 #include <util/iddef.h>
 #include <util/constant.h>
 #include <util/cursor.h>
+#include <util/scale.h>
 #include <util/u32_to_hex8.auto.h>
 
 #include <attr/specid.h>
@@ -111,6 +112,7 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 					case CXType_SChar:
 					case CXType_UChar:
 						TYPE_ID = util_get_default_id(ID_DEFAULT_U32_PTR_FUNC, CTX);
+						CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_U32;
 
 						CURSOR.m_data.m_var_simple.m_fits_32bit = 1;
 
@@ -122,6 +124,7 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 							case CXType_Long:
 							case CXType_ULong:
 							TYPE_ID = util_get_default_id(ID_DEFAULT_U64_PTR_FUNC, CTX);
+							CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_U64;
 						}
 
 						CURSOR.m_data.m_var_simple.m_is_integer = 1;
@@ -134,12 +137,14 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 							case CXType_BFloat16:
 							case CXType_Float16:
 							TYPE_ID = util_get_default_id(ID_DEFAULT_F16_PTR_FUNC, CTX);
+							CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_F16;
 						}
 
 						ae2f_unexpected_but_if(0) {
 							ae2f_unreachable();
 							case CXType_Float:
 							TYPE_ID = util_get_default_id(ID_DEFAULT_F32_PTR_FUNC, CTX);
+							CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_F32;
 						}
 
 						CURSOR.m_data.m_var_simple.m_fits_32bit = 1;
@@ -148,6 +153,7 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 							ae2f_unreachable();
 							case CXType_Double:
 							TYPE_ID = util_get_default_id(ID_DEFAULT_F64_PTR_FUNC, CTX);
+							CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_F64;
 						}
 						CURSOR.m_data.m_var_simple.m_is_undefined = 1;
 						CURSOR.m_data.m_var_simple.m_fits_64bit = 1;
@@ -169,6 +175,9 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 										(TY_SIZE_WRD + 3) >> 2
 										, CTX))
 								goto LBL_FAIL;
+							CURSOR.m_data.m_var_simple.m_type_id = util_mk_constant_structpriv_id(
+									(TY_SIZE_WRD + 3) >> 2, CTX
+									);
 						}
 						break;
 
@@ -185,14 +194,7 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 				ae2f_expected_but_else(TYPE_ID)
 					goto LBL_FAIL;
 
-				ae2f_expected_but_else(CTX->m_count.m_fndef = util_emitx_variable(
-							&CTX->m_section.m_fndef
-							, CTX->m_count.m_fndef
-							, TYPE_ID
-							, CTX->m_id
-							, SpvStorageClassFunction))
-					goto LBL_FAIL;
-
+				CURSOR.m_data.m_var_simple.m_ptr_type_id = TYPE_ID;
 				CURSOR.m_data.m_var_simple.m_id = CTX->m_id++;
 				___mkname_on_dbg(CURSOR.m_data.m_var_simple.m_id);
 
@@ -208,16 +210,18 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 			goto LBL_DONE;
 
 		case CXCursor_ReturnStmt:
-			ae2f_expected_but_else(CTX->m_count.m_fndef = emit_opcode(
-						&CTX->m_section.m_fndef
-						, CTX->m_count.m_fndef
+			ae2f_expected_but_else(CTX->m_count.m_fnimpl = emit_opcode(
+						&CTX->m_section.m_fnimpl
+						, CTX->m_count.m_fnimpl
 						, SpvOpReturn, 0
 						)) goto LBL_FAIL;
 			CTX->m_has_function_ret = 1;
 			goto LBL_DONE;
 		case CXCursor_LabelStmt:
-			util_tell_cursor_lbl(CTX->m_num_cursor, CTX->m_cursors.m_p);
-
+			ae2f_unexpected_but_if(CTX->m_err = util_tell_cursor_lbl(
+						CTX->m_num_cursor
+						, CTX->m_cursors.m_p, CTX))
+					goto LBL_DONE;
 			{
 
 #define	CURSOR	((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[IDX]
@@ -235,9 +239,17 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 					++CTX->m_num_cursor;
 				}
 
-				ae2f_expected_but_else(CTX->m_count.m_fndef = util_emitx_2(
-							&CTX->m_section.m_fndef
-							, CTX->m_count.m_fndef
+				ae2f_expected_but_else(CTX->m_count.m_fnimpl = util_emitx_2(
+							&CTX->m_section.m_fnimpl
+							, CTX->m_count.m_fnimpl
+							, SpvOpBranch
+							, ((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[IDX]
+							.m_data.m_goto_lbl.m_id
+							)) goto LBL_FAIL;
+
+				ae2f_expected_but_else(CTX->m_count.m_fnimpl = util_emitx_2(
+							&CTX->m_section.m_fnimpl
+							, CTX->m_count.m_fnimpl
 							, SpvOpLabel
 							, CURSOR.m_data.m_goto_lbl.m_id
 							)) goto LBL_FAIL;
@@ -269,19 +281,25 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 					++CTX->m_num_cursor;
 				}
 
-				ae2f_expected_but_else(CTX->m_count.m_fndef = util_emitx_2(
-							&CTX->m_section.m_fndef
-							, CTX->m_count.m_fndef
+				ae2f_expected_but_else(CTX->m_count.m_fnimpl = util_emitx_2(
+							&CTX->m_section.m_fnimpl
+							, CTX->m_count.m_fnimpl
 							, SpvOpBranch
 							, ((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[IDX]
 							.m_data.m_goto_lbl.m_id
+							)) goto LBL_FAIL;
+
+				/** just for branch */
+				ae2f_expected_but_else(CTX->m_count.m_fnimpl = util_emitx_2(
+							&CTX->m_section.m_fnimpl
+							, CTX->m_count.m_fnimpl
+							, SpvOpLabel
+							, CTX->m_id++
 							)) goto LBL_FAIL;
 			}
 			goto LBL_DONE;
 
 			/** Literals in function scope does literally nothing in my opinion */
-		case CXCursor_IntegerLiteral:
-		case CXCursor_FloatingLiteral:
 			goto LBL_DONE;
 
 
@@ -292,15 +310,10 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 		case CXCursor_CompoundStmt:
 			goto LBL_RECURSE;
 
+		case CXCursor_IntegerLiteral:
 		case CXCursor_BinaryOperator:
 		case CXCursor_CompoundAssignOperator:
-		case CXCursor_UnaryOperator:
-		case CXCursor_CallExpr:
-		case CXCursor_ArraySubscriptExpr:
-		case CXCursor_ConditionalOperator:
-		case CXCursor_CStyleCastExpr:
-		case CXCursor_DeclRefExpr:
-		case CXCursor_UnaryExpr:
+#if 1
 			{
 				const aclspv_wrdcount_t EXPR_IDX = util_mk_cursor_base(
 						CTX->m_num_cursor
@@ -314,11 +327,20 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 				if(EXPR_IDX == CTX->m_num_cursor)
 					++CTX->m_num_cursor;
 
-				/** this is being invoked well */
-				clang_visitChildren(h_cur, emit_expr, CTX);
+				++CTX->m_id;
+				ae2f_unexpected_but_if(emit_get_expr(CTX->m_id - 1, 0, h_cur, CTX))
+					goto LBL_FAIL;
 			}
 			goto LBL_DONE;
-
+#endif
+		case CXCursor_FloatingLiteral:
+		case CXCursor_UnaryOperator:
+		case CXCursor_CallExpr:
+		case CXCursor_ArraySubscriptExpr:
+		case CXCursor_ConditionalOperator:
+		case CXCursor_CStyleCastExpr:
+		case CXCursor_DeclRefExpr:
+		case CXCursor_UnaryExpr:
 		case CXCursor_DoStmt:
 		case CXCursor_IfStmt:
 

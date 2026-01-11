@@ -315,7 +315,7 @@ LBL_ABRT_NALLOC:
 						CONST_NODE->m_const_spec_type_id = ID_DEFAULT_U32;
 						CTX->m_count.m_types = RETCOUNT_TY;
 						CTX->m_count.m_decorate = RETCOUNT_DC;
-					} else ae2f_expected_but_else(util_is_default_id_int(CONST_NODE->m_const_spec_type_id)) {
+					} else ae2f_expected_but_else(util_default_is_int(CONST_NODE->m_const_spec_type_id)) {
 						CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
 						return CXChildVisit_Break;
 					}

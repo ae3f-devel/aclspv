@@ -6,9 +6,9 @@
 #ifndef pass_scale_h
 #define pass_scale_h
 
-#include "./ctx.h"
+#include <ae2f/c90/StdInt.h>
+#include "../vec.auto.h"
 #include <assert.h>
-#include <stdio.h>
 
 
 typedef struct x_scale x_scale;
@@ -17,6 +17,7 @@ typedef x_scale* ae2f_restrict h_scale_t;
 struct x_scale {
 	size_t			m_id;
 	size_t			m_nxt;
+	size_t			m_prv;
 	size_t			m_buf;
 	size_t			m_sz;
 };
@@ -35,8 +36,14 @@ struct x_scale {
 	 ? (void* ae2f_restrict)(((uintptr_t)(h_alloc)->m_p) + ((uintptr_t)(c_scale).m_buf)) \
 	 : ((void* ae2f_restrict)ae2f_NIL))
 
+#define	get_buf_from_scale2(buf_T, h_alloc, c_scale)	\
+	((buf_T* ae2f_restrict)get_buf_from_scale(h_alloc, c_scale))
+
 #define	get_nxt_from_scale(h_alloc, c_scale)	\
-	(void* ae2f_restrict)(((uintptr_t)(h_alloc)->m_p) + ((uintptr_t)(c_scale).m_nxt))
+	(x_scale* ae2f_restrict)(((uintptr_t)(h_alloc)->m_p) + ((uintptr_t)(c_scale).m_nxt))
+
+#define	get_prv_from_scale(h_alloc, c_scale)	\
+	(x_scale* ae2f_restrict)(((uintptr_t)(h_alloc)->m_p) + ((uintptr_t)(c_scale).m_prv))
 
 /** 
  * @fn	 	init_scale
@@ -58,6 +65,7 @@ ae2f_inline ae2f_retnew static x_scale* init_scale(
 	get_first_scale_from_vec(h_alloc)->m_buf = SCALE_HEADER_SIZE;
 	get_first_scale_from_vec(h_alloc)->m_sz = c_init_sz;
 	get_first_scale_from_vec(h_alloc)->m_nxt = 0;
+	get_first_scale_from_vec(h_alloc)->m_prv = sizeof(size_t);
 	get_first_scale_from_vec(h_alloc)->m_id = 0;
 
 	assert(get_first_scale_from_vec(h_alloc) == get_last_scale_from_vec(h_alloc));
@@ -133,6 +141,20 @@ ae2f_inline	static int_fast8_t grow_last_scale(
 	return !(h_alloc && h_alloc->m_p);
 }
 
+ae2f_retnew ae2f_inline static x_scale* del_scale_from_vec_last(x_aclspv_vec* ae2f_restrict const h_alloc) {
+	h_scale_t	lst = get_last_scale_from_vec(h_alloc);
+	h_scale_t	lst_prv;
+
+	*get_scale_header_from_vec(h_alloc)
+		= lst->m_prv;
+
+	assert(lst);
+	lst_prv	= get_prv_from_scale(h_alloc, *lst);
+	assert(lst_prv);
+	lst_prv->m_nxt = 0;
+	return		lst_prv;
+}
+
 /**
  * @fn		mk_scale_from_vec
  * @brief	make new scale from `h_alloc` and returns its pointer
@@ -160,7 +182,8 @@ ae2f_retnew ae2f_inline static x_scale* mk_scale_from_vec(
 			, newsz
 			);
 
-	unless(h_alloc->m_p) return ae2f_NIL;
+	assert(h_alloc->m_p);
+	ae2f_expected_but_else(h_alloc->m_p) return ae2f_NIL;
 
 	lst = get_last_scale_from_vec(h_alloc);
 	lst->m_nxt = lst->m_buf + lst->m_sz;
@@ -176,6 +199,7 @@ ae2f_retnew ae2f_inline static x_scale* mk_scale_from_vec(
 	nxt->m_sz = c_init_size_opt;
 	nxt->m_nxt = 0;
 	nxt->m_id = lst->m_id + 1;
+	nxt->m_prv = lst->m_buf - (size_t)sizeof(x_scale);
 
 	assert(get_first_scale_from_vec(h_alloc) < get_last_scale_from_vec(h_alloc));
 	assert(lst->m_buf);
@@ -184,5 +208,7 @@ ae2f_retnew ae2f_inline static x_scale* mk_scale_from_vec(
 
 	return nxt;
 }
+
+
 
 #endif

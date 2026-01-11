@@ -1,7 +1,6 @@
 #ifndef	lib_emit_expr_h
 #define	lib_emit_expr_h
 
-#include <stdio.h>
 #include <complex.h>
 #include <assert.h>
 
@@ -20,10 +19,10 @@
 #include <util/constant.h>
 #include <util/cursor.h>
 #include <util/fn.h>
+#include <util/scale.h>
 
 #include <spirv/unified1/spirv.h>
 
-static aclspv_id_t emit_expr_type(CXType type, h_util_ctx_t CTX);
 
 static enum CXChildVisitResult emit_expr(
 		CXCursor h_cur,
@@ -31,372 +30,569 @@ static enum CXChildVisitResult emit_expr(
 		CXClientData h_ctx
 		);
 
-static aclspv_id_t emit_expr_binary(
-		CXCursor h_cur,
-		CXCursor h_parent,
-		h_util_ctx_t CTX
-		)
-{
-	aclspv_id_t	RESULT_ID = 0;
-	aclspv_id_t	LHS_ID = 0;
-	aclspv_id_t	RHS_ID = 0;
-	CXType		LHS_TYPE, RHS_TYPE, RESULT_TYPE;
-	CXCursor	LHS_CURSOR, RHS_CURSOR;
-	CXString	OP_SPELLING;
-	enum CXBinaryOperatorKind OP_KIND;
+typedef enum EMIT_EXPR_BIN_1_ {
 
-	OP_KIND = clang_getCursorBinaryOperatorKind(h_cur);
-	LHS_CURSOR = clang_Cursor_getArgument(h_cur, 0);
-	RHS_CURSOR = clang_Cursor_getArgument(h_cur, 1);
+	EMIT_EXPR_BIN_1_FAILURE,
 
-	LHS_TYPE = clang_getCanonicalType(clang_getCursorType(LHS_CURSOR));
-	RHS_TYPE = clang_getCanonicalType(clang_getCursorType(RHS_CURSOR));
-	RESULT_TYPE = clang_getCanonicalType(clang_getCursorType(h_cur));
+	/** succeed, value was not constant */
+	EMIT_EXPR_BIN_1_SUCCESS,
 
-	(void)h_parent;
+	/** succeed, value was constant. */
+	EMIT_EXPR_BIN_1_SUCCESS_CONSTANT,
+	EMIT_EXPR_BIN_1_NOT_THE_CASE
+} e_emit_expr_bin_1_t;
 
-	ae2f_expected_if(LHS_CURSOR.kind) {
-		aclspv_wrdcount_t LHS_IDX = util_mk_cursor_base(CTX->m_num_cursor, &CTX->m_cursors, LHS_CURSOR);
-		if(LHS_IDX < CTX->m_num_cursor) {
-			clang_visitChildren(LHS_CURSOR, emit_expr, CTX);
-			LHS_ID = ((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[LHS_IDX].m_data.m_var_simple.m_id;
-		}
-	}
+/** 
+ * binary expression with 1 operators.
+ *
+ * @param	c_id_scalar_for_cast
+ * 		if casting is needed, specify the type via here
+ * 		0 for no casting
+ *
+ * */
+ae2f_inline static enum EMIT_EXPR_BIN_1_ emit_expr_bin_1(
+		const CXCursor		c_cur,
+		const h_util_ctx_t	h_ctx,
+		const aclspv_id_t	c_newid,
+		e_id_default* ae2f_restrict const	rdwr_type_req
+		) {
+	union {
+		uintmax_t	m_ull;
+		intmax_t	m_ll;
+		double		m_dbl;
+		float		m_flt;
+	} EVRES;
+#define	TYPE_NEW_REQ	((*rdwr_type_req))
 
-	ae2f_expected_if(RHS_CURSOR.kind) {
-		aclspv_wrdcount_t RHS_IDX = util_mk_cursor_base(CTX->m_num_cursor, &CTX->m_cursors, RHS_CURSOR);
-		if(RHS_IDX < CTX->m_num_cursor) {
-			clang_visitChildren(RHS_CURSOR, emit_expr, CTX);
-			RHS_ID = ((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[RHS_IDX].m_data.m_var_simple.m_id;
-		}
-	}
+	struct {
+		unsigned m_is_constant	: 1;
+		unsigned m_is_int	: 1;
+		unsigned m_need_cast	: 1;
+	} FLAGS;
 
+	FLAGS.m_is_constant = 0;
+	FLAGS.m_is_int = 0;
 
-	ae2f_expected_if(LHS_ID && RHS_ID) {
-	} else {
-		CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
-		return 0;
-	}
+	ae2f_expected_but_else(h_ctx)
+		return EMIT_EXPR_BIN_1_FAILURE;
 
-
-	switch((uintmax_t)OP_KIND) {
-		case CXBinaryOperator_Add: {
-			enum SpvOp_ OPCODE;
-			ae2f_expected_if(LHS_TYPE.kind == CXType_Float || LHS_TYPE.kind == CXType_Double
-					|| RHS_TYPE.kind == CXType_Float || RHS_TYPE.kind == CXType_Double)
-				OPCODE = SpvOpFAdd;
-			else
-				OPCODE = SpvOpIAdd;
-
-			ae2f_expected_but_else(CTX->m_count.m_fndef = util_emitx_5(
-						&CTX->m_section.m_fndef
-						, CTX->m_count.m_fndef
-						, OPCODE
-						, emit_expr_type(RESULT_TYPE, CTX)
-						, CTX->m_id
-						, LHS_ID
-						, RHS_ID
-						)) return 0;
-			RESULT_ID = CTX->m_id++;
-			break;
-		}
-
-		case CXBinaryOperator_Sub: {
-			enum SpvOp_ OPCODE;
-			ae2f_expected_if(LHS_TYPE.kind == CXType_Float || LHS_TYPE.kind == CXType_Double
-					|| RHS_TYPE.kind == CXType_Float || RHS_TYPE.kind == CXType_Double)
-				OPCODE = SpvOpFSub;
-			else
-				OPCODE = SpvOpISub;
-
-			ae2f_expected_but_else(CTX->m_count.m_fndef = util_emitx_5(
-						&CTX->m_section.m_fndef
-						, CTX->m_count.m_fndef
-						, OPCODE
-						, emit_expr_type(RESULT_TYPE, CTX)
-						, CTX->m_id
-						, LHS_ID
-						, RHS_ID
-						)) return 0;
-			RESULT_ID = CTX->m_id++;
-			break;
-		}
-
-		case CXBinaryOperator_Mul: {
-			enum SpvOp_ OPCODE;
-			ae2f_expected_if(LHS_TYPE.kind == CXType_Float || LHS_TYPE.kind == CXType_Double
-					|| RHS_TYPE.kind == CXType_Float || RHS_TYPE.kind == CXType_Double)
-				OPCODE = SpvOpFMul;
-			else
-				OPCODE = SpvOpIMul;
-
-			ae2f_expected_but_else(CTX->m_count.m_fndef = util_emitx_5(
-						&CTX->m_section.m_fndef
-						, CTX->m_count.m_fndef
-						, OPCODE
-						, emit_expr_type(RESULT_TYPE, CTX)
-						, CTX->m_id
-						, LHS_ID
-						, RHS_ID
-						)) return 0;
-			RESULT_ID = CTX->m_id++;
-			break;
-		}
-
-		case CXBinaryOperator_Div: {
-			enum SpvOp_ OPCODE;
-			ae2f_expected_if(LHS_TYPE.kind == CXType_Float || LHS_TYPE.kind == CXType_Double
-					|| RHS_TYPE.kind == CXType_Float || RHS_TYPE.kind == CXType_Double)
-				OPCODE = SpvOpFDiv;
-			else if (LHS_TYPE.kind == CXType_UInt || RHS_TYPE.kind == CXType_UInt)
-				OPCODE = SpvOpUDiv;
-			else
-				OPCODE = SpvOpSDiv;
-
-			ae2f_expected_but_else(CTX->m_count.m_fndef = util_emitx_5(
-						&CTX->m_section.m_fndef
-						, CTX->m_count.m_fndef
-						, OPCODE
-						, emit_expr_type(RESULT_TYPE, CTX)
-						, CTX->m_id
-						, LHS_ID
-						, RHS_ID
-						)) return 0;
-			RESULT_ID = CTX->m_id++;
-			break;
-		}
-
-		case CXBinaryOperator_Rem: {
-			enum SpvOp_ OPCODE;
-			ae2f_expected_if(LHS_TYPE.kind == CXType_Float || LHS_TYPE.kind == CXType_Double
-					|| RHS_TYPE.kind == CXType_Float || RHS_TYPE.kind == CXType_Double)
-				OPCODE = SpvOpFRem;
-			else
-				OPCODE = SpvOpSRem;
-
-			ae2f_expected_but_else(CTX->m_count.m_fndef = util_emitx_5(
-						&CTX->m_section.m_fndef
-						, CTX->m_count.m_fndef
-						, OPCODE
-						, emit_expr_type(RESULT_TYPE, CTX)
-						, CTX->m_id
-						, LHS_ID
-						, RHS_ID
-						)) return 0;
-			RESULT_ID = CTX->m_id++;
-			break;
-		}
-
-		default: {
-			OP_SPELLING = clang_getCursorSpelling(h_cur);
-			printf("Unsupported binary operator: %s\n", (const char*)OP_SPELLING.data);
-			clang_disposeString(OP_SPELLING);
-			CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
-			return 0;
-		}
-	}
-
-	CTX->m_err = ACLSPV_COMPILE_OK;
-	return RESULT_ID;
-}
-
-static aclspv_id_t emit_expr_unary(
-		CXCursor h_cur,
-		CXCursor h_parent,
-		h_util_ctx_t CTX
-		)
-{
-	(void)h_cur;
-	(void)h_parent;
-	(void)CTX;
-
-	CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
-	return 0;
-}
-
-static aclspv_id_t emit_expr_call(
-		CXCursor h_cur,
-		CXCursor h_parent,
-		h_util_ctx_t CTX
-		)
-{
-	CXCursor		CALLEE;
-	CXString		CALLEE_NAME;
-	int			NUM_ARGS;
-
-	(void)h_parent;
-
-	CALLEE = clang_getCursorReferenced(h_cur);
-	CALLEE_NAME = clang_getCursorSpelling(CALLEE);
-	NUM_ARGS = clang_Cursor_getNumArguments(h_cur);
-
-	(void)NUM_ARGS;
-
-	clang_disposeString(CALLEE_NAME);
-	CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
-	return 0;
-}
-
-static aclspv_id_t emit_expr_array_subscript(
-		CXCursor h_cur,
-		CXCursor h_parent,
-		h_util_ctx_t CTX
-		)
-{
-	CXType			ELEMENT_TYPE;
-	CXType			POINTER_TYPE;
-	aclspv_id_t		RESULT_ID = 0;
-	aclspv_id_t		BASE_ID = 0;
-	aclspv_id_t		INDEX_ID = 0;
-	CXCursor		BASE_CURSOR, INDEX_CURSOR;
-	aclspv_wrdcount_t	BASE_IDX;
-	aclspv_wrdcount_t	INDEX_IDX;
-
-	(void)h_parent;
-
-	BASE_CURSOR = clang_Cursor_getArgument(h_cur, 0);
-	INDEX_CURSOR = clang_Cursor_getArgument(h_cur, 1);
-
-	ae2f_expected_if(BASE_CURSOR.kind && INDEX_CURSOR.kind) {
-		BASE_IDX = util_mk_cursor_base(CTX->m_num_cursor, &CTX->m_cursors, BASE_CURSOR);
-		if(BASE_IDX < CTX->m_num_cursor) {
-			clang_visitChildren(BASE_CURSOR, emit_expr, CTX);
-			BASE_ID = ((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[BASE_IDX].m_data.m_var_simple.m_id;
-		}
-
-		INDEX_IDX = util_mk_cursor_base(CTX->m_num_cursor, &CTX->m_cursors, INDEX_CURSOR);
-		if(INDEX_IDX < CTX->m_num_cursor) {
-			clang_visitChildren(INDEX_CURSOR, emit_expr, CTX);
-			INDEX_ID = ((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[INDEX_IDX].m_data.m_var_simple.m_id;
-		}
-	}
-
-	ae2f_expected_if(BASE_ID && INDEX_ID) {
-	} else {
-		CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
-		return 0;
-	}
-
-	ELEMENT_TYPE = clang_getCanonicalType(clang_getCursorType(h_cur));
-	POINTER_TYPE = clang_getPointeeType(ELEMENT_TYPE);
-
-	ae2f_expected_but_else(CTX->m_count.m_fndef = util_emitx_5(
-				&CTX->m_section.m_fndef
-				, CTX->m_count.m_fndef
-				, SpvOpAccessChain
-				, emit_expr_type(POINTER_TYPE, CTX)
-				, CTX->m_id
-				, BASE_ID
-				, INDEX_ID
-				)) return 0;
-
-	RESULT_ID = CTX->m_id++;
-
-	CTX->m_err = ACLSPV_COMPILE_OK;
-	return RESULT_ID;
-}
-
-static aclspv_id_t emit_expr_conditional(
-		CXCursor h_cur,
-		CXCursor h_parent,
-		h_util_ctx_t CTX
-		)
-{
-	(void)h_cur;
-	(void)h_parent;
-	(void)CTX;
-
-	CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
-	return 0;
-}
-
-static aclspv_id_t emit_expr_cast(
-		CXCursor h_cur,
-		CXCursor h_parent,
-		h_util_ctx_t CTX
-		)
-{
-	(void)h_cur;
-	(void)h_parent;
-	(void)CTX;
-
-	CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
-	return 0;
-}
-
-static aclspv_id_t emit_expr_decl_ref(
-		CXCursor h_cur,
-		CXCursor h_parent,
-		h_util_ctx_t CTX
-		)
-{
-	CXCursor		REFERENCED;
-	aclspv_wrdcount_t	CURSOR_IDX;
-	aclspv_id_t		VAR_ID = 0;
-
-	(void)h_parent;
-
-	REFERENCED = clang_getCursorReferenced(h_cur);
-
-	if(REFERENCED.kind == CXCursor_ParmDecl || REFERENCED.kind == CXCursor_VarDecl) {
-		CURSOR_IDX = util_find_cursor(CTX->m_num_cursor, CTX->m_cursors.m_p, REFERENCED);
-
-		if(CURSOR_IDX < CTX->m_num_cursor) {
-			VAR_ID = ((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[CURSOR_IDX].m_data.m_var_simple.m_id;
-		} else {
-			VAR_ID = 0;
-		}
-	}
-
-	CTX->m_err = ACLSPV_COMPILE_OK;
-	return VAR_ID;
-}
-
-static aclspv_id_t emit_expr_literal(
-		CXCursor h_cur,
-		CXCursor h_parent,
-		h_util_ctx_t CTX
-		)
-{
-	CXType			LITERAL_TYPE;
-	intmax_t		LITERAL_VALUE;
-	aclspv_id_t		CONST_ID = 0;
-
-	(void)h_parent;
-
-	LITERAL_TYPE = clang_getCursorType(h_cur);
-
-	switch((uintmax_t)LITERAL_TYPE.kind) {
-		case CXType_Int:
-		case CXType_UInt:
-		case CXType_Short:
-		case CXType_UShort:
-		case CXType_SChar:
-		case CXType_UChar:
-		case CXType_Long:
-		case CXType_ULong:
-		case CXType_LongLong:
-		case CXType_ULongLong:
-			LITERAL_VALUE = clang_Cursor_getNumArguments(h_cur);
-			CONST_ID = util_mk_constant_val_id((aclspv_wrd_t)LITERAL_VALUE, CTX);
-			break;
-
-		case CXType_Float:
-		case CXType_Double:
-			CONST_ID = 0;
-			break;
-
+	switch((uintmax_t)c_cur.kind) {
+		/** unknown */
 		default:
-			CONST_ID = 0;
-			CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
+			return EMIT_EXPR_BIN_1_NOT_THE_CASE;
+
+			/** literals */
+
+		case CXCursor_IntegerLiteral:
+		case CXCursor_FloatingLiteral:
+			{
+				CXEvalResult EVAL = clang_Cursor_Evaluate(c_cur);
+				enum EMIT_EXPR_BIN_1_ RES = EMIT_EXPR_BIN_1_FAILURE;
+
+				/** no cleanup needed. init already fucked. */
+				ae2f_expected_but_else (EVAL) {
+					assert(0 && "EVAL is not running");
+					return EMIT_EXPR_BIN_1_FAILURE;
+				}
+
+				switch((uintmax_t)clang_EvalResult_getKind(EVAL)) {
+					case CXEval_Int:
+						EVRES.m_ull = clang_EvalResult_getAsUnsigned(EVAL);
+						if(TYPE_NEW_REQ && TYPE_NEW_REQ != ID_DEFAULT_U64) {
+							FLAGS.m_is_constant	= 1;
+							FLAGS.m_is_int		= 1;
+							FLAGS.m_need_cast	= 1;
+							RES = EMIT_EXPR_BIN_1_SUCCESS_CONSTANT;
+							break;
+						} else {
+							TYPE_NEW_REQ = ID_DEFAULT_U64;
+						}
+
+
+
+						if(EVRES.m_ull <= UINT32_MAX) {
+							ae2f_expected_but_else(h_ctx->m_count.m_types = util_emitx_4(
+										&h_ctx->m_section.m_types
+										, h_ctx->m_count.m_types
+										, SpvOpConstant
+										, ID_DEFAULT_U32
+										, c_newid
+										, (aclspv_wrd_t)EVRES.m_ull
+										)) { assert(0); break; }
+
+							RES = EMIT_EXPR_BIN_1_SUCCESS_CONSTANT;
+							break;
+						}
+
+						ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U64, h_ctx)) {
+							assert(0);
+							break;
+						}
+
+						ae2f_expected_but_else(h_ctx->m_count.m_types = util_emitx_5(
+									&h_ctx->m_section.m_types
+									, h_ctx->m_count.m_types
+									, SpvOpConstant
+									, ID_DEFAULT_U64
+									, c_newid
+									, (aclspv_wrd_t)(EVRES.m_ull		& 0xFFFFFFFF)
+									, (aclspv_wrd_t)((EVRES.m_ull >> 32)	& 0xFFFFFFFF)
+									))
+						{
+							assert(0);
+							break; 
+						}
+
+						RES = EMIT_EXPR_BIN_1_SUCCESS_CONSTANT;
+						break;
+
+					case CXEval_Float:
+						EVRES.m_dbl = clang_EvalResult_getAsDouble(EVAL);
+						if(TYPE_NEW_REQ && TYPE_NEW_REQ != ID_DEFAULT_F64) {
+							FLAGS.m_is_constant	= 1;
+							FLAGS.m_need_cast	= 1;
+							RES = EMIT_EXPR_BIN_1_SUCCESS_CONSTANT;
+							break;
+						} else {
+							TYPE_NEW_REQ = ID_DEFAULT_F64;
+						}
+
+
+						ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_F64, h_ctx)) {
+							RES = EMIT_EXPR_BIN_1_FAILURE;
+							break;
+						}
+
+						ae2f_expected_but_else(h_ctx->m_count.m_types = util_emitx_5(
+									&h_ctx->m_section.m_types
+									, h_ctx->m_count.m_types
+									, SpvOpConstant
+									, ID_DEFAULT_F64
+									, c_newid
+									, (aclspv_wrd_t)(EVRES.m_ull		& 0xFFFFFFFF)
+									, (aclspv_wrd_t)((EVRES.m_ull >> 32)	& 0xFFFFFFFF)
+									)) { 
+							break; 
+						}
+
+						RES = EMIT_EXPR_BIN_1_SUCCESS_CONSTANT;
+						break;
+					default:
+						assert(0 && "unknown evaluation");
+						break;
+				}
+
+				clang_EvalResult_dispose(EVAL);
+
+				if(FLAGS.m_need_cast && RES != EMIT_EXPR_BIN_1_FAILURE) {
+					break;
+				}
+				return RES;
+			}
+
+		case CXCursor_DeclRefExpr:
+			{
+				const CXCursor DECL = clang_getCursorReferenced(c_cur);
+				const aclspv_wrd_t	DECL_IDX = util_find_cursor(
+						h_ctx->m_num_cursor
+						, h_ctx->m_cursors.m_p
+						, DECL
+						);
+
+				ae2f_expected_but_else(DECL_IDX < h_ctx->m_num_cursor)
+					return EMIT_EXPR_BIN_1_FAILURE;
+
+#define	DECL_INFO	DECL_IDX[((util_cursor* ae2f_restrict)h_ctx->m_cursors.m_p)]
+
+				/** NaN is undefined behaviour here */
+				unless(util_default_is_number(DECL_INFO.m_data.m_var_simple.m_type_id))
+					return EMIT_EXPR_BIN_1_FAILURE;
+
+				if(!TYPE_NEW_REQ || TYPE_NEW_REQ == DECL_INFO.m_data.m_var_simple.m_type_id) {
+					TYPE_NEW_REQ = DECL_INFO.m_data.m_var_simple.m_type_id;
+					ae2f_expected_but_else(h_ctx->m_count.m_fnimpl = util_emitx_4(
+								&h_ctx->m_section.m_fnimpl
+								, h_ctx->m_count.m_fnimpl
+								, SpvOpLoad
+								, DECL_INFO.m_data.m_var_simple.m_type_id
+								, c_newid
+								, DECL_INFO.m_data.m_var_simple.m_id
+								)) return EMIT_EXPR_BIN_1_FAILURE;
+				} else {
+					ae2f_expected_but_else(h_ctx->m_count.m_fnimpl = util_emitx_4(
+								&h_ctx->m_section.m_fnimpl
+								, h_ctx->m_count.m_fnimpl
+								, SpvOpLoad
+								, DECL_INFO.m_data.m_var_simple.m_type_id
+								, h_ctx->m_id++
+								, DECL_INFO.m_data.m_var_simple.m_id
+								)) return EMIT_EXPR_BIN_1_FAILURE;
+
+					if(
+							util_default_bit_width(TYPE_NEW_REQ) 
+							!= util_default_bit_width(DECL_INFO.m_data.m_var_simple.m_type_id)) 
+					{
+#define	IS_FLT	util_default_is_float(DECL_INFO.m_data.m_var_simple.m_type_id)
+#define	BWIDTH	util_default_bit_width(TYPE_NEW_REQ)
+#define	OPCODE	IS_FLT ? SpvOpFConvert : SpvOpUConvert
+#define	NEWTYPEGEN	(IS_FLT ? util_default_float : util_default_unsigned)(BWIDTH)
+
+						ae2f_expected_but_else(h_ctx->m_count.m_fnimpl = util_emitx_4(
+									&h_ctx->m_section.m_fnimpl
+									, h_ctx->m_count.m_fnimpl
+									, OPCODE
+									, NEWTYPEGEN
+									, h_ctx->m_id
+									, h_ctx->m_id - 1
+									)) return EMIT_EXPR_BIN_1_FAILURE;
+						++h_ctx->m_id;
+#undef	NEWTYPEGEN
+#undef	BWIDTH
+#undef	IS_FLT
+#undef	OPCODE
+					}
+
+#define	IS_FLT	util_default_is_float(TYPE_NEW_REQ)
+#define	OPCODE	IS_FLT	? SpvOpConvertSToF : SpvOpConvertFToS
+					ae2f_expected_but_else(h_ctx->m_count.m_fnimpl = util_emitx_4(
+								&h_ctx->m_section.m_fnimpl
+								, h_ctx->m_count.m_fnimpl
+								, OPCODE
+								, TYPE_NEW_REQ
+								, c_newid
+								, h_ctx->m_id - 1
+								)) return EMIT_EXPR_BIN_1_FAILURE;
+#undef	OPCODE
+#undef	IS_FLT
+
+				}
+#undef	DECL_INFO
+			}
+
+			return EMIT_EXPR_BIN_1_SUCCESS;
+	}
+
+	/** casting logic */
+	unless(FLAGS.m_is_constant) {
+		assert(0 && "not constant");
+		return EMIT_EXPR_BIN_1_FAILURE;
+	}
+
+	unless(util_get_default_id(TYPE_NEW_REQ, h_ctx)) {
+		assert(0 && "requested type is not default maybe");
+		return EMIT_EXPR_BIN_1_FAILURE;
+	}
+
+	switch(TYPE_NEW_REQ) {
+		{
+			aclspv_wrd_t	MASK;
+
+			ae2f_unexpected_but_if(0) {
+				ae2f_unreachable();
+				case ID_DEFAULT_U8:
+				MASK = 0xFF;
+				unless(FLAGS.m_is_int)
+					EVRES.m_ll = (intmax_t)EVRES.m_dbl;
+
+				EVRES.m_ll = (char)EVRES.m_ll;
+			}
+
+			ae2f_unexpected_but_if(0) {
+				ae2f_unreachable();
+				case ID_DEFAULT_U16:
+				MASK = 0xFFFF;
+				unless(FLAGS.m_is_int)
+					EVRES.m_ll = (intmax_t)EVRES.m_dbl;
+
+				EVRES.m_ll = (short)EVRES.m_ll;
+			}
+
+			ae2f_unexpected_but_if(0) {
+				ae2f_unreachable();
+				case ID_DEFAULT_U32:
+				case ID_DEFAULT_I32:
+				MASK = 0xFFFFFFFF;
+				unless(FLAGS.m_is_int)
+					EVRES.m_ll = (intmax_t)EVRES.m_dbl;
+
+				EVRES.m_ll = (int)EVRES.m_ll;
+			}
+
+			ae2f_unexpected_but_if(0) {
+				ae2f_unreachable();
+				case ID_DEFAULT_F32:
+				MASK = 0xFFFFFFFF;
+				if(FLAGS.m_is_int)
+					EVRES.m_flt = (float)EVRES.m_ll;
+				else
+					EVRES.m_flt = (float)EVRES.m_dbl;
+			}
+
+			ae2f_expected_but_else(h_ctx->m_count.m_types = util_emitx_4(
+						&h_ctx->m_section.m_types
+						, h_ctx->m_count.m_types
+						, SpvOpConstant
+						, TYPE_NEW_REQ
+						, c_newid
+						, (aclspv_wrd_t)EVRES.m_ull & MASK
+						)) { return EMIT_EXPR_BIN_1_FAILURE; }
+		} return EMIT_EXPR_BIN_1_SUCCESS_CONSTANT;
+
+		ae2f_unexpected_but_if(0) {
+			ae2f_unreachable();
+			case ID_DEFAULT_F64:
+			if(FLAGS.m_is_int)
+				EVRES.m_dbl = (double)EVRES.m_ull;
+		}
+
+		ae2f_unexpected_but_if(0) {
+			ae2f_unreachable();
+			case ID_DEFAULT_U64:
+			unless(FLAGS.m_is_int)
+				EVRES.m_ll = (intmax_t)EVRES.m_dbl;
+		}
+
+		ae2f_expected_but_else(h_ctx->m_count.m_types = util_emitx_5(
+					&h_ctx->m_section.m_types
+					, h_ctx->m_count.m_types
+					, SpvOpConstant
+					, ID_DEFAULT_F64
+					, c_newid
+					, (aclspv_wrd_t)(EVRES.m_ull		& 0xFFFFFFFF)
+					, (aclspv_wrd_t)((EVRES.m_ull >> 32)	& 0xFFFFFFFF)
+					)) return EMIT_EXPR_BIN_1_FAILURE;
+		return EMIT_EXPR_BIN_1_SUCCESS_CONSTANT;
+
+		case ID_DEFAULT_F16:
+		unless(util_get_default_id(ID_DEFAULT_F32, h_ctx)) {
+			assert(0);
+			return EMIT_EXPR_BIN_1_FAILURE;
+		}
+
+		if(FLAGS.m_is_int)
+			EVRES.m_flt = (float)EVRES.m_ull;
+		else
+			EVRES.m_flt = (float)EVRES.m_dbl;
+
+		ae2f_expected_but_else(h_ctx->m_count.m_types = util_emitx_4(
+					&h_ctx->m_section.m_types
+					, h_ctx->m_count.m_types
+					, SpvOpConstant
+					, ID_DEFAULT_F32 
+					, h_ctx->m_id
+					, (aclspv_wrd_t)EVRES.m_ull & 0xFFFFFFFF
+					)) { assert(0); return EMIT_EXPR_BIN_1_FAILURE; }
+
+		ae2f_expected_but_else(h_ctx->m_count.m_types = util_emitx_4(
+					&h_ctx->m_section.m_types
+					, h_ctx->m_count.m_types
+					, SpvOpSpecConstantOp
+					, ID_DEFAULT_F16
+					, c_newid
+					, h_ctx->m_id
+					)) { assert(0); return EMIT_EXPR_BIN_1_FAILURE; }
+
+		++h_ctx->m_id;
+		return EMIT_EXPR_BIN_1_SUCCESS_CONSTANT;
+
+		/** literals? for these? seriously? */
+		case ID_DEFAULT_I32_PTR_FUNC:
+		case ID_DEFAULT_U8_PTR_FUNC:
+		case ID_DEFAULT_U16_PTR_FUNC:
+		case ID_DEFAULT_U32_PTR_FUNC:
+		case ID_DEFAULT_U64_PTR_FUNC:
+		case ID_DEFAULT_U32V4_PTR_INP:
+		case ID_DEFAULT_U32V4_PTR_OUT:
+		case ID_DEFAULT_END:
+		case ID_DEFAULT_FN_VOID:
+		case ID_DEFAULT_VOID:
+		case ID_DEFAULT_F16_PTR_FUNC:
+		case ID_DEFAULT_F32_PTR_FUNC:
+		case ID_DEFAULT_F64_PTR_FUNC:
+		default:
+		assert(0 && "unsuppported");
+		return EMIT_EXPR_BIN_1_FAILURE;
+	}
+}
+
+
+#if 1
+ae2f_inline static enum EMIT_EXPR_BIN_1_ emit_expr_bin_2(
+		const CXCursor				c_cur,
+		const h_util_ctx_t			h_ctx, 
+		const aclspv_id_t			c_newid,
+		const aclspv_id_t			c_result_type_id,
+		x_aclspv_vec* ae2f_restrict const	h_cmdscale,
+		aclspv_id_t				wr_operands[2]
+		)
+{
+
+	x_scale* ae2f_restrict	NEW_SCALE;
+	aclspv_wrd_t		OPCODE;
+	ae2f_expected_but_else(h_ctx) {
+		assert(0 && "emit_expr_bin_2::h_ctx is null");
+		return EMIT_EXPR_BIN_1_FAILURE;
+	}
+
+	switch((umax)c_cur.kind) {
+		default:
+			return EMIT_EXPR_BIN_1_NOT_THE_CASE;
+
+		case CXCursor_BinaryOperator:
+		case CXCursor_CompoundAssignOperator:
 			break;
 	}
 
-	CTX->m_err = ACLSPV_COMPILE_OK;
-	return CONST_ID;
+	switch((uintmax_t)clang_getCursorBinaryOperatorKind(c_cur)) {
+		default:
+			return EMIT_EXPR_BIN_1_NOT_THE_CASE;
+
+		case CXBinaryOperator_Add:
+			switch(c_result_type_id) {
+				case 0:
+				case ID_DEFAULT_U8:
+				case ID_DEFAULT_U16:
+				case ID_DEFAULT_U32:
+				case ID_DEFAULT_U64:
+				case ID_DEFAULT_I32:
+					OPCODE = SpvOpIAdd;
+					break;
+
+				case ID_DEFAULT_F16:
+				case ID_DEFAULT_F32:
+				case ID_DEFAULT_F64:
+					OPCODE = SpvOpFAdd;
+					break;
+
+				default:
+					/** not supported */
+					assert(0 && "no support::add");
+					return EMIT_EXPR_BIN_1_FAILURE;
+			} break;
+
+		case CXBinaryOperator_Sub:
+			switch(c_result_type_id) {
+				case ID_DEFAULT_U8:
+				case ID_DEFAULT_U16:
+				case ID_DEFAULT_U32:
+				case ID_DEFAULT_U64:
+				case ID_DEFAULT_I32:
+					OPCODE = SpvOpISub;
+					break;
+
+				case ID_DEFAULT_F16:
+				case ID_DEFAULT_F32:
+				case ID_DEFAULT_F64:
+					OPCODE = SpvOpFSub;
+					break;
+
+				default:
+					/** not supported */
+					assert(0 && "no support::sub");
+					return EMIT_EXPR_BIN_1_FAILURE;
+			} break;
+
+		case CXBinaryOperator_Mul:
+			switch(c_result_type_id) {
+				case ID_DEFAULT_U8:
+				case ID_DEFAULT_U16:
+				case ID_DEFAULT_U32:
+				case ID_DEFAULT_U64:
+				case ID_DEFAULT_I32:
+					OPCODE = SpvOpIMul;
+					break;
+
+				case ID_DEFAULT_F16:
+				case ID_DEFAULT_F32:
+				case ID_DEFAULT_F64:
+					OPCODE = SpvOpFMul;
+					break;
+
+				default:
+					/** not supported */
+					assert(0 && "no support::mul");
+					return EMIT_EXPR_BIN_1_FAILURE;
+			} break;
+
+		case CXBinaryOperator_Div:
+			switch(c_result_type_id) {
+				case ID_DEFAULT_U8:
+				case ID_DEFAULT_U16:
+				case ID_DEFAULT_U32:
+				case ID_DEFAULT_U64:
+					OPCODE = SpvOpUDiv;
+					break;
+
+				case ID_DEFAULT_I32:
+					OPCODE = SpvOpSDiv;
+					break;
+
+				case ID_DEFAULT_F16:
+				case ID_DEFAULT_F32:
+				case ID_DEFAULT_F64:
+					OPCODE = SpvOpFDiv;
+					break;
+
+				default:
+					/** not supported */
+					assert(0 && "no support::div");
+					return EMIT_EXPR_BIN_1_FAILURE;
+			} break;
+
+		case CXBinaryOperator_Rem:
+			switch(c_result_type_id) {
+				case ID_DEFAULT_U8:
+				case ID_DEFAULT_U16:
+				case ID_DEFAULT_U32:
+				case ID_DEFAULT_U64:
+					OPCODE = SpvOpUMod;
+					break;
+
+				case ID_DEFAULT_I32:
+					OPCODE = SpvOpSRem;
+					break;
+
+				default:
+					/** not supported */
+					assert(0 && "no support::rem");
+					return EMIT_EXPR_BIN_1_FAILURE;
+			} break;
+	}
+
+
+	{
+		aclspv_wrd_t* ae2f_restrict VEC;
+		NEW_SCALE = mk_scale_from_vec(h_cmdscale, count_to_sz(8));
+		ae2f_expected_but_else(NEW_SCALE)
+			return EMIT_EXPR_BIN_1_FAILURE;
+
+		VEC = get_buf_from_scale2(aclspv_wrd_t, h_cmdscale, *NEW_SCALE);
+
+		ae2f_expected_but_else(VEC)
+			return EMIT_EXPR_BIN_1_FAILURE;
+
+		if(c_newid == h_ctx->m_id)
+			++h_ctx->m_id;
+
+		VEC[0] = 2;	/** number of operands */
+		VEC[1] = 0;	/** is not constant? */
+		VEC[2] = opcode_to_wrd(SpvOpSpecConstantOp, 5);
+		VEC[3] = c_result_type_id;
+		VEC[4] = c_newid;
+		VEC[5] = OPCODE;
+		VEC[6] = h_ctx->m_id++;
+		VEC[7] = h_ctx->m_id++;
+
+		if(wr_operands) {
+			wr_operands[0] = VEC[6];
+			wr_operands[1] = VEC[7];
+		}
+	}
+
+	return EMIT_EXPR_BIN_1_SUCCESS_CONSTANT;
 }
 
-static aclspv_id_t emit_expr_type(CXType type, h_util_ctx_t CTX)
+ae2f_inline static aclspv_id_t emit_expr_type(const CXType type, const h_util_ctx_t CTX)
 {
 	aclspv_id_t	TYPE_ID = 0;
 
@@ -436,79 +632,215 @@ static aclspv_id_t emit_expr_type(CXType type, h_util_ctx_t CTX)
 			break;
 	}
 
-	(void)TYPE_ID;
-	CTX->m_err = ACLSPV_COMPILE_OK;
 	return TYPE_ID;
 }
+#endif
 
 static enum CXChildVisitResult emit_expr(
 		CXCursor h_cur,
 		CXCursor h_parent,
-		CXClientData h_ctx
+		CXClientData rdwr_data
 		)
 {
-#define	CTX	((h_util_ctx_t)h_ctx)
-	aclspv_id_t	EXPR_ID = 0;
-	enum CXCursorKind	KIND = h_cur.kind;
+#define	CTX		((h_util_ctx_t)(((uptr* ae2f_restrict)rdwr_data)[0]))
+#define STCK_COUNT	((uptr* ae2f_restrict)(rdwr_data))[1]
+#define ID_REQ		((aclspv_wrd_t)(((uptr* ae2f_restrict)(rdwr_data))[2]))
+#define	IS_NOT_CONSTANT	((uptr* ae2f_restrict)(rdwr_data))[3]
+#define	TYPE_REQUIRED	(((uptr* ae2f_restrict)(rdwr_data))[4])
+#define	COUNTER_OPRND	(((uptr* ae2f_restrict)(rdwr_data))[5])
 
-	(void)h_parent;
+	/** for stack tmp.m_v0 will be used. */
+#define	STCK		CTX->m_tmp.m_v0
+#define	CMDSTCK_SCALE	CTX->m_tmp.m_v1
+	h_scale_t LST_SCALE				= get_last_scale_from_vec(&CMDSTCK_SCALE);
+	aclspv_wrd_t* ae2f_restrict LST_SCALE_BUF	= get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *LST_SCALE);
+	aclspv_id_t ID_REQ_CURRENT			= ID_REQ;
 
-	switch((uintmax_t)KIND) {
-		case CXCursor_BinaryOperator:
-		case CXCursor_CompoundAssignOperator:
-			EXPR_ID = emit_expr_binary(h_cur, h_parent, CTX);
-			break;
-
-		case CXCursor_UnaryOperator:
-			EXPR_ID = emit_expr_unary(h_cur, h_parent, CTX);
-			break;
-
-		case CXCursor_CallExpr:
-			EXPR_ID = emit_expr_call(h_cur, h_parent, CTX);
-			break;
-
-		case CXCursor_ArraySubscriptExpr:
-			EXPR_ID = emit_expr_array_subscript(h_cur, h_parent, CTX);
-			break;
-
-		case CXCursor_ConditionalOperator:
-			EXPR_ID = emit_expr_conditional(h_cur, h_parent, CTX);
-			break;
-
-		case CXCursor_CStyleCastExpr:
-			EXPR_ID = emit_expr_cast(h_cur, h_parent, CTX);
-			break;
-
-		case CXCursor_DeclRefExpr:
-			EXPR_ID = emit_expr_decl_ref(h_cur, h_parent, CTX);
-			break;
-
-		case CXCursor_IntegerLiteral:
-		case CXCursor_FloatingLiteral:
-			EXPR_ID = emit_expr_literal(h_cur, h_parent, CTX);
-			break;
-
-		default:
-			return CXChildVisit_Recurse;
-		}
-
-		unless(EXPR_ID) {
-			aclspv_wrdcount_t CURSOR_IDX = util_find_cursor(
-					CTX->m_num_cursor
-					, CTX->m_cursors.m_p
-					, h_cur
-					);
-
-			if(CURSOR_IDX < CTX->m_num_cursor) {
-				((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[CURSOR_IDX].m_data.m_var_simple.m_id = EXPR_ID;
-			}
+	if(STCK_COUNT) {
+		ae2f_expected_but_else(STCK.m_p) {
+			CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
+			assert(0 && "stack is acting funny");
 			return CXChildVisit_Break;
 		}
 
-		CTX->m_err = ACLSPV_COMPILE_OK;
-		return CXChildVisit_Continue;
+		ID_REQ_CURRENT = get_wrd_of_vec(&STCK)[STCK_COUNT - 1];
+	}
+
+	ae2f_expected_but_else(LST_SCALE_BUF) {
+		CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
+		return CXChildVisit_Break;
+	}
+
+	{
+		const CXString SPELL		= clang_getCursorSpelling(h_cur);
+		const CXString KINDSPELL	= clang_getCursorKindSpelling(h_cur.kind);
+		printf("EMITEXPR(%u) STACK(%lu) LST_SCALE_BUF(%lu %u): ", ID_REQ_CURRENT, STCK_COUNT, LST_SCALE->m_id, LST_SCALE_BUF[0]);
+		puts(SPELL.data);
+		puts(KINDSPELL.data);
+		clang_disposeString(SPELL);
+		clang_disposeString(KINDSPELL);
+
+#if 0
+		return CXChildVisit_Recurse;
+#endif
+	}
+
+	(void)h_parent;
+
+	switch(emit_expr_bin_1(h_cur, CTX, ID_REQ_CURRENT, (e_id_default* ae2f_restrict)&TYPE_REQUIRED)) {
+		case EMIT_EXPR_BIN_1_FAILURE:
+			assert(0 && "bin_1 is fishy");
+			return CXChildVisit_Break;
+
+		case EMIT_EXPR_BIN_1_SUCCESS:
+			IS_NOT_CONSTANT = 1;
+			LST_SCALE_BUF[1] = 1;
+			ae2f_fallthrough;
+
+		case EMIT_EXPR_BIN_1_SUCCESS_CONSTANT:
+			(void)(STCK_COUNT && --STCK_COUNT);
+			++COUNTER_OPRND;
+			while(LST_SCALE->m_id &&  COUNTER_OPRND == LST_SCALE_BUF[0]) {
+				puts("SPOTTED!!");
+				get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE))[1] 
+					|= LST_SCALE_BUF[1];
+
+				if(LST_SCALE_BUF[1]) {
+					(void)LST_SCALE_BUF[2]; /** OpSpecConstant */
+
+					LST_SCALE_BUF[3] ^= LST_SCALE_BUF[5];
+					LST_SCALE_BUF[5] ^= LST_SCALE_BUF[3];
+					LST_SCALE_BUF[3] ^= LST_SCALE_BUF[5]; /** swap */
+
+					LST_SCALE_BUF[3] |= mk_noprnds(4);
+
+					LST_SCALE_BUF[4] ^= LST_SCALE_BUF[5];
+					LST_SCALE_BUF[5] ^= LST_SCALE_BUF[4];
+					LST_SCALE_BUF[4] ^= LST_SCALE_BUF[5]; /** swap */
+				}
+
+#define		TMPL_SECTION	(*(IS_NOT_CONSTANT ? &CTX->m_section.m_fnimpl	: &CTX->m_section.m_types))
+#define		TMPL_COUNT	(*(IS_NOT_CONSTANT ? &CTX->m_count.m_fnimpl	: &CTX->m_count.m_types))
+
+				_aclspv_grow_vec_with_copy(
+						_aclspv_malloc
+						, _aclspv_free
+						, memcpy
+						, L_new
+						, TMPL_SECTION
+						, count_to_sz(TMPL_COUNT + sz_to_count(LST_SCALE->m_sz) - 2 - LST_SCALE_BUF[1])
+						);
+
+				ae2f_expected_but_else(TMPL_SECTION.m_p) {
+					CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
+					return CXChildVisit_Break;
+				}
+
+				memcpy(
+						get_wrd_of_vec(&TMPL_SECTION) + TMPL_COUNT
+						, LST_SCALE_BUF + 2 + LST_SCALE_BUF[1]
+						, LST_SCALE->m_sz - count_to_sz(2 + (aclspv_wrd_t)LST_SCALE_BUF[1])
+				      );
+
+				TMPL_COUNT += sz_to_count(LST_SCALE->m_sz) - 2 - LST_SCALE_BUF[1];
+#undef		TMPL_SECTION
+#undef		TMPL_COUNT
+
+				del_scale_from_vec_last(&CMDSTCK_SCALE);
+				LST_SCALE = get_last_scale_from_vec(&CMDSTCK_SCALE);
+				LST_SCALE_BUF = get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *LST_SCALE);
+
+				COUNTER_OPRND	= 1;
+				STCK_COUNT	-= LST_SCALE_BUF[0] - 1;
+			} return CXChildVisit_Recurse;
+		case EMIT_EXPR_BIN_1_NOT_THE_CASE:
+			break;
+		default:
+			ae2f_unreachable();
+	}
+
+	{
+		aclspv_wrd_t	OPRNDS[2];
+		switch(emit_expr_bin_2(
+					h_cur
+					, CTX
+					, ID_REQ_CURRENT
+					, (aclspv_wrd_t)TYPE_REQUIRED
+					, &CMDSTCK_SCALE, OPRNDS))
+		{
+			case EMIT_EXPR_BIN_1_FAILURE:
+				assert(0 && "FAILURE_expr_bin2");
+				return CXChildVisit_Break;
+
+			case EMIT_EXPR_BIN_1_SUCCESS:
+			case EMIT_EXPR_BIN_1_SUCCESS_CONSTANT:
+				printf("OPERANDS %u %u\n", OPRNDS[0], OPRNDS[1]);
+
+				ae2f_expected_but_else(STCK_COUNT = util_emit_wrd(
+							&STCK, (aclspv_wrd_t)STCK_COUNT + 1
+							, OPRNDS[1])) {
+					CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
+					return CXChildVisit_Break;
+				}
+
+				get_wrd_of_vec(&STCK)[STCK_COUNT - 2] = OPRNDS[0];
+
+
+				ae2f_fallthrough;
+			case EMIT_EXPR_BIN_1_NOT_THE_CASE:
+				break;
+			default:
+				ae2f_unreachable();
+		}
+	}
+
+	CTX->m_err = ACLSPV_COMPILE_OK;
+	return CXChildVisit_Recurse;
 
 #undef	CTX
+#undef	STCK_COUNT
+#undef	STCK
+#undef	CMDSTCK_SCALE
+#undef	ID_REQ
+}
+
+ae2f_inline static int emit_get_expr(const aclspv_id_t c_id_req, const aclspv_id_t c_type_req, const CXCursor c_cur, h_util_ctx_t h_ctx) {
+	uptr BUF[6];
+	aclspv_wrd_t* ae2f_restrict		SCALE_BOOT;
+
+	BUF[0]		= (uptr)h_ctx;					/* context. must be pointer to context. */
+	BUF[1]		= 0;						/* stack count. must be 0. */
+	BUF[2]		= c_id_req;					/* result value id requested */
+	BUF[3]		= 0;						/* is-not-constant. must be 0. */
+	BUF[4]		= c_type_req ? c_type_req : ID_DEFAULT_U32;	/* type required */
+	BUF[5]		= 0;						/* count for operand */
+
+	puts("HERE IS YOUR CALL");
+
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, h_ctx->m_tmp.m_v0, 100);
+	ae2f_expected_but_else(h_ctx->m_tmp.m_v0.m_p)
+		return 1;
+
+	ae2f_expected_but_else(init_scale(&h_ctx->m_tmp.m_v1, 2))
+		return 1;
+
+	SCALE_BOOT = get_buf_from_scale2(aclspv_wrd_t, &h_ctx->m_tmp.m_v1, *get_last_scale_from_vec(&h_ctx->m_tmp.m_v1));
+	assert(SCALE_BOOT);
+	SCALE_BOOT[0] = 0;
+	SCALE_BOOT[1] = 0;
+
+	if(emit_expr(c_cur, c_cur, BUF) == CXChildVisit_Break)
+		return 1;
+
+	ae2f_expected_but_else(h_ctx->m_tmp.m_v0.m_p)
+		return 1;
+
+	ae2f_expected_but_else(h_ctx->m_tmp.m_v1.m_p)
+		return 1;
+
+	clang_visitChildren(c_cur, emit_expr, BUF);
+
+	return (int)h_ctx->m_err;
 }
 
 #endif

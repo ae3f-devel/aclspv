@@ -129,8 +129,6 @@ aclspv_compile(
 	CTX.m_tmp.m_w0 = 0;
 	clang_visitChildren(CXROOTCUR, emit_decl_glob_obj, &CTX);
 
-
-
 	{
 		aclspv_wrdcount_t	IDX = CTX.m_fnlist.m_num_entp;
 		const aclspv_wrd_t	ANCHOR = CTX.m_tmp.m_w3;
@@ -155,6 +153,7 @@ aclspv_compile(
 					,  (size_t)(CTX.m_tmp.m_w0 = IDX)
 					);
 
+			CTX.m_count.m_fnimpl = 0;
 
 			ae2f_expected_but_else(CTX.m_scale_vars.m_p && FNSCALE) {
 				CTX.m_err = ACLSPV_COMPILE_MET_INVAL;
@@ -217,12 +216,35 @@ aclspv_compile(
 					, &CTX);
 			ae2f_unexpected_but_if(STATE_VAL) goto LBL_CLEANUP;
 
+			if(CTX.m_count.m_fnimpl) {
+				_aclspv_grow_vec_with_copy(_aclspv_malloc, _aclspv_free, _aclspv_memcpy, L_new
+						, CTX.m_section.m_fndef
+						, (size_t)count_to_sz(CTX.m_count.m_fndef + CTX.m_count.m_fnimpl)
+						);
+
+				ae2f_expected_but_else(CTX.m_section.m_fndef.m_p) {
+					CTX.m_err = ACLSPV_COMPILE_ALLOC_FAILED;
+					goto LBL_CLEANUP;
+				}
+
+				memcpy(
+						get_wrd_of_vec(&CTX.m_section.m_fndef) + CTX.m_count.m_fndef
+						, CTX.m_section.m_fnimpl.m_p
+						, (size_t)count_to_sz(CTX.m_count.m_fnimpl)
+						);
+
+				CTX.m_count.m_fndef += CTX.m_count.m_fnimpl;
+			}
+
 			unless(CTX.m_has_function_ret) {
 				ae2f_expected_but_else(CTX.m_count.m_fndef = emit_opcode(
 							&CTX.m_section.m_fndef
 							, CTX.m_count.m_fndef
 							, SpvOpReturn, 0
-							)) goto LBL_CLEANUP;
+							)) {
+					CTX.m_err = ACLSPV_COMPILE_ALLOC_FAILED;
+					goto LBL_CLEANUP;
+				}
 			}
 
 			ae2f_expected_but_else(CTX.m_count.m_fndef = emit_opcode(
@@ -235,7 +257,7 @@ aclspv_compile(
 			}
 
 			assert(IDX == CTX.m_tmp.m_w0);
-			{ ae2f_assume(IDX == CTX.m_tmp.m_w0); } 
+			{ ae2f_assume(IDX == CTX.m_tmp.m_w0); }
 		}
 	}
 
@@ -258,6 +280,7 @@ LBL_CLEANUP:
 	_aclspv_stop_vec(_aclspv_free, CTX.m_fnlist.m_fn);
 
 	_aclspv_stop_vec(_aclspv_free, CTX.m_tmp.m_v0);
+	_aclspv_stop_vec(_aclspv_free, CTX.m_tmp.m_v1);
 
 	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_capability);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_decorate);
@@ -269,6 +292,7 @@ LBL_CLEANUP:
 	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_name);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_types);
 	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_vars);
+	_aclspv_stop_vec(_aclspv_free, CTX.m_section.m_fnimpl);
 
 
 	if(ae2f_expected(CXIDX)) clang_disposeIndex(CXIDX);
