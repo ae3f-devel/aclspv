@@ -10,6 +10,11 @@ set(ae2f_submod  .submod CACHE STRING "Relative path to submodule (subdirectory)
 
 option(aclspv_N_RELOAD_ALWAYS	"reloads aclspv always on configuration when set `OFF`" ON)
 
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE Release)
+endif()
+
+
 if(NOT aclspv_RELOADED)
 	set(_aclspv_RELOADED OFF)
 else()
@@ -52,7 +57,6 @@ else()
 	endif()
 
 	set(LLVM_ENABLE_PROJECTS "clang")
-	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "build type")
 	add_subdirectory(${ae2f_CoreScript_Wh}/llvm/llvm ${ae2f_BinRoot}/${ae2f_submod}/llvm)
 endif()
 
