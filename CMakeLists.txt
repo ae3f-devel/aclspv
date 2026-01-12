@@ -53,7 +53,7 @@ else()
 
 	set(LLVM_ENABLE_PROJECTS "clang")
 	if(NOT DEFINED CMAKE_BUILD_TYPE)
-		set(CMAKE_BUILD_TYPE Release)
+		set(CMAKE_BUILD_TYPE "Release")
 	endif()
 	add_subdirectory(${ae2f_CoreScript_Wh}/llvm/llvm ${ae2f_BinRoot}/${ae2f_submod}/llvm)
 endif()
