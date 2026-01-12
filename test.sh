@@ -26,6 +26,7 @@ for _ae2f_MAC_BUILD in ${__ae2f_IS_SHARED[@]}; do
 		$maker $1 $2 \
 		-Dae2f_CXX=$_ae2f_CXX \
 		-Dae2f_IS_SHARED=$_ae2f_IS_SHARED \
+		-DACLSPV_FETCH_CLANG_ALWAYS=ON \
 		-Dae2f_MAC_BUILD=$_ae2f_MAC_BUILD ||
 		{
 			echo "Configuration failed"

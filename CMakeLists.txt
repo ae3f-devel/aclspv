@@ -42,7 +42,9 @@ ae2f_CoreLibFetchX(ae2f Preproc	main)
 
 ae2f_CoreLibFetchX(KhronosGroup SPIRV-Headers main)
 
-find_package(Clang)
+if(ACLSPV_FETCH_CLANG_ALWAYS)
+	find_package(Clang)
+endif()
 
 message(STATUS ${Clang_FOUND})
 
@@ -118,3 +120,10 @@ ae2f_CoreTestTentVerbose(${ae3f__aclspvABI__TENT} ./test/util)
 
 ae2f_UltraErrWERROR(${ae3f__aclspvABI__TENT} PRIVATE)
 
+
+find_package(SPIRV-Headers QUIET)
+message(STATUS "SPIRV-Headers_FOUND: ${SPIRV-Headers_FOUND}")
+if(${SPIRV-Headers_FOUND})
+else()
+	install(TARGETS SPIRV-Headers EXPORT ae3f-aclspvCoreTargets)
+endif()
