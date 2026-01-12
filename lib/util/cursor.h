@@ -7,11 +7,16 @@
 #include <aclspv/spvty.h>
 #include <ae2f/Keys.h>
 #include <assert.h>
+#include <spirv/unified1/spirv.h>
 #include "../vec.auto.h"
 
 #include "./bind.h"
 #include "./ctx.h"
 #include "./emitx.h"
+#include "./u32_to_hex8.auto.h"
+
+#include "aclspv.h"
+#include "aclspv/abi.h"
 
 typedef struct {
 	/**
@@ -37,24 +42,12 @@ typedef struct {
 			aclspv_id_t	m_ptr_type_id;
 
 			/**
-			 * @var	m_init_val_0
-			 * @var	m_init_val_1
+			 * @var	m_init_val
 			 *
 			 * @brief
 			 * the initial value id 
 			 * */
-			aclspv_id_t	m_init_val_0;
-			aclspv_id_t	m_init_val_1;
-
-			/**
-			 * @var m_data_0
-			 * @var m_data_1
-			 * @brief
-			 * evaluated data.
-			 * meaningless when `m_is_32bit` is false.
-			 * */
-			aclspv_wrd_t	m_data_0;
-			aclspv_wrd_t	m_data_1;
+			aclspv_id_t	m_init_val;
 
 			/** 
 			 * @var m_is_constant
@@ -66,6 +59,7 @@ typedef struct {
 			 * is this variable not seem to be referenced?
 			 * */
 			aclspv_wrd_t	m_is_predictable	: 1;
+			aclspv_wrd_t	m_is_constant		: 1;
 
 			/**
 			 * @var	m_is_undefined
@@ -73,6 +67,7 @@ typedef struct {
 			 * is its first value not specified yet?
 			 * */
 			aclspv_wrd_t	m_is_undefined		: 1;
+
 
 			/**
 			 * @var	m_is_integer
@@ -187,6 +182,63 @@ ae2f_inline static e_aclspv_compile_t util_tell_cursor_lbl(
 							, CURSORDATA.m_id
 							, SpvStorageClassFunction))
 					return ACLSPV_COMPILE_ALLOC_FAILED;
+
+				if(CURSORDATA.m_init_val && !ae2f_expected(
+							h_ctx->m_count.m_fnimpl = util_emitx_3(
+								&h_ctx->m_section.m_fnimpl
+								, h_ctx->m_count.m_fnimpl
+								, SpvOpStore
+								, CURSORDATA.m_id
+								, CURSORDATA.m_init_val
+								)
+							)
+				  ) return ACLSPV_COMPILE_ALLOC_FAILED;
+
+#if	!defined(NDEBUG) || !NDEBUG
+				{
+					const aclspv_wrd_t POS	= h_ctx->m_count.m_name;
+					CXString SPELL		= clang_getCursorSpelling(wr_cursor[IDX].m_cursor);
+
+					_aclspv_grow_vec(_aclspv_malloc, _aclspv_free	
+							, h_ctx->m_tmp.m_v0, strlen(SPELL.data) + 10
+							);							
+					ae2f_expected_but_else(h_ctx->m_tmp.m_v0.m_p)		
+						goto LBL_FAIL;								
+					((char* ae2f_restrict)h_ctx->m_tmp.m_v0.m_p)[8] = ':';			
+					((char* ae2f_restrict)h_ctx->m_tmp.m_v0.m_p)[9] = '\0';			
+					_util_u32_to_hex8((CURSORDATA.m_id)
+							, ((char* ae2f_restrict)h_ctx->m_tmp.m_v0.m_p));	
+					strcat(h_ctx->m_tmp.m_v0.m_p, SPELL.data);			
+					ae2f_expected_but_else((h_ctx->m_count.m_name = emit_opcode(	
+									&h_ctx->m_section.m_name		
+									, h_ctx->m_count.m_name	
+									, SpvOpName, 0))			
+							) goto LBL_FAIL;					
+					ae2f_expected_but_else((h_ctx->m_count.m_name = util_emit_wrd(		
+									&h_ctx->m_section.m_name		
+									, h_ctx->m_count.m_name	
+									, CURSORDATA.m_id
+									)))						
+						goto LBL_FAIL;								
+					ae2f_expected_but_else((h_ctx->m_count.m_name = util_emit_str(			
+									&h_ctx->m_section.m_name			
+									, h_ctx->m_count.m_name		
+									, h_ctx->m_tmp.m_v0.m_p 			
+									)))						
+						goto LBL_FAIL;								
+					set_oprnd_count_for_opcode(get_wrd_of_vec(					
+								&h_ctx->m_section.m_name)[POS]				
+							, h_ctx->m_count.m_name - POS - 1);
+
+					clang_disposeString(SPELL);
+					continue;
+					ae2f_unreachable();
+LBL_FAIL:
+					clang_disposeString(SPELL);
+					return ACLSPV_COMPILE_ALLOC_FAILED;
+				}
+#else
+#endif
 			}
 		}
 #undef	CURSORDATA

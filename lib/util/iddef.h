@@ -215,6 +215,35 @@ util_default_bit_width(const e_id_default c_id_default) {
 	}
 }
 
+
+ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) unsigned	
+util_default_is_arithmetic(const aclspv_id_t c_id) {
+	return util_default_is_number(c_id);
+}
+
+/**
+ * @fn		util_default_decide_cast
+ * @returns	0 when invalid
+ * */
+ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) e_id_default
+util_default_decide_cast(const e_id_default c_id0, const e_id_default c_id1) {
+	unless(util_default_is_arithmetic(c_id0) && util_default_is_arithmetic(c_id1))
+		return 0;
+
+	unless(util_default_is_number(c_id0) && util_default_is_number(c_id1))
+		return 0;
+
+	/** one is 0? */
+	unless(c_id0 && c_id1)
+		return c_id0 + c_id1;
+
+	if(util_default_is_float(c_id0) != util_default_is_float(c_id1))
+		return util_default_is_float(c_id0) ? c_id0 : c_id1;
+
+	return util_default_bit_width(c_id0) > util_default_bit_width(c_id1)
+		? c_id0 : c_id1;
+}
+
 ae2f_inline static aclspv_id_t util_mk_default_id(
 		const e_id_default	c_id_default,
 		h_util_ctx_t	h_ctx

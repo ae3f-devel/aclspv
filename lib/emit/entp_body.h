@@ -198,7 +198,6 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 
 				CURSOR.m_data.m_var_simple.m_ptr_type_id = TYPE_ID;
 				CURSOR.m_data.m_var_simple.m_id = CTX->m_id++;
-				___mkname_on_dbg(CURSOR.m_data.m_var_simple.m_id);
 
 				/**
 				 * TODO:
@@ -206,6 +205,50 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 				 * Make initialising part if possible.
 				 * */
 				CURSOR.m_data.m_var_simple.m_is_undefined = 1;
+				if(util_default_is_arithmetic(CURSOR.m_data.m_var_simple.m_type_id))
+				{
+					CXCursor	VAR_INIT = clang_Cursor_getVarDeclInitializer(h_cur);
+		
+#if 0
+					aclspv_id_t	SPECID = 0xFFFFFFFF;
+
+					clang_visitChildren(h_cur, attr_specid, &SPECID);
+
+					if(SPECID != 0xFFFFFFFF) {
+						/** specid! */
+						util_constant* ae2f_restrict const NODE
+							= util_mk_constant_node(SPECID, CTX);
+
+						NODE->m_const_spec_id
+					}
+#endif
+
+					unless(clang_Cursor_isNull(VAR_INIT)) {
+						CURSOR.m_data.m_var_simple.m_is_undefined	= 0;
+						CURSOR.m_data.m_var_simple.m_init_val		= CTX->m_id++;
+						switch(emit_get_expr(
+								CURSOR.m_data.m_var_simple.m_init_val
+								, CURSOR.m_data.m_var_simple.m_type_id
+								, VAR_INIT
+								, CTX))
+						{
+							case EMIT_EXPR_NOT_THE_CASE:
+								CTX->m_err = ACLSPV_COMPILE_NO_IMPL;
+								break;
+
+							default:
+							case EMIT_EXPR_FAILURE:
+								CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
+								break;
+
+							case EMIT_EXPR_SUCCESS_LITERAL:
+							case EMIT_EXPR_SUCCESS_CONSTANT:
+							case EMIT_EXPR_SUCCESS:
+								CURSOR.m_data.m_var_simple.m_is_predictable = 1;
+								break;
+						}
+					}
+				}
 #undef	CURSOR
 
 			}
@@ -330,7 +373,7 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 					++CTX->m_num_cursor;
 
 				++CTX->m_id;
-				ae2f_unexpected_but_if(emit_get_expr(CTX->m_id - 1, 0, h_cur, CTX))
+				unless(emit_get_expr(CTX->m_id - 1, 0, h_cur, CTX))
 					goto LBL_FAIL;
 			}
 			goto LBL_DONE;

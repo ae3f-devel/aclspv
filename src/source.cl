@@ -63,7 +63,6 @@ __kernel void N_KERNEL_0(__constant uintptr_t* consti32, __attribute__((annotate
 	3;
 	a;
 	3 + 4 + 3;
-
 	a + 3;
 	a + 4.0 + 3;
 
@@ -77,7 +76,9 @@ AGOTO:
 
 kernel void do_none(void)
 {
+#if 0
     size_t g = get_global_id(0);
+#endif
     struct { char a; int b; } C;
 }
 
