@@ -51,7 +51,11 @@ else()
 			)
 	endif()
 
-	add_subdirectory(${ae2f_CoreScript_Wh}/llvm/clang ${ae2f_BinRoot}/${ae2f_submod}/clang)
+	set(LLVM_ENABLE_PROJECTS "clang")
+	if(NOT SET CMAKE_BUILD_TYPE)
+		set(CMAKE_BUILD_TYPE Release)
+	endif()
+	add_subdirectory(${ae2f_CoreScript_Wh}/llvm/llvm ${ae2f_BinRoot}/${ae2f_submod}/llvm)
 endif()
 
 file(GLOB aclspv-inc ${PROJECT_SOURCE_DIR}/inc/*)
