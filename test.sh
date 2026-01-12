@@ -4,7 +4,7 @@
 # $5 	stdcc
 
 makers=("-GNinja" "")
-lstdc=("90" "99" "11" "17" "23")
+lstdc=("99" "11" "17" "23")
 lstdcc=("11" "14" "17" "20" "23")
 
 __ae2f_CXX=("ON")
@@ -33,10 +33,9 @@ for _ae2f_MAC_BUILD in ${__ae2f_IS_SHARED[@]}; do
 			exit 1
 		}
 
-	cmake --build $builddir --config $buildtype || {
-		echo "Build failed"
-			exit 1	
-		}
+	cmake --build $builddir				\
+		--config $buildtype || exit 1
+
 	ctest -VV --test-dir $builddir -C $buildtype || {
 		echo "Test failed"
 			exit 1
