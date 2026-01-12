@@ -42,7 +42,8 @@ ae2f_CoreLibFetchX(ae2f Preproc	main)
 
 ae2f_CoreLibFetchX(KhronosGroup SPIRV-Headers main)
 
-if(ACLSPV_FETCH_CLANG_ALWAYS)
+if(${ACLSPV_FETCH_CLANG_ALWAYS})
+else()
 	find_package(Clang)
 endif()
 
