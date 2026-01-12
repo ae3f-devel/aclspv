@@ -135,8 +135,8 @@ aclspv_compile(
 		aclspv_wrdcount_t	IDX = CTX.m_fnlist.m_num_entp;
 		const aclspv_wrd_t	ANCHOR = CTX.m_tmp.m_w3;
 
-		util_get_default_id(ID_DEFAULT_VOID, &CTX);
-		util_get_default_id(ID_DEFAULT_FN_VOID, &CTX);
+		util_mk_default_id(ID_DEFAULT_VOID, &CTX);
+		util_mk_default_id(ID_DEFAULT_FN_VOID, &CTX);
 
 
 		while((IDX--)) {

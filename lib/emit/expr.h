@@ -126,7 +126,7 @@ ae2f_inline static enum EMIT_EXPR_BIN_1_ emit_expr_bin_1(
 							break;
 						}
 
-						ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U64, h_ctx)) {
+						ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U64, h_ctx)) {
 							assert(0);
 							break;
 						}
@@ -160,7 +160,7 @@ ae2f_inline static enum EMIT_EXPR_BIN_1_ emit_expr_bin_1(
 						}
 
 
-						ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_F64, h_ctx)) {
+						ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_F64, h_ctx)) {
 							RES = EMIT_EXPR_BIN_1_FAILURE;
 							break;
 						}
@@ -280,7 +280,7 @@ ae2f_inline static enum EMIT_EXPR_BIN_1_ emit_expr_bin_1(
 		return EMIT_EXPR_BIN_1_FAILURE;
 	}
 
-	unless(util_get_default_id(TYPE_NEW_REQ, h_ctx)) {
+	unless(util_mk_default_id(TYPE_NEW_REQ, h_ctx)) {
 		assert(0 && "requested type is not default maybe");
 		return EMIT_EXPR_BIN_1_FAILURE;
 	}
@@ -366,7 +366,7 @@ ae2f_inline static enum EMIT_EXPR_BIN_1_ emit_expr_bin_1(
 		return EMIT_EXPR_BIN_1_SUCCESS_CONSTANT;
 
 		case ID_DEFAULT_F16:
-		unless(util_get_default_id(ID_DEFAULT_F32, h_ctx)) {
+		unless(util_mk_default_id(ID_DEFAULT_F32, h_ctx)) {
 			assert(0);
 			return EMIT_EXPR_BIN_1_FAILURE;
 		}
@@ -601,32 +601,32 @@ ae2f_inline static aclspv_id_t emit_expr_type(const CXType type, const h_util_ct
 	switch((uintmax_t)type.kind) {
 		case CXType_Int:
 		case CXType_UInt:
-			TYPE_ID = util_get_default_id(ID_DEFAULT_U32, CTX);
+			TYPE_ID = util_mk_default_id(ID_DEFAULT_U32, CTX);
 			break;
 
 		case CXType_Short:
 		case CXType_UShort:
-			TYPE_ID = util_get_default_id(ID_DEFAULT_U16, CTX);
+			TYPE_ID = util_mk_default_id(ID_DEFAULT_U16, CTX);
 			break;
 
 		case CXType_SChar:
 		case CXType_UChar:
-			TYPE_ID = util_get_default_id(ID_DEFAULT_U8, CTX);
+			TYPE_ID = util_mk_default_id(ID_DEFAULT_U8, CTX);
 			break;
 
 		case CXType_Float:
-			TYPE_ID = util_get_default_id(ID_DEFAULT_F32, CTX);
+			TYPE_ID = util_mk_default_id(ID_DEFAULT_F32, CTX);
 			break;
 
 		case CXType_Double:
-			TYPE_ID = util_get_default_id(ID_DEFAULT_F64, CTX);
+			TYPE_ID = util_mk_default_id(ID_DEFAULT_F64, CTX);
 			break;
 
 		case CXType_Long:
 		case CXType_ULong:
 		case CXType_LongLong:
 		case CXType_ULongLong:
-			TYPE_ID = util_get_default_id(ID_DEFAULT_U64, CTX);
+			TYPE_ID = util_mk_default_id(ID_DEFAULT_U64, CTX);
 			break;
 
 		default:
@@ -725,7 +725,6 @@ static enum CXChildVisitResult emit_expr(
 					 * [4] result type
 					 * [5] result id
 					 * */
-					(void)LST_SCALE_BUF[2];
 
 					/** 
 					 * swap [3] and [5]

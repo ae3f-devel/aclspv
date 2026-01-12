@@ -17,7 +17,7 @@
 #include "./constant/ptr.auto.h"
 
 /** TODO: make this modular. this is risky */
-ae2f_inline static aclspv_id_t util_get_default_id(
+ae2f_inline static aclspv_id_t util_mk_default_id(
 		const e_id_default	c_id_default,
 		h_util_ctx_t	h_ctx
 		);
@@ -169,7 +169,7 @@ ae2f_inline static aclspv_id_t	util_mk_constant_val_id(const aclspv_wrd_t c_val,
 	if(C->m_const_val_id) return C->m_const_val_id;
 
 
-	ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U32, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U32, h_ctx))
 		return 0;
 
 	/** OpConstant */
@@ -196,7 +196,7 @@ ae2f_inline static aclspv_id_t	util_mk_constant_spec_id(const aclspv_wrd_t c_key
 	if(C->m_const_spec_id) return C->m_const_spec_id;
 
 
-	ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U32, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U32, h_ctx))
 		return 0;
 
 	/** OpSpecConstant */
@@ -251,7 +251,7 @@ ae2f_inline static aclspv_id_t	util_mk_constant_vec32_id(const aclspv_wrd_t c_va
 	if(C->m_vec32_id) return C->m_vec32_id;
 
 
-	ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U32, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U32, h_ctx))
 		return 0;
 
 	if(c_val == 1) return ID_DEFAULT_U32;
@@ -276,7 +276,7 @@ ae2f_inline static aclspv_id_t	util_mk_constant_arr8_id(const aclspv_wrd_t c_arr
 		C->m_const_val_id = util_mk_constant_val_id(c_arrcount, h_ctx);
 
 	if(C->m_arr8_id) return C->m_arr8_id;
-	ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U8, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U8, h_ctx))
 		return 0;
 	if(C->m_key == 1) return ID_DEFAULT_U8;
 
@@ -319,7 +319,7 @@ ae2f_inline static aclspv_id_t	util_mk_constant_arr16_id(const aclspv_wrd_t c_ar
 		C->m_const_val_id = util_mk_constant_val_id(c_arrcount, h_ctx);
 
 	if(C->m_arr16_id) return C->m_arr16_id;
-	ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U16, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U16, h_ctx))
 		return 0;
 	if(C->m_key == 1) return ID_DEFAULT_U16;
 
@@ -361,7 +361,7 @@ ae2f_inline static aclspv_id_t	util_mk_constant_arr32_id(const aclspv_wrd_t c_ar
 		C->m_const_val_id = util_mk_constant_val_id(c_arrcount, h_ctx);
 
 	if(C->m_arr32_id) return C->m_arr32_id;
-	ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U32, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U32, h_ctx))
 		return 0;
 	if(C->m_key == 1) return ID_DEFAULT_U32;
 
@@ -402,7 +402,7 @@ ae2f_inline static aclspv_id_t	util_mk_constant_arrspec32_id(const aclspv_wrd_t 
 		util_mk_constant_spec_id(c_key, c_arrcount, h_ctx);
 
 	if(C->m_arrspec32_id) return C->m_arrspec32_id;
-	ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U32, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U32, h_ctx))
 		return 0;
 
 	/** OpArray */

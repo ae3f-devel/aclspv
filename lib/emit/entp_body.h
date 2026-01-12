@@ -113,7 +113,7 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 					case CXType_UShort:
 					case CXType_SChar:
 					case CXType_UChar:
-						TYPE_ID = util_get_default_id(ID_DEFAULT_U32_PTR_FUNC, CTX);
+						TYPE_ID = util_mk_default_id(ID_DEFAULT_U32_PTR_FUNC, CTX);
 						CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_U32;
 
 						CURSOR.m_data.m_var_simple.m_fits_32bit = 1;
@@ -125,7 +125,7 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 							case CXType_ULongLong:
 							case CXType_Long:
 							case CXType_ULong:
-							TYPE_ID = util_get_default_id(ID_DEFAULT_U64_PTR_FUNC, CTX);
+							TYPE_ID = util_mk_default_id(ID_DEFAULT_U64_PTR_FUNC, CTX);
 							CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_U64;
 						}
 
@@ -138,14 +138,14 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 							ae2f_unreachable();
 							case CXType_BFloat16:
 							case CXType_Float16:
-							TYPE_ID = util_get_default_id(ID_DEFAULT_F16_PTR_FUNC, CTX);
+							TYPE_ID = util_mk_default_id(ID_DEFAULT_F16_PTR_FUNC, CTX);
 							CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_F16;
 						}
 
 						ae2f_unexpected_but_if(0) {
 							ae2f_unreachable();
 							case CXType_Float:
-							TYPE_ID = util_get_default_id(ID_DEFAULT_F32_PTR_FUNC, CTX);
+							TYPE_ID = util_mk_default_id(ID_DEFAULT_F32_PTR_FUNC, CTX);
 							CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_F32;
 						}
 
@@ -154,7 +154,7 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 						ae2f_unexpected_but_if(0) {
 							ae2f_unreachable();
 							case CXType_Double:
-							TYPE_ID = util_get_default_id(ID_DEFAULT_F64_PTR_FUNC, CTX);
+							TYPE_ID = util_mk_default_id(ID_DEFAULT_F64_PTR_FUNC, CTX);
 							CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_F64;
 						}
 						CURSOR.m_data.m_var_simple.m_is_undefined = 1;

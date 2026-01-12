@@ -140,6 +140,8 @@ LBL_ABRT_NALLOC:
 		strcat(NAME_MERGE, "::");
 		strcat(NAME_MERGE, PARAM_NAME.data);
 
+
+#if	!defined(NDEBUG) || !NDEBUG
 #define EMIT_POS	CTX->m_count.m_name
 		unless((POS_FOR_LOCAL = EMIT_POS = emit_opcode(&CTX->m_section.m_name, EMIT_POS, SpvOpName, 0))) 
 			goto LBL_ABRT_NALLOC;
@@ -149,6 +151,7 @@ LBL_ABRT_NALLOC:
 			goto LBL_ABRT_NALLOC;
 		set_oprnd_count_for_opcode(get_wrd_of_vec(&CTX->m_section.m_name)[POS], EMIT_POS - POS - 1);
 #undef	EMIT_POS
+#endif
 
 
 		free(NAME_MERGE);
@@ -287,7 +290,7 @@ LBL_ABRT_NALLOC:
 						return CXChildVisit_Break;
 					}
 
-					ae2f_expected_but_else(util_get_default_id(ID_DEFAULT_U32, CTX))
+					ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U32, CTX))
 						return CXChildVisit_Break;
 
 					unless(CONST_NODE->m_const_spec_id) {
@@ -384,8 +387,10 @@ LBL_ABRT_NALLOC:
 				CTX->m_id	+= 6;
 				CTX->m_err	 = ACLSPV_COMPILE_OK;
 
+#if !defined(NDEBUG) || !NDEBUG
 				((aclspv_wrd_t* ae2f_restrict)CTX->m_section.m_name.m_p)[POS_FOR_LOCAL] 
 					= INFO->m_unified.m_var_id;
+#endif
 
 				ae2f_expected_but_else(CTX->m_count.m_vars = util_emitx_variable(
 							&CTX->m_section.m_vars
@@ -403,13 +408,13 @@ LBL_ABRT_NALLOC:
 			ae2f_unexpected_but_if(0) {
 				ae2f_unreachable();
 				case SpvStorageClassInput:
-				INFO->m_unified.m_var_type_id = util_get_default_id(ID_DEFAULT_U32V4_PTR_INP, CTX);
+				INFO->m_unified.m_var_type_id = util_mk_default_id(ID_DEFAULT_U32V4_PTR_INP, CTX);
 			}
 
 			ae2f_unexpected_but_if(0) {
 				ae2f_unreachable();
 				case SpvStorageClassOutput:
-				INFO->m_unified.m_var_type_id = util_get_default_id(ID_DEFAULT_U32V4_PTR_OUT, CTX);
+				INFO->m_unified.m_var_type_id = util_mk_default_id(ID_DEFAULT_U32V4_PTR_OUT, CTX);
 			}
 
 			clang_visitChildren(h_cur, attr_location, &INFO->m_io.m_location);
@@ -436,7 +441,9 @@ LBL_ABRT_NALLOC:
 						, INFO->m_unified.m_storage_class
 						)) return CXChildVisit_Break;
 
+#if !defined(NDEBUG) || !NDEBUG
 			get_wrd_of_vec(&CTX->m_section.m_name)[POS_FOR_LOCAL] = INFO->m_unified.m_var_id;
+#endif
 #undef		THIS_ENTP
 
 			++IO_ARG_IDX;
