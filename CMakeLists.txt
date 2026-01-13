@@ -123,7 +123,9 @@ ae2f_CoreLibTentConfigCustom(
 	)
 
 target_link_libraries(${ae3f__aclspvABI__TENT} PUBLIC ae3f::aclspvCore)
-target_include_directories(${ae3f__aclspvABI__TENT} PRIVATE lib)
+target_include_directories(${ae3f__aclspvABI__TENT} 
+	PRIVATE lib ${CLANG_INCLUDE_DIRS}
+	)
 
 target_link_libraries(${ae3f__aclspvABI__TENT} PUBLIC libclang)
 
