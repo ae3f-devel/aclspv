@@ -261,7 +261,8 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 		const CXCursor		c_cur,
 		const h_util_ctx_t	h_ctx,
 		const aclspv_id_t	c_newid,
-		e_id_default* ae2f_restrict const	rdwr_type_req
+		e_id_default* ae2f_restrict const	rdwr_type_req,
+		util_literal* ae2f_restrict const	rwr_literal_opt
 		) {
 	emit_expr_literal EVRES;
 #define	TYPE_NEW_REQ	((*rdwr_type_req))
@@ -308,9 +309,8 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 								? ID_DEFAULT_I32 : ID_DEFAULT_I64
 								, 0, 1, EVRES
 								, c_newid, TYPE_NEW_REQ
-								, ae2f_NIL
+								, rwr_literal_opt
 								, h_ctx);
-						break;
 
 					case CXEval_Float:
 						dbg_puts(("Literal: double"));
@@ -328,7 +328,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 								1, ID_DEFAULT_F64
 								, 0, 1, EVRES
 								, c_newid, TYPE_NEW_REQ
-								, ae2f_NIL
+								, rwr_literal_opt 
 								, h_ctx);
 					default:
 						assert(0 && "unknown evaluation");
@@ -372,7 +372,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 							, 1, 1
 							, DECL_INFO.m_data.m_var_simple.m_literal
 							, c_newid, TYPE_NEW_REQ
-							, ae2f_NIL, h_ctx);
+							, rwr_literal_opt, h_ctx);
 				}
 
 				if(DECL_INFO.m_data.m_var_simple.m_is_predictable) {
@@ -416,7 +416,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 						, DECL_INFO.m_data.m_var_simple.m_type_id
 						, 0, 0, EVRES
 						, c_newid, TYPE_NEW_REQ
-						, ae2f_NIL, h_ctx);
+						, rwr_literal_opt, h_ctx);
 
 #undef	DECL_INFO
 			}
@@ -576,7 +576,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 		dbg_prefix(a);
 		dbg_call(fprintf, (stderr, "\tNew scale 0: %u[%p]\n", VEC[1], (void*)(VEC + 1)));
 
-		NEW_SCALE = mk_scale_from_vec(h_cmdscale, count_to_sz(8));
+		NEW_SCALE = mk_scale_from_vec(h_cmdscale, count_to_sz(8) + (sizeof(util_literal) << 1));
 		ae2f_expected_but_else(NEW_SCALE)
 			return EMIT_EXPR_FAILURE;
 
@@ -600,7 +600,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 			++h_ctx->m_id;
 
 		VEC[0] = 2;			/** number of operands */
-		VEC[1] = UTIL_LITERAL_CONSTANT;	/** is not constant? */
+		VEC[1] = UTIL_LITERAL_LITERAL;	/** is not constant? */
 		VEC[2] = opcode_to_wrd(SpvOpSpecConstantOp, 5);
 		VEC[3] = c_result_type_id;
 		VEC[4] = c_newid;
@@ -614,7 +614,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 		}
 	}
 
-	return EMIT_EXPR_SUCCESS_CONSTANT;
+	return EMIT_EXPR_SUCCESS_LITERAL;
 }
 
 ae2f_inline static aclspv_id_t emit_expr_type(const CXType type, const h_util_ctx_t CTX)
@@ -677,9 +677,14 @@ static enum CXChildVisitResult emit_expr(
 	/** for stack tmp.m_v0 will be used. */
 #define	STCK		CTX->m_tmp.m_v0
 #define	CMDSTCK_SCALE	CTX->m_tmp.m_v1
+#define	LST_CMD_COUNT		(LST_SCALE_BUF[0] + 4)
+
 	h_scale_t LST_SCALE				= get_last_scale_from_vec(&CMDSTCK_SCALE);
 	aclspv_wrd_t* ae2f_restrict LST_SCALE_BUF	= get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *LST_SCALE);
 	aclspv_id_t ID_REQ_CURRENT			= ID_REQ;
+
+	util_literal* ae2f_restrict LITERAL 
+		= ((util_literal* ae2f_restrict)(void* ae2f_restrict)(&LST_SCALE_BUF[(LST_CMD_COUNT + 2)]));
 
 	if(STCK_COUNT) {
 		ae2f_expected_but_else(STCK.m_p) {
@@ -712,7 +717,13 @@ static enum CXChildVisitResult emit_expr(
 				, (void*)(get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE)) + 1)
 			  ));
 
-	switch(emit_expr_bin_1(h_cur, CTX, ID_REQ_CURRENT, (e_id_default* ae2f_restrict)&TYPE_REQUIRED)) {
+	switch(emit_expr_bin_1(
+				h_cur
+				, CTX
+				, ID_REQ_CURRENT
+				, (e_id_default* ae2f_restrict)&TYPE_REQUIRED
+				, LITERAL + COUNTER_OPRND
+				)) {
 		case EMIT_EXPR_FAILURE:
 			assert(0 && "bin_1 is fishy");
 			return CXChildVisit_Break;
@@ -747,6 +758,7 @@ static enum CXChildVisitResult emit_expr(
 
 			(void)(STCK_COUNT && --STCK_COUNT);
 			++COUNTER_OPRND;
+
 			while(LST_SCALE->m_id &&  COUNTER_OPRND == LST_SCALE_BUF[0]) {
 
 				dbg_puts(("==[ Op1 Destroy"));
@@ -778,58 +790,85 @@ static enum CXChildVisitResult emit_expr(
 				get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE))[1]
 					&= LST_SCALE_BUF[1];
 
+
 				dbg_puts(("]== Op1 Destroy"));
 
-
-				if(LST_SCALE_BUF[1] == UTIL_LITERAL_RT) {
-					dbg_puts(("The result is rt(runtime)."));
+				switch((enum UTIL_LITERAL_)LST_SCALE_BUF[1]) {
+					case UTIL_LITERAL_RT:
+						dbg_puts(("The result is rt(runtime)."));
 #define	XORSWAP(a, b)	(a) ^= (b); (b) ^= (a); (a) ^= (b);
-					/** 
-					 * here, operation is not constant.
-					 *
-					 * current
-					 * [2] OpSpecConstant opcode (ignorance required)
-					 * [3] result type
-					 * [4] result id
-					 * [5] literal opcode (opspecconstant evaluation)
-					 * ...
-					 *
-					 *
-					 * we want
-					 * [3] opcode with operand count
-					 * [4] result type
-					 * [5] result id
-					 * */
+						/** 
+						 * here, operation is not constant.
+						 *
+						 * current
+						 * [2] OpSpecConstant opcode (ignorance required)
+						 * [3] result type
+						 * [4] result id
+						 * [5] literal opcode (opspecconstant evaluation)
+						 * ...
+						 *
+						 *
+						 * we want
+						 * [3] opcode with operand count
+						 * [4] result type
+						 * [5] result id
+						 * */
 
-					/** 
-					 * swap [3] and [5]
-					 *
-					 * after this will
-					 * [3] literal opcode (without operand)
-					 * [4] result id
-					 * [5] result type
-					 * * */
-					XORSWAP(LST_SCALE_BUF[3], LST_SCALE_BUF[5]);
+						/** 
+						 * swap [3] and [5]
+						 *
+						 * after this will
+						 * [3] literal opcode (without operand)
+						 * [4] result id
+						 * [5] result type
+						 * * */
+						XORSWAP(LST_SCALE_BUF[3], LST_SCALE_BUF[5]);
 
-					/** we have four operands (including opcode) */
-					LST_SCALE_BUF[3] |= mk_noprnds(4);
+						/** we have four operands (including opcode) */
+						LST_SCALE_BUF[3] |= mk_noprnds(4);
 
-					/**
-					 * swap [4] and [5].
-					 *
-					 * after this will
-					 * [3] opcode
-					 * [4] result type
-					 * [5] result id
-					 *
-					 * that matches what we want.
-					 * */
-					XORSWAP(LST_SCALE_BUF[4], LST_SCALE_BUF[5]);
+						/**
+						 * swap [4] and [5].
+						 *
+						 * after this will
+						 * [3] opcode
+						 * [4] result type
+						 * [5] result id
+						 *
+						 * that matches what we want.
+						 * */
+						XORSWAP(LST_SCALE_BUF[4], LST_SCALE_BUF[5]);
 #undef	XORSWAP
+						break;
+
+					case UTIL_LITERAL_LITERAL:
+						dbg_puts(("The result is literal."));
+						switch(LST_SCALE_BUF[5]) {
+							default:
+								fixme_prefix(a);
+								fixme_call(fprintf, (
+											stderr
+											, "Add literal operation %u\n"
+											, LST_SCALE_BUF[5])
+										);
+								break;
+						}
+
+						LST_SCALE_BUF[1] = UTIL_LITERAL_CONSTANT;
+						ae2f_fallthrough;
+					case UTIL_LITERAL_CONSTANT:
+						dbg_puts(("The result is constant(fallback)."));
+						break;
+					default:
+						err_puts(("unknown literal"));
+						ae2f_unreachable();
 				}
 
 #define		TMPL_SECTION	(*((IS_NOT_CONSTANT) == UTIL_LITERAL_RT ? &CTX->m_section.m_fnimpl	: &CTX->m_section.m_types))
 #define		TMPL_COUNT	(*((IS_NOT_CONSTANT) == UTIL_LITERAL_RT ? &CTX->m_count.m_fnimpl	: &CTX->m_count.m_types))
+
+				dbg_prefix(a);
+				dbg_call(fprintf, (stderr, "IS_NOT_CONSTANT: %lu\n", IS_NOT_CONSTANT));
 
 				_aclspv_grow_vec_with_copy(
 						_aclspv_malloc
@@ -837,8 +876,8 @@ static enum CXChildVisitResult emit_expr(
 						, memcpy
 						, L_new
 						, TMPL_SECTION
-						, count_to_sz(TMPL_COUNT + sz_to_count(LST_SCALE->m_sz) 
-							- 2 - (LST_SCALE_BUF[1] == UTIL_LITERAL_RT))
+						, (size_t)count_to_sz(TMPL_COUNT + (LST_CMD_COUNT) 
+							- (LST_SCALE_BUF[1] == UTIL_LITERAL_RT))
 						);
 
 				ae2f_expected_but_else(TMPL_SECTION.m_p) {
@@ -853,10 +892,10 @@ static enum CXChildVisitResult emit_expr(
 				memcpy(
 						get_wrd_of_vec(&TMPL_SECTION) + TMPL_COUNT
 						, LST_SCALE_BUF + 2 + (LST_SCALE_BUF[1] == UTIL_LITERAL_RT)
-						, LST_SCALE->m_sz - count_to_sz(2 + (LST_SCALE_BUF[1] == UTIL_LITERAL_RT))
+						, (size_t)count_to_sz(LST_CMD_COUNT - (LST_SCALE_BUF[1] == UTIL_LITERAL_RT))
 				      );
 
-				TMPL_COUNT += sz_to_count(LST_SCALE->m_sz) - 2 - (LST_SCALE_BUF[1] == UTIL_LITERAL_RT);
+				TMPL_COUNT += LST_CMD_COUNT - (LST_SCALE_BUF[1] == UTIL_LITERAL_RT);
 #undef		TMPL_SECTION
 #undef		TMPL_COUNT
 
