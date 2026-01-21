@@ -14,6 +14,7 @@
 #include "./ctx.h"
 #include "./emitx.h"
 #include "./u32_to_hex8.auto.h"
+#include "./literal.h"
 
 #include "aclspv.h"
 #include "aclspv/abi.h"
@@ -60,13 +61,7 @@ typedef struct {
 			 * */
 			aclspv_wrd_t	m_is_predictable	: 1;
 			aclspv_wrd_t	m_is_constant		: 1;
-
-			/**
-			 * @var	m_is_undefined
-			 * @brief
-			 * is its first value not specified yet?
-			 * */
-			aclspv_wrd_t	m_is_undefined		: 1;
+			aclspv_wrd_t	m_is_literal		: 1;
 
 
 			/**
@@ -89,6 +84,11 @@ typedef struct {
 			 * */
 			aclspv_wrd_t	m_fits_32bit		: 1;
 			aclspv_wrd_t	m_fits_64bit		: 1;
+			aclspv_wrd_t	m_flag_unused		: 23;
+
+			util_literal	m_literal;
+
+
 		} 
 		/** when cursor kind is vardecl */
 		m_var_simple;

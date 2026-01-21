@@ -169,12 +169,12 @@ ae2f_inline static aclspv_id_t	util_mk_constant_val_id(const aclspv_wrd_t c_val,
 	if(C->m_const_val_id) return C->m_const_val_id;
 
 
-	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U32, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_I32, h_ctx))
 		return 0;
 
 	/** OpConstant */
 	ae2f_expected_but_else((h_ctx->m_count.m_types = emit_opcode(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvOpConstant, 3))) return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_U32))) return 0;
+	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_I32))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, c_val))) return 0;  
 
@@ -196,7 +196,7 @@ ae2f_inline static aclspv_id_t	util_mk_constant_spec_id(const aclspv_wrd_t c_key
 	if(C->m_const_spec_id) return C->m_const_spec_id;
 
 
-	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U32, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_I32, h_ctx))
 		return 0;
 
 	/** OpSpecConstant */
@@ -206,7 +206,7 @@ ae2f_inline static aclspv_id_t	util_mk_constant_spec_id(const aclspv_wrd_t c_key
 					, SpvOpSpecConstant
 					, 3))
 			) return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_U32))) return 0;
+	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_I32))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, c_val))) return 0;
 
@@ -251,15 +251,15 @@ ae2f_inline static aclspv_id_t	util_mk_constant_vec32_id(const aclspv_wrd_t c_va
 	if(C->m_vec32_id) return C->m_vec32_id;
 
 
-	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U32, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_I32, h_ctx))
 		return 0;
 
-	if(c_val == 1) return ID_DEFAULT_U32;
+	if(c_val == 1) return ID_DEFAULT_I32;
 
 	/** OpTypeVector */
 	ae2f_expected_but_else((h_ctx->m_count.m_types = emit_opcode(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvOpTypeVector, 3))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_U32))) return 0;
+	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_I32))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, c_val))) return 0;  
 
 	C->m_vec32_id = h_ctx->m_id++;
@@ -276,15 +276,15 @@ ae2f_inline static aclspv_id_t	util_mk_constant_arr8_id(const aclspv_wrd_t c_arr
 		C->m_const_val_id = util_mk_constant_val_id(c_arrcount, h_ctx);
 
 	if(C->m_arr8_id) return C->m_arr8_id;
-	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U8, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_I8, h_ctx))
 		return 0;
-	if(C->m_key == 1) return ID_DEFAULT_U8;
+	if(C->m_key == 1) return ID_DEFAULT_I8;
 
 
 	/** OpArray */
 	ae2f_expected_but_else((h_ctx->m_count.m_types = emit_opcode(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvOpTypeArray, 3))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_U8))) return 0;
+	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_I8))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, C->m_const_val_id))) return 0;
 
 	ae2f_expected_but_else((h_ctx->m_count.m_decorate = emit_opcode(&h_ctx->m_section.m_decorate
@@ -319,14 +319,14 @@ ae2f_inline static aclspv_id_t	util_mk_constant_arr16_id(const aclspv_wrd_t c_ar
 		C->m_const_val_id = util_mk_constant_val_id(c_arrcount, h_ctx);
 
 	if(C->m_arr16_id) return C->m_arr16_id;
-	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U16, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_I16, h_ctx))
 		return 0;
-	if(C->m_key == 1) return ID_DEFAULT_U16;
+	if(C->m_key == 1) return ID_DEFAULT_I16;
 
 	/** OpArray */
 	ae2f_expected_but_else((h_ctx->m_count.m_types = emit_opcode(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvOpTypeArray, 3))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_U16))) return 0;
+	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_I16))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, C->m_const_val_id))) return 0;
 
 	ae2f_expected_but_else((h_ctx->m_count.m_decorate = emit_opcode(&h_ctx->m_section.m_decorate
@@ -361,14 +361,14 @@ ae2f_inline static aclspv_id_t	util_mk_constant_arr32_id(const aclspv_wrd_t c_ar
 		C->m_const_val_id = util_mk_constant_val_id(c_arrcount, h_ctx);
 
 	if(C->m_arr32_id) return C->m_arr32_id;
-	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U32, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_I32, h_ctx))
 		return 0;
-	if(C->m_key == 1) return ID_DEFAULT_U32;
+	if(C->m_key == 1) return ID_DEFAULT_I32;
 
 	/** OpArray */
 	ae2f_expected_but_else((h_ctx->m_count.m_types = emit_opcode(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvOpTypeArray, 3))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_U32))) return 0;
+	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_I32))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, C->m_const_val_id))) return 0;
 
 	ae2f_expected_but_else((h_ctx->m_count.m_decorate = emit_opcode(&h_ctx->m_section.m_decorate
@@ -402,13 +402,13 @@ ae2f_inline static aclspv_id_t	util_mk_constant_arrspec32_id(const aclspv_wrd_t 
 		util_mk_constant_spec_id(c_key, c_arrcount, h_ctx);
 
 	if(C->m_arrspec32_id) return C->m_arrspec32_id;
-	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U32, h_ctx))
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_I32, h_ctx))
 		return 0;
 
 	/** OpArray */
 	ae2f_expected_but_else((h_ctx->m_count.m_types = emit_opcode(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvOpTypeArray, 3))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) return 0;
-	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_U32))) return 0;
+	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_I32))) return 0;
 	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, C->m_const_spec_id))) return 0;
 
 	ae2f_expected_but_else((h_ctx->m_count.m_decorate = emit_opcode(&h_ctx->m_section.m_decorate

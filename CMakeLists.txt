@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 enable_testing()
 
-project(aclspv)
+project(aclspv VERSION 0)
 
 # Set this source directory as the tree root for project.
 set(ae2f_ProjRoot ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "Tree root for project")
@@ -11,7 +11,7 @@ set(ae2f_submod  .submod CACHE STRING "Relative path to submodule (subdirectory)
 option(aclspv_N_RELOAD_ALWAYS	"reloads aclspv always on configuration when set `OFF`" ON)
 
 if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE Release)
+	set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 

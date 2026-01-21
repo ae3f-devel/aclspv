@@ -290,14 +290,14 @@ LBL_ABRT_NALLOC:
 						return CXChildVisit_Break;
 					}
 
-					ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_U32, CTX))
+					ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_I32, CTX))
 						return CXChildVisit_Break;
 
 					unless(CONST_NODE->m_const_spec_id) {
 						const aclspv_wrdcount_t RETCOUNT_TY = util_emitx_spec_constant(
 								&CTX->m_section.m_types
 								, CTX->m_count.m_types
-								, ID_DEFAULT_U32
+								, ID_DEFAULT_I32
 								, CTX->m_id
 								, NUM_ARR 
 								);
@@ -317,7 +317,7 @@ LBL_ABRT_NALLOC:
 						}
 
 						CONST_NODE->m_const_spec_id = CTX->m_id++;
-						CONST_NODE->m_const_spec_type_id = ID_DEFAULT_U32;
+						CONST_NODE->m_const_spec_type_id = ID_DEFAULT_I32;
 						CTX->m_count.m_types = RETCOUNT_TY;
 						CTX->m_count.m_decorate = RETCOUNT_DC;
 					} else ae2f_expected_but_else(util_default_is_int(CONST_NODE->m_const_spec_type_id)) {
@@ -334,7 +334,7 @@ LBL_ABRT_NALLOC:
 				ae2f_expected_but_else(CTX->m_count.m_types = util_emitx_spec_constant_op2(
 							&CTX->m_section.m_types
 							, CTX->m_count.m_types
-							, ID_DEFAULT_U32
+							, ID_DEFAULT_I32
 							, CTX->m_id
 							, SpvOpIMul
 							, CTX->m_id - 1
@@ -345,7 +345,7 @@ LBL_ABRT_NALLOC:
 				ae2f_expected_but_else(CTX->m_count.m_types = util_emitx_spec_constant_op2(
 							&CTX->m_section.m_types
 							, CTX->m_count.m_types
-							, ID_DEFAULT_U32
+							, ID_DEFAULT_I32
 							, CTX->m_id + 1
 							, SpvOpIAdd
 							, CTX->m_id
@@ -356,7 +356,7 @@ LBL_ABRT_NALLOC:
 				ae2f_expected_but_else(CTX->m_count.m_types = util_emitx_spec_constant_op2(
 							&CTX->m_section.m_types
 							, CTX->m_count.m_types
-							, ID_DEFAULT_U32
+							, ID_DEFAULT_I32
 							, CTX->m_id + 2
 							, SpvOpShiftRightLogical
 							, CTX->m_id + 1
@@ -367,7 +367,7 @@ LBL_ABRT_NALLOC:
 							&CTX->m_section.m_types
 							, CTX->m_count.m_types
 							, CTX->m_id + 3
-							, ID_DEFAULT_U32
+							, ID_DEFAULT_I32
 							, CTX->m_id + 2
 							)) return CXChildVisit_Break;
 
@@ -408,13 +408,13 @@ LBL_ABRT_NALLOC:
 			ae2f_unexpected_but_if(0) {
 				ae2f_unreachable();
 				case SpvStorageClassInput:
-				INFO->m_unified.m_var_type_id = util_mk_default_id(ID_DEFAULT_U32V4_PTR_INP, CTX);
+				INFO->m_unified.m_var_type_id = util_mk_default_id(ID_DEFAULT_I32V4_PTR_INP, CTX);
 			}
 
 			ae2f_unexpected_but_if(0) {
 				ae2f_unreachable();
 				case SpvStorageClassOutput:
-				INFO->m_unified.m_var_type_id = util_mk_default_id(ID_DEFAULT_U32V4_PTR_OUT, CTX);
+				INFO->m_unified.m_var_type_id = util_mk_default_id(ID_DEFAULT_I32V4_PTR_OUT, CTX);
 			}
 
 			clang_visitChildren(h_cur, attr_location, &INFO->m_io.m_location);

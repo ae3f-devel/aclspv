@@ -26,6 +26,7 @@
 #include <spirv/unified1/spirv.h>
 
 #include "./expr.h"
+#include "aclspv/abi.h"
 #include "aclspv/spvty.h"
 
 
@@ -113,8 +114,8 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 					case CXType_UShort:
 					case CXType_SChar:
 					case CXType_UChar:
-						TYPE_ID = util_mk_default_id(ID_DEFAULT_U32_PTR_FUNC, CTX);
-						CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_U32;
+						TYPE_ID = util_mk_default_id(ID_DEFAULT_I32_PTR_FUNC, CTX);
+						CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_I32;
 
 						CURSOR.m_data.m_var_simple.m_fits_32bit = 1;
 
@@ -125,8 +126,8 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 							case CXType_ULongLong:
 							case CXType_Long:
 							case CXType_ULong:
-							TYPE_ID = util_mk_default_id(ID_DEFAULT_U64_PTR_FUNC, CTX);
-							CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_U64;
+							TYPE_ID = util_mk_default_id(ID_DEFAULT_I64_PTR_FUNC, CTX);
+							CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_I64;
 						}
 
 						CURSOR.m_data.m_var_simple.m_is_integer = 1;
@@ -157,8 +158,9 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 							TYPE_ID = util_mk_default_id(ID_DEFAULT_F64_PTR_FUNC, CTX);
 							CURSOR.m_data.m_var_simple.m_type_id = ID_DEFAULT_F64;
 						}
-						CURSOR.m_data.m_var_simple.m_is_undefined = 1;
 						CURSOR.m_data.m_var_simple.m_fits_64bit = 1;
+						CURSOR.m_data.m_var_simple.m_is_predictable = 0;
+
 						break;
 
 						/** complex types. we make it later. */
@@ -186,9 +188,16 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 					default:
 						{
 							CXString __NAME = clang_getTypeSpelling(TYPE);
-							printf("WHO THE HELL ARE YOU(%u) \n", TYPE.kind);
-							puts(__NAME.data);
-							clang_disposeString(__NAME);
+							err_prefix(a);
+							err_call(
+									fprintf, (
+										stderr
+										, "Met the unknown type(%u): %s\n"
+										, TYPE.kind
+										, (const char*)__NAME.data
+										);
+								)
+								clang_disposeString(__NAME);
 						}
 						break;
 				}
@@ -204,12 +213,12 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 				 * So far I have defined the variable but not with the initialiser.
 				 * Make initialising part if possible.
 				 * */
-				CURSOR.m_data.m_var_simple.m_is_undefined = 1;
+				CURSOR.m_data.m_var_simple.m_is_predictable = 0;
 				if(util_default_is_arithmetic(CURSOR.m_data.m_var_simple.m_type_id))
 				{
 					CXCursor	VAR_INIT = clang_Cursor_getVarDeclInitializer(h_cur);
-		
-#if 0
+
+#if 1
 					aclspv_id_t	SPECID = 0xFFFFFFFF;
 
 					clang_visitChildren(h_cur, attr_specid, &SPECID);
@@ -219,18 +228,74 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 						util_constant* ae2f_restrict const NODE
 							= util_mk_constant_node(SPECID, CTX);
 
-						NODE->m_const_spec_id
+#if 1 
+						dbg_prefix(i);
+						dbg_call(fprintf, (stderr, "Spec ID detected: %u\n", SPECID));
+#endif
+
+						if(NODE && NODE->m_const_spec_id) {
+							emit_expr_literal	UNUSED = {0, };
+							CURSOR.m_data.m_var_simple.m_init_val = CTX->m_id++;
+
+							dbg_prefix(a);
+							dbg_call(fprintf, (stderr, "Spec ID definition spotted.: %u\n"
+										, NODE->m_const_spec_id));
+
+							switch(emit_expr_arithmetic_cast(
+										NODE->m_const_spec_id
+										, NODE->m_const_spec_type_id
+										, 1
+										, 0, UNUSED
+										, CTX->m_id - 1
+										, CURSOR.m_data.m_var_simple.m_type_id
+										, ae2f_NIL
+										, CTX
+										))
+							{
+								case EMIT_EXPR_SUCCESS_LITERAL:
+								default:
+									assert(0 && "unreachable & default");
+									ae2f_unreachable();
+									break;
+								case EMIT_EXPR_NOT_THE_CASE:
+									assert(0 && "not the case");
+									ae2f_unreachable();
+									break;
+
+								case EMIT_EXPR_FAILURE:
+									goto LBL_FAIL;
+
+									ae2f_unexpected_but_if(0) {
+										ae2f_unreachable();
+										case EMIT_EXPR_SUCCESS:
+										CURSOR.m_data.m_var_simple.m_is_constant = 1;
+									}
+
+									ae2f_unexpected_but_if(0) {
+										ae2f_unreachable();
+										case EMIT_EXPR_SUCCESS_CONSTANT:
+										CURSOR.m_data.m_var_simple.m_is_constant = 0;
+									}
+
+									CURSOR.m_data.m_var_simple.m_is_predictable = 1;
+									CURSOR.m_data.m_var_simple.m_is_literal = 0;
+							}
+						}
+
+
+						goto LBL_DONE;
 					}
 #endif
 
 					unless(clang_Cursor_isNull(VAR_INIT)) {
-						CURSOR.m_data.m_var_simple.m_is_undefined	= 0;
+						dbg_puts(("Variable has constructor."));
+
 						CURSOR.m_data.m_var_simple.m_init_val		= CTX->m_id++;
 						switch(emit_get_expr(
-								CURSOR.m_data.m_var_simple.m_init_val
-								, CURSOR.m_data.m_var_simple.m_type_id
-								, VAR_INIT
-								, CTX))
+									CURSOR.m_data.m_var_simple.m_init_val
+									, CURSOR.m_data.m_var_simple.m_type_id
+									, VAR_INIT
+									, CTX))
 						{
 							case EMIT_EXPR_NOT_THE_CASE:
 								CTX->m_err = ACLSPV_COMPILE_NO_IMPL;
@@ -242,13 +307,20 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 								break;
 
 							case EMIT_EXPR_SUCCESS_LITERAL:
+								CURSOR.m_data.m_var_simple.m_is_literal = 1;
+								dbg_puts(("Constructor is literal."));
+								ae2f_fallthrough;
 							case EMIT_EXPR_SUCCESS_CONSTANT:
+								dbg_puts(("Constructor may be constant."));
+								CURSOR.m_data.m_var_simple.m_is_constant = 1;
+								ae2f_fallthrough;
 							case EMIT_EXPR_SUCCESS:
 								CURSOR.m_data.m_var_simple.m_is_predictable = 1;
 								break;
 						}
 					}
 				}
+
 #undef	CURSOR
 
 			}
@@ -262,11 +334,12 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 						)) goto LBL_FAIL;
 			CTX->m_has_function_ret = 1;
 			goto LBL_DONE;
+
 		case CXCursor_LabelStmt:
 			ae2f_unexpected_but_if(CTX->m_err = util_tell_cursor_lbl(
 						CTX->m_num_cursor
 						, CTX->m_cursors.m_p, CTX))
-					goto LBL_DONE;
+				goto LBL_FAIL;
 			{
 
 #define	CURSOR	((util_cursor* ae2f_restrict)CTX->m_cursors.m_p)[IDX]
@@ -405,9 +478,10 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 	}
 
 
-	puts(SPELL.data);
-	puts(KINDSPELL.data);
-	puts("");
+	warn_prefix(i);
+	warn_call(fprintf, (stderr, "Met unprocessed spell(%s) in kind(%s) [NOIMPL]\n"
+				, (const char*)SPELL.data
+				, (const char*)KINDSPELL.data));
 
 	CTX->m_err = ACLSPV_COMPILE_OK;
 	clang_disposeString(SPELL);
