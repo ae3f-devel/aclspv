@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #define	dbg_call(func, prm)	func	prm
+#define	fixme_call(func, prm)	func	prm
 
 #endif
 
@@ -31,10 +32,12 @@
 #define	err_call(a, b)
 #endif
 
-#define	dbg_prefix(a)	dbg_call(fputs, ("[~] ", stderr))
+#define	dbg_prefix(a)	dbg_call(fputs, ("<-> ", stderr))
+#define	fixme_prefix(a)	fixme_call(fputs, ("</>", stderr))
 #define	warn_prefix(a)	warn_call(fputs, ("[?] ", stderr))
 #define err_prefix(a)	err_call(fputs, ("[X] ", stderr))
 
-#define	dbg_puts(a)	{ dbg_call(fputs, ("[~] ", stderr)); dbg_call(puts, a); }
-#define	warn_puts(a)	{ warn_call(fputs, ("[?] ", stderr)); warn_call(puts, a); }
-#define	err_puts(a)	{ err_call(fputs, ("[X] ", stderr)); err_call(puts, a); }
+#define	dbg_puts(a)	{ dbg_prefix(); dbg_call(perror, a); }
+#define fixme_puts(a)	{ fixme_prefix(); fixme_call(perror, a); }
+#define	warn_puts(a)	{ warn_prefix(); warn_call(perror, a); }
+#define	err_puts(a)	{ err_prefix(); err_call(perror, a); }

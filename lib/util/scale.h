@@ -173,27 +173,6 @@ ae2f_retnew ae2f_inline static x_scale* mk_scale_from_vec(
 		, nxt;
 	const size_t	newsz = lst->m_buf + lst->m_sz + c_init_size_opt + (size_t)sizeof(x_scale);
 
-#if 0
-	dbg_puts(("==[ OLD ONE"));
-	dbg_prefix();
-	dbg_call(fprintf, (stderr, "\tID: %lu\n", lst->m_id));
-	dbg_prefix();
-	dbg_call(fprintf, (stderr, "\tBUF: %lu\n", lst->m_buf));
-	dbg_prefix();
-	dbg_call(fprintf, (stderr, "\tNXT: %lu\n", lst->m_nxt));
-
-	dbg_prefix();
-	dbg_call(fprintf, (stderr, "\tPRV: %lu\n", lst->m_prv));
-
-	dbg_prefix();
-	dbg_call(fprintf, (stderr, "\tSZ: %lu\n", lst->m_sz));
-
-	dbg_prefix();
-	dbg_call(fprintf, (stderr, "\tSZ: %u\n", get_buf_from_scale2(aclspv_wrd_t, h_alloc,  *lst)[1]));
-
-	dbg_puts(("]== OLD ONE"));
-#endif
-
 	assert(lst); 
 	assert(h_alloc);
 	assert(h_alloc->m_p);
@@ -224,25 +203,6 @@ ae2f_retnew ae2f_inline static x_scale* mk_scale_from_vec(
 	nxt->m_nxt = 0;
 	nxt->m_id = lst->m_id + 1;
 	nxt->m_prv = (size_t)((const char*)lst - (const char*)h_alloc->m_p);
-
-#if 0
-	dbg_puts(("==[ NEW ONE"));
-	dbg_prefix();
-	dbg_call(fprintf, (stderr, "\tID: %lu\n", lst->m_id));
-	dbg_prefix();
-	dbg_call(fprintf, (stderr, "\tBUF: %lu\n", lst->m_buf));
-	dbg_prefix();
-	dbg_call(fprintf, (stderr, "\tNXT: %lu\n", lst->m_nxt));
-
-	dbg_prefix();
-	dbg_call(fprintf, (stderr, "\tPRV: %lu\n", lst->m_prv));
-
-	dbg_prefix();
-	dbg_call(fprintf, (stderr, "\tSZ: %lu\n", lst->m_sz));
-	dbg_call(fprintf, (stderr, "\tSZ: %u\n", get_buf_from_scale2(aclspv_wrd_t, h_alloc,  *lst)[1]));
-
-	dbg_puts(("]== NEW ONE"));
-#endif
 
 	assert(get_first_scale_from_vec(h_alloc) < get_last_scale_from_vec(h_alloc));
 	assert(lst->m_buf);
