@@ -194,15 +194,15 @@ util_default_is_arithmetic(const aclspv_id_t c_id) {
  * */
 ae2f_WhenCXX(ae2f_constexpr) ae2f_WhenC(ae2f_inline ae2f_ccconst static) e_id_default
 util_default_decide_cast(const e_id_default c_id0, const e_id_default c_id1) {
+	/** one is 0? */
+	unless(c_id0 && c_id1)
+		return c_id0 ? c_id0 : c_id1;
+
 	unless(util_default_is_arithmetic(c_id0) && util_default_is_arithmetic(c_id1))
 		return 0;
 
 	unless(util_default_is_number(c_id0) && util_default_is_number(c_id1))
 		return 0;
-
-	/** one is 0? */
-	unless(c_id0 && c_id1)
-		return c_id0 + c_id1;
 
 	if(util_default_is_float(c_id0) != util_default_is_float(c_id1))
 		return util_default_is_float(c_id0) ? c_id0 : c_id1;

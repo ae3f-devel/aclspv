@@ -33,11 +33,28 @@
 #endif
 
 #define	dbg_prefix(a)	dbg_call(fputs, ("<-> ", stderr))
-#define	fixme_prefix(a)	fixme_call(fputs, ("</>", stderr))
+#define	fixme_prefix(a)	fixme_call(fputs, ("</> ", stderr))
 #define	warn_prefix(a)	warn_call(fputs, ("[?] ", stderr))
 #define err_prefix(a)	err_call(fputs, ("[X] ", stderr))
 
-#define	dbg_puts(a)	{ dbg_prefix(); dbg_call(perror, a); }
-#define fixme_puts(a)	{ fixme_prefix(); fixme_call(perror, a); }
-#define	warn_puts(a)	{ warn_prefix(); warn_call(perror, a); }
-#define	err_puts(a)	{ err_prefix(); err_call(perror, a); }
+#define	dbg_puts(a)	{ \
+	dbg_prefix(); dbg_call(fputs, (a, stderr)); \
+	dbg_call(fputc, ('\n', stderr)); \
+}
+
+#define fixme_puts(a)	{ \
+	fixme_prefix(); \
+	fixme_call(fputs, (a, stderr)); \
+	fixme_call(fputc, ('\n', stderr)); \
+}
+
+#define	warn_puts(a)	{ \
+	warn_prefix(); \
+	warn_call(fputs, (a, stderr)); \
+	warn_call(fputc, ('\n', stderr)); \
+}
+#define	err_puts(a)	{ \
+	err_prefix(); \
+	err_call(fputs, (a, stderr)); \
+	err_call(fputc, ('\n', stderr)); \
+}

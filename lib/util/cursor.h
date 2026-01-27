@@ -60,8 +60,7 @@ typedef struct {
 			 * is this variable not seem to be referenced?
 			 * */
 			aclspv_wrd_t	m_is_predictable	: 1;
-			aclspv_wrd_t	m_is_constant		: 1;
-			aclspv_wrd_t	m_is_literal		: 1;
+			B_util_literal_t	m_mask_literal	: 2;
 
 
 			/**

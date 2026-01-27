@@ -234,21 +234,18 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 #endif
 
 						if(NODE && NODE->m_const_spec_id) {
-							emit_expr_literal	UNUSED = {0, };
 							CURSOR.m_data.m_var_simple.m_init_val = CTX->m_id++;
 
 							dbg_prefix(a);
 							dbg_call(fprintf, (stderr, "Spec ID definition spotted.: %u\n"
 										, NODE->m_const_spec_id));
 
-							switch(emit_expr_arithmetic_cast(
+							switch(emit_expr_arithmetic_cast_non_literal(
 										NODE->m_const_spec_id
 										, NODE->m_const_spec_type_id
-										, 1
-										, 0, UNUSED
+										, UTIL_LITERAL_CONSTANT
 										, CTX->m_id - 1
 										, CURSOR.m_data.m_var_simple.m_type_id
-										, ae2f_NIL
 										, CTX
 										))
 							{
@@ -268,17 +265,18 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 									ae2f_unexpected_but_if(0) {
 										ae2f_unreachable();
 										case EMIT_EXPR_SUCCESS:
-										CURSOR.m_data.m_var_simple.m_is_constant = 1;
+										CURSOR.m_data.m_var_simple.m_mask_literal
+											= UTIL_LITERAL_CONSTANT;
 									}
 
 									ae2f_unexpected_but_if(0) {
 										ae2f_unreachable();
 										case EMIT_EXPR_SUCCESS_CONSTANT:
-										CURSOR.m_data.m_var_simple.m_is_constant = 0;
+										CURSOR.m_data.m_var_simple.m_mask_literal 
+											= UTIL_LITERAL_RT;
 									}
 
 									CURSOR.m_data.m_var_simple.m_is_predictable = 1;
-									CURSOR.m_data.m_var_simple.m_is_literal = 0;
 							}
 						}
 
@@ -295,6 +293,7 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 									CURSOR.m_data.m_var_simple.m_init_val
 									, CURSOR.m_data.m_var_simple.m_type_id
 									, VAR_INIT
+									, &CURSOR.m_data.m_var_simple.m_literal
 									, CTX))
 						{
 							case EMIT_EXPR_NOT_THE_CASE:
@@ -307,12 +306,16 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 								break;
 
 							case EMIT_EXPR_SUCCESS_LITERAL:
-								CURSOR.m_data.m_var_simple.m_is_literal = 1;
+								CURSOR.m_data.m_var_simple.m_mask_literal
+									|= UTIL_LITERAL_MASK_LITERAL;
+
 								dbg_puts(("Constructor is literal."));
 								ae2f_fallthrough;
 							case EMIT_EXPR_SUCCESS_CONSTANT:
+
 								dbg_puts(("Constructor may be constant."));
-								CURSOR.m_data.m_var_simple.m_is_constant = 1;
+								CURSOR.m_data.m_var_simple.m_mask_literal 
+									|= UTIL_LITERAL_CONSTANT;
 								ae2f_fallthrough;
 							case EMIT_EXPR_SUCCESS:
 								CURSOR.m_data.m_var_simple.m_is_predictable = 1;
@@ -445,8 +448,12 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 				if(EXPR_IDX == CTX->m_num_cursor)
 					++CTX->m_num_cursor;
 
-				++CTX->m_id;
-				unless(emit_get_expr(CTX->m_id - 1, 0, h_cur, CTX))
+				unless(emit_get_expr(
+							CTX->m_id++
+							, 0
+							, h_cur
+							, 0
+							, CTX))
 					goto LBL_FAIL;
 			}
 			goto LBL_DONE;

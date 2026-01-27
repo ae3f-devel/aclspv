@@ -54,19 +54,11 @@ __kernel void KERNEL_0(
 
 __attribute__((annotate("aclspv_execmodel(0)")))
 __kernel void N_KERNEL_0(__constant uintptr_t* consti32, __attribute__((annotate("aclspv_storage_class(3)"))) __global const uint* u32out) {
-	const size_t specid_0 __attribute__((annotate("aclspv_specid(0)"))) = 0;
-	const size_t specid_1 __attribute__((annotate("aclspv_specid(1)"))) = 1;
-	int a = 3;
-	float b = 4;
+	int a0 = 3;
+	int a1;
+	int a2 = 7;
+	int a = a0 + a1 + a2;
 
-
-	3;
-	3 + 4 + 3;
-	a + 3;
-	a + 4.0 + 3;
-
-	b;
-	b + 3;
 
 	goto AGOTO;
 AGOTO:

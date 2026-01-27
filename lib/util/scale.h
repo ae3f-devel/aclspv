@@ -43,10 +43,10 @@ struct x_scale {
 	((buf_T* ae2f_restrict)get_buf_from_scale(h_alloc, c_scale))
 
 #define	get_nxt_from_scale(h_alloc, c_scale)	\
-	(x_scale* ae2f_restrict)(((uintptr_t)(h_alloc)->m_p) + ((uintptr_t)(c_scale).m_nxt))
+	((x_scale* ae2f_restrict)(((uintptr_t)(h_alloc)->m_p) + ((uintptr_t)(c_scale).m_nxt)))
 
 #define	get_prv_from_scale(h_alloc, c_scale)	\
-	(x_scale* ae2f_restrict)(((uintptr_t)(h_alloc)->m_p) + ((uintptr_t)(c_scale).m_prv))
+	((x_scale* ae2f_restrict)(((uintptr_t)(h_alloc)->m_p) + ((uintptr_t)(c_scale).m_prv)))
 
 /** 
  * @fn	 	init_scale

@@ -3,7 +3,9 @@
 #ifndef	lib_emit_expr_h
 #define	lib_emit_expr_h
 
-#include <complex.h>
+#include "aclspv/spvty.h"
+#include "util/id.h"
+#include "util/op.h"
 #include <assert.h>
 
 #include <aclspv.h>
@@ -57,7 +59,7 @@ typedef util_literal emit_expr_literal;
 ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 		const aclspv_id_t	c_old_id,
 		const aclspv_id_t	c_old_type,
-		const aclspv_wrd_t	c_is_old_constant,
+		const B_util_literal_t	c_flag_literal,
 		aclspv_id_t		c_new_id,
 		aclspv_id_t		c_new_type,
 		const h_util_ctx_t	h_ctx
@@ -69,7 +71,35 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 
 	dbg_puts(("Arithmetic cast: non-literal"));
 	if(util_default_is_int(c_old_type) && util_default_is_int(c_new_type)) {
-		if(c_is_old_constant) {
+		if(c_flag_literal & UTIL_LITERAL_CONSTANT) {
+			if(c_old_type == c_new_type) {
+				aclspv_wrd_t	NEGATE_1 = h_ctx->m_id++;
+
+				ae2f_expected_but_else(h_ctx->m_count.m_types
+						= util_emitx_5(
+							&h_ctx->m_section.m_types
+							, h_ctx->m_count.m_types
+							, SpvOpSpecConstantOp
+							, c_new_type
+							, NEGATE_1
+							, SpvOpSNegate
+							, c_old_id))
+					return EMIT_EXPR_FAILURE;
+
+				ae2f_expected_but_else(h_ctx->m_count.m_types
+						= util_emitx_5(
+							&h_ctx->m_section.m_types
+							, h_ctx->m_count.m_types
+							, SpvOpSpecConstantOp
+							, c_new_type
+							, c_new_id
+							, SpvOpSNegate
+							, NEGATE_1))
+					return EMIT_EXPR_FAILURE;
+
+				return EMIT_EXPR_SUCCESS_CONSTANT;
+			}
+
 			ae2f_expected_but_else(h_ctx->m_count.m_types
 					= util_emitx_5(
 						&h_ctx->m_section.m_types
@@ -83,6 +113,33 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 
 			return EMIT_EXPR_SUCCESS_CONSTANT;
 		} else {
+			if(c_new_type == c_old_type) {
+				aclspv_wrd_t	NEGATE_1 = h_ctx->m_id++;
+				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
+						= util_emitx_4(
+							&h_ctx->m_section.m_fnimpl
+							, h_ctx->m_count.m_fnimpl
+							, SpvOpSNegate
+							, c_new_type
+							, NEGATE_1
+							, c_old_id
+							)
+						) return EMIT_EXPR_FAILURE;
+
+				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
+						= util_emitx_4(
+							&h_ctx->m_section.m_fnimpl
+							, h_ctx->m_count.m_fnimpl
+							, SpvOpSNegate
+							, c_new_type
+							, c_new_id
+							, NEGATE_1
+							)
+						) return EMIT_EXPR_FAILURE;
+
+				return EMIT_EXPR_SUCCESS;
+			}
+
 			ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
 					= util_emitx_4(
 						&h_ctx->m_section.m_fnimpl
@@ -98,7 +155,35 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 	}
 
 	if (util_default_is_float(c_old_type) && util_default_is_float(c_new_type)) {
-		if(c_is_old_constant) {
+		if(c_flag_literal & UTIL_LITERAL_CONSTANT) {
+			if(c_old_type == c_new_type) {
+				aclspv_wrd_t	NEGATE_1 = h_ctx->m_id++;
+
+				ae2f_expected_but_else(h_ctx->m_count.m_types
+						= util_emitx_5(
+							&h_ctx->m_section.m_types
+							, h_ctx->m_count.m_types
+							, SpvOpSpecConstantOp
+							, c_new_type
+							, NEGATE_1
+							, SpvOpFNegate
+							, c_old_id))
+					return EMIT_EXPR_FAILURE;
+
+				ae2f_expected_but_else(h_ctx->m_count.m_types
+						= util_emitx_5(
+							&h_ctx->m_section.m_types
+							, h_ctx->m_count.m_types
+							, SpvOpSpecConstantOp
+							, c_new_type
+							, c_new_id
+							, SpvOpFNegate
+							, NEGATE_1))
+					return EMIT_EXPR_FAILURE;
+
+				return EMIT_EXPR_SUCCESS_CONSTANT;
+			}
+
 			ae2f_expected_but_else(h_ctx->m_count.m_types
 					= util_emitx_5(
 						&h_ctx->m_section.m_types
@@ -112,6 +197,32 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 
 			return EMIT_EXPR_SUCCESS_CONSTANT;
 		} else {
+			if(c_new_type == c_old_type) {
+				aclspv_wrd_t	NEGATE_1 = h_ctx->m_id++;
+				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
+						= util_emitx_4(
+							&h_ctx->m_section.m_fnimpl
+							, h_ctx->m_count.m_fnimpl
+							, SpvOpFNegate
+							, c_new_type
+							, NEGATE_1
+							, c_old_id
+							)
+						) return EMIT_EXPR_FAILURE;
+
+				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
+						= util_emitx_4(
+							&h_ctx->m_section.m_fnimpl
+							, h_ctx->m_count.m_fnimpl
+							, SpvOpFNegate
+							, c_new_type
+							, c_new_id
+							, NEGATE_1
+							)
+						) return EMIT_EXPR_FAILURE;
+				return EMIT_EXPR_SUCCESS;
+			}
+
 			ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
 					= util_emitx_4(
 						&h_ctx->m_section.m_fnimpl
@@ -164,9 +275,8 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast(
 		const aclspv_id_t	c_old_id,
 		const aclspv_id_t	c_old_type,
-		const aclspv_wrd_t	c_is_old_constant,
-		const aclspv_wrd_t	c_is_old_literal,
-		emit_expr_literal	c_old_literal,
+		const B_util_literal_t	c_flag_literal,
+		const emit_expr_literal	c_old_literal,
 
 		aclspv_id_t		c_new_id,
 		aclspv_id_t		c_new_type,
@@ -174,79 +284,136 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast(
 		const h_util_ctx_t	h_ctx
 		)
 {
+	emit_expr_literal	RESULT = c_old_literal;
 	assert(c_old_type);	assert(c_new_type);
 	assert(c_new_id);
 	assert(h_ctx);
 
-	if(c_is_old_literal) {
-		dbg_puts(("Arithmetic cast: literal"));
-		unless(util_default_is_number(c_old_type) && util_default_is_number(c_new_type))
-			return EMIT_EXPR_NOT_THE_CASE;
+	unless(c_flag_literal & UTIL_LITERAL_LITERAL) 
+		return emit_expr_arithmetic_cast_non_literal(
+				c_old_id, c_old_type
+				, c_flag_literal, c_new_id
+				, c_new_type, h_ctx
+				);
 
-		if(util_default_is_float(c_old_type) && util_default_is_int(c_new_type)) {
-			switch(util_default_bit_width(c_old_type)) {
-				case 64:
-					c_old_literal.m_api_intmax = (imax)c_old_literal.m_dbl;
-					break;
-				case 32:
-					c_old_literal.m_api_intmax = (imax)c_old_literal.m_flt;
-					break;
-				default:
-					assert(0 && "unknown float bit-width");
-					return EMIT_EXPR_FAILURE;
-			}
-		}
+	dbg_prefix(a);
+	dbg_call(ae2f_NONE, (fprintf(
+					stderr
+					, "Arithmetic cast: literal old[%u] new [%u]\n"
+					, c_old_type, c_new_type
+				    )));
 
-		if(util_default_is_int(c_old_type) && util_default_is_float(c_new_type)) {
-			switch(util_default_bit_width(c_new_type)) {
-				case 64:
-					c_old_literal.m_dbl = (double)c_old_literal.m_api_intmax;
-					break;
+	unless(util_default_is_number(c_old_type) && util_default_is_number(c_new_type))
+		return EMIT_EXPR_NOT_THE_CASE;
 
-				case 32:
-					c_old_literal.m_flt = (float)c_old_literal.m_api_intmax;
-					break;
-				default:
-					assert(0 && "unknown float bit-width");
-					return EMIT_EXPR_FAILURE;
-			}
-		}
-
-		if(wr_new_literal_opt) *wr_new_literal_opt = c_old_literal;
-
-		if(util_default_bit_width(c_new_type) == 64) {
-			ae2f_expected_but_else(h_ctx->m_count.m_types
-					= util_emitx_5(
-						&h_ctx->m_section.m_types
-						, h_ctx->m_count.m_types
-						, SpvOpConstant
-						, c_new_type
-						, c_new_id
-						, (aclspv_wrd_t)(c_old_literal.m_u64		& 0xFFFFFFFF)
-						, (aclspv_wrd_t)(c_old_literal.m_u64 >> 32)	& 0xFFFFFFFF))
+	if(util_default_is_float(c_old_type) && util_default_is_int(c_new_type)) {
+		dbg_puts(("Cast (float -> int)"));
+		switch(util_default_bit_width(c_old_type)) {
+			case 64:
+				dbg_prefix();
+				dbg_call(fprintf, (stderr, "Cast from literal(double): %f\n", c_old_literal.m_dbl));
+				RESULT.m_api_intmax = (imax)c_old_literal.m_dbl;
+				break;
+			case 32:
+				dbg_prefix();
+				dbg_call(fprintf, (stderr, "Cast from literal(float): %f\n", c_old_literal.m_flt));
+				RESULT.m_api_intmax = (imax)c_old_literal.m_flt;
+				break;
+			default:
+				assert(0 && "unknown float bit-width");
 				return EMIT_EXPR_FAILURE;
-			return EMIT_EXPR_SUCCESS_LITERAL;
 		}
 
-		ae2f_expected_but_else(h_ctx->m_count.m_types = util_emitx_4(
+		dbg_prefix();
+		dbg_call(fprintf, (stderr, "Result literal(intmax): %ld\n", RESULT.m_api_intmax));
+	}
+
+	if(util_default_is_int(c_old_type) && util_default_is_float(c_new_type)) {
+		dbg_prefix(a);
+		dbg_call(ae2f_NONE, (fprintf(stderr, "Cast (int -> float): %ld\n", c_old_literal.m_api_intmax)));
+		switch(util_default_bit_width(c_new_type)) {
+			case 64:
+				RESULT.m_dbl = (double)c_old_literal.m_api_intmax;
+				dbg_prefix();
+				dbg_call(fprintf, (stderr, "Literal result(double): %f\n", RESULT.m_dbl));
+				break;
+
+			case 32:
+				RESULT.m_flt = (float)c_old_literal.m_api_intmax;
+				dbg_prefix();
+				dbg_call(fprintf, (stderr, "Literal result(float): %f\n", RESULT.m_flt));
+				break;
+			default:
+				assert(0 && "unknown float bit-width");
+				return EMIT_EXPR_FAILURE;
+		}
+	}
+
+	if(util_default_is_float(c_old_type) && util_default_is_float(c_new_type) && c_old_type != c_new_type) {
+		switch(util_default_bit_width(c_new_type)) {
+			case 64:
+				RESULT.m_dbl = c_old_literal.m_flt;
+				break;
+			case 32:
+				RESULT.m_flt = (float)c_old_literal.m_dbl;
+				break;
+			default:
+				assert(0 && "unknown float bit-width");
+				return EMIT_EXPR_FAILURE;
+		}
+	}
+
+	if(wr_new_literal_opt) *wr_new_literal_opt = RESULT;
+
+	if(util_default_bit_width(c_new_type) == 64) {
+		dbg_call(fprintf, (
+					stderr
+					, "Width is 64 %lu\n"
+					, RESULT.m_u64
+				  ));
+		dbg_call(fprintf, (
+					stderr
+					, "Width is 64 %f\n"
+					, RESULT.m_dbl
+				  ));
+
+		ae2f_expected_but_else(h_ctx->m_count.m_types
+				= util_emitx_5(
 					&h_ctx->m_section.m_types
 					, h_ctx->m_count.m_types
 					, SpvOpConstant
 					, c_new_type
 					, c_new_id
-					, (aclspv_wrd_t)(c_old_literal.m_u64
-						& ((1ul << util_default_bit_width(c_new_type)) - 1ul))
-					))
+					, (aclspv_wrd_t)(RESULT.m_api_intmax		& 0xFFFFFFFF)
+					, (aclspv_wrd_t)(RESULT.m_api_intmax >> 32)	& 0xFFFFFFFF))
 			return EMIT_EXPR_FAILURE;
-
 		return EMIT_EXPR_SUCCESS_LITERAL;
 	}
 
-	return emit_expr_arithmetic_cast_non_literal(
-			c_old_id, c_old_type
-			, c_is_old_constant, c_new_id
-			, c_new_type, h_ctx
-			);
+
+	dbg_prefix(a);
+	dbg_call(fprintf, (
+				stderr
+				, "Width is 32 %u\n"
+				, (aclspv_wrd_t)RESULT.m_api_intmax
+			  ));
+	dbg_call(fprintf, (
+				stderr
+				, "Width is 32 %f\n"
+				, RESULT.m_flt
+			  ));
+
+	ae2f_expected_but_else(h_ctx->m_count.m_types = util_emitx_4(
+				&h_ctx->m_section.m_types
+				, h_ctx->m_count.m_types
+				, SpvOpConstant
+				, c_new_type
+				, c_new_id
+				, (aclspv_wrd_t)(RESULT.m_api_intmax)
+				))
+		return EMIT_EXPR_FAILURE;
+
+	return EMIT_EXPR_SUCCESS_LITERAL;
 }
 
 /** 
@@ -258,14 +425,14 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast(
  *
  * */
 ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
-		const CXCursor		c_cur,
-		const h_util_ctx_t	h_ctx,
-		const aclspv_id_t	c_newid,
-		e_id_default* ae2f_restrict const	rdwr_type_req,
+		const CXCursor			c_cur,
+		const h_util_ctx_t		h_ctx,
+		const aclspv_id_t		c_newid,
+		e_id_default* ae2f_restrict	wr_type_cast,
+		e_id_default* ae2f_restrict	wr_type_fetched,
 		util_literal* ae2f_restrict const	rwr_literal_opt
 		) {
 	emit_expr_literal EVRES;
-#define	TYPE_NEW_REQ	((*rdwr_type_req))
 
 	ae2f_expected_but_else(h_ctx)
 		return EMIT_EXPR_FAILURE;
@@ -294,40 +461,85 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 						EVRES.m_api_uintmax = clang_EvalResult_getAsUnsigned(EVAL);
 						clang_EvalResult_dispose(EVAL);
 
-						unless(TYPE_NEW_REQ) {
-							ae2f_expected_but_else(util_mk_default_id(
-										TYPE_NEW_REQ = 
-										EVRES.m_api_uintmax <= 0xFFFFFFFF
-										? ID_DEFAULT_I32 : ID_DEFAULT_I64
-										, h_ctx))
-								return EMIT_EXPR_FAILURE;
+
+
+						dbg_prefix(i);
+						dbg_call(fprintf, (stderr
+									, "Value fetched: %lu\n"
+									, EVRES.m_api_uintmax
+								  )
+							);
+
+						*wr_type_fetched = *wr_type_cast  =  util_default_decide_cast(
+								*wr_type_cast
+								, 
+
+								(EVRES.m_api_uintmax <= 0xFFFFFFFF 
+									? ID_DEFAULT_I32 : ID_DEFAULT_I64)
+								);
+
+						assert(*wr_type_cast);
+						assert(*wr_type_fetched);
+
+						dbg_prefix(i);
+						dbg_call(fprintf, (stderr
+									, "Value of `wr_type_cast`: %u\n"
+									, *wr_type_cast
+								  )
+							);
+
+						ae2f_expected_but_else(util_mk_default_id(
+									*wr_type_cast
+									, h_ctx)) {
+							err_prefix(a);
+							err_call(fprintf, (stderr
+										, "Default id fetch has failed. %u\n"
+										, *wr_type_cast
+									  )
+								);
+							return EMIT_EXPR_FAILURE;
 						}
 
 						return emit_expr_arithmetic_cast(
 								1
-								, EVRES.m_api_uintmax <= 0xFFFFFFFF
-								? ID_DEFAULT_I32 : ID_DEFAULT_I64
-								, 0, 1, EVRES
-								, c_newid, TYPE_NEW_REQ
+								, (EVRES.m_api_uintmax <= 0xFFFFFFFF 
+									? ID_DEFAULT_I32 : ID_DEFAULT_I64)
+								, UTIL_LITERAL_MASK_LITERAL
+								, EVRES
+								, c_newid, *wr_type_cast
 								, rwr_literal_opt
 								, h_ctx);
 
 					case CXEval_Float:
-						dbg_puts(("Literal: double"));
+						dbg_puts(("Literal: double (float casted)"));
 						EVRES.m_dbl = clang_EvalResult_getAsDouble(EVAL);
+						dbg_prefix(a);
+						dbg_call(fprintf, (stderr, "Literal fetched: %f\n", EVRES.m_dbl));
+
 						clang_EvalResult_dispose(EVAL);
 
-						unless(TYPE_NEW_REQ) {
-							ae2f_expected_but_else(util_mk_default_id(
-										TYPE_NEW_REQ = ID_DEFAULT_F32
-										, h_ctx))
-								return EMIT_EXPR_FAILURE;	
-						}
+						*wr_type_fetched = *wr_type_cast = util_default_decide_cast(
+								*wr_type_cast
+								, ID_DEFAULT_F32
+								);
+
+						assert(*wr_type_cast);
+						assert(*wr_type_fetched);
+
+						dbg_prefix(a);
+						dbg_call(fprintf, (stderr, "wr_type_cast: %u\n", *wr_type_cast));
+
+						ae2f_expected_but_else(util_mk_default_id(
+									*wr_type_cast
+									, h_ctx))
+							return EMIT_EXPR_FAILURE;
 
 						return emit_expr_arithmetic_cast(
 								1, ID_DEFAULT_F64
-								, 0, 1, EVRES
-								, c_newid, TYPE_NEW_REQ
+								, UTIL_LITERAL_MASK_LITERAL
+								, EVRES
+								, c_newid
+								, *wr_type_cast
 								, rwr_literal_opt 
 								, h_ctx);
 					default:
@@ -356,68 +568,47 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 					return EMIT_EXPR_FAILURE;
 				}
 
-				unless(TYPE_NEW_REQ) {
-					TYPE_NEW_REQ = DECL_INFO.m_data.m_var_simple.m_type_id;
-				}
+				*wr_type_fetched = DECL_INFO.m_data.m_var_simple.m_type_id;
+				*wr_type_cast = util_default_decide_cast(
+						*wr_type_cast
+						, *wr_type_fetched 
+						);
 
-				unless(util_default_is_number(TYPE_NEW_REQ)) {
-					err_puts(("Required new type is no number [NOIMPL]"));
-					return EMIT_EXPR_FAILURE;
-				}
-
-				if(DECL_INFO.m_data.m_var_simple.m_is_literal) {
-					dbg_puts(("Value is literal"));
+				if(DECL_INFO.m_data.m_var_simple.m_mask_literal & UTIL_LITERAL_LITERAL) {
+					dbg_puts(("Variable is literal"));
 					return emit_expr_arithmetic_cast(
-							0, DECL_INFO.m_data.m_var_simple.m_type_id
-							, 1, 1
+							1, DECL_INFO.m_data.m_var_simple.m_type_id
+							, UTIL_LITERAL_MASK_LITERAL
 							, DECL_INFO.m_data.m_var_simple.m_literal
-							, c_newid, TYPE_NEW_REQ
-							, rwr_literal_opt, h_ctx);
-				}
-
-				if(DECL_INFO.m_data.m_var_simple.m_is_predictable) {
-					dbg_puts(("Value is predictable"));
-					return emit_expr_arithmetic_cast_non_literal(
-							DECL_INFO.m_data.m_var_simple.m_init_val
-							, DECL_INFO.m_data.m_var_simple.m_type_id
-							, DECL_INFO.m_data.m_var_simple.m_is_constant
 							, c_newid
-							, TYPE_NEW_REQ
+							, *wr_type_fetched = *wr_type_cast
+							, rwr_literal_opt
 							, h_ctx);
 				}
 
-				if(TYPE_NEW_REQ == DECL_INFO.m_data.m_var_simple.m_type_id) {
-					dbg_puts(("Two types are same"));
-					ae2f_expected_but_else(h_ctx->m_count.m_fnimpl = util_emitx_4(
-								&h_ctx->m_section.m_fnimpl
-								, h_ctx->m_count.m_fnimpl
-								, SpvOpLoad
-								, DECL_INFO.m_data.m_var_simple.m_type_id
-								, c_newid
-								, DECL_INFO.m_data.m_var_simple.m_id
-								)) return EMIT_EXPR_FAILURE;
+				if(DECL_INFO.m_data.m_var_simple.m_is_predictable) {
+					dbg_puts(("Variable is predictable"));
 
-					return EMIT_EXPR_SUCCESS;
+					return emit_expr_arithmetic_cast_non_literal(
+							DECL_INFO.m_data.m_var_simple.m_init_val
+							, DECL_INFO.m_data.m_var_simple.m_type_id
+							, DECL_INFO.m_data.m_var_simple.m_mask_literal
+							, c_newid
+							, *wr_type_fetched = *wr_type_cast
+							, h_ctx);
 				}
 
-				dbg_puts(("Evaluate and cast"));
-
+				dbg_puts(("Load from memory"));
 				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl = util_emitx_4(
 							&h_ctx->m_section.m_fnimpl
 							, h_ctx->m_count.m_fnimpl
 							, SpvOpLoad
 							, DECL_INFO.m_data.m_var_simple.m_type_id
-							, h_ctx->m_id++
+							, c_newid
 							, DECL_INFO.m_data.m_var_simple.m_id
 							)) return EMIT_EXPR_FAILURE;
 
-				return emit_expr_arithmetic_cast(
-						h_ctx->m_id - 1
-						, DECL_INFO.m_data.m_var_simple.m_type_id
-						, 0, 0, EVRES
-						, c_newid, TYPE_NEW_REQ
-						, rwr_literal_opt, h_ctx);
-
+				return EMIT_EXPR_SUCCESS;
 #undef	DECL_INFO
 			}
 	}
@@ -439,7 +630,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 {
 
 	x_scale* ae2f_restrict	NEW_SCALE;
-	aclspv_wrd_t		OPCODE;
+	enum UTIL_OPBIN2_	OPCODE;
 
 	ae2f_expected_but_else(h_ctx) {
 		assert(0 && "emit_expr_bin_2::h_ctx is null");
@@ -460,110 +651,24 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 			return EMIT_EXPR_NOT_THE_CASE;
 
 		case CXBinaryOperator_Add:
-			switch(c_result_type_id) {
-				case 0:
-				case ID_DEFAULT_I8:
-				case ID_DEFAULT_I16:
-				case ID_DEFAULT_I32:
-				case ID_DEFAULT_I64:
-					dbg_puts(("SpvOpIAdd"));
-					OPCODE = SpvOpIAdd;
-					break;
-
-				case ID_DEFAULT_F16:
-				case ID_DEFAULT_F32:
-				case ID_DEFAULT_F64:
-					dbg_puts(("SpvOpFAdd"));
-					OPCODE = SpvOpFAdd;
-					break;
-
-				default:
-					/** not supported */
-					assert(0 && "no support::add");
-					return EMIT_EXPR_FAILURE;
-			} break;
+			OPCODE = UTIL_OPBIN2_ADD;
+			break;
 
 		case CXBinaryOperator_Sub:
-			switch(c_result_type_id) {
-				case ID_DEFAULT_I8:
-				case ID_DEFAULT_I16:
-				case ID_DEFAULT_I32:
-				case ID_DEFAULT_I64:
-					dbg_puts(("SpvOpISub"));
-					OPCODE = SpvOpISub;
-					break;
-
-				case ID_DEFAULT_F16:
-				case ID_DEFAULT_F32:
-				case ID_DEFAULT_F64:
-					dbg_puts(("SpvOpFSub"));
-					OPCODE = SpvOpFSub;
-					break;
-
-				default:
-					/** not supported */
-					assert(0 && "no support::sub");
-					return EMIT_EXPR_FAILURE;
-			} break;
+			OPCODE = UTIL_OPBIN2_SUB;
+			break;
 
 		case CXBinaryOperator_Mul:
-			switch(c_result_type_id) {
-				case ID_DEFAULT_I8:
-				case ID_DEFAULT_I16:
-				case ID_DEFAULT_I32:
-				case ID_DEFAULT_I64:
-					OPCODE = SpvOpIMul;
-					break;
-
-				case ID_DEFAULT_F16:
-				case ID_DEFAULT_F32:
-				case ID_DEFAULT_F64:
-					OPCODE = SpvOpFMul;
-					break;
-
-				default:
-					/** not supported */
-					assert(0 && "no support::mul");
-					return EMIT_EXPR_FAILURE;
-			} break;
+			OPCODE = UTIL_OPBIN2_MUL;
+			break;
 
 		case CXBinaryOperator_Div:
-			switch(c_result_type_id) {
-				case ID_DEFAULT_I8:
-				case ID_DEFAULT_I16:
-				case ID_DEFAULT_I32:
-				case ID_DEFAULT_I64:
-					OPCODE = SpvOpSDiv;
-					break;
-
-					/*** TODO: make an unsigned types or builtin */
-
-				case ID_DEFAULT_F16:
-				case ID_DEFAULT_F32:
-				case ID_DEFAULT_F64:
-					OPCODE = SpvOpFDiv;
-					break;
-
-				default:
-					/** not supported */
-					assert(0 && "no support::div");
-					return EMIT_EXPR_FAILURE;
-			} break;
+			OPCODE = UTIL_OPBIN2_DIV;
+			break;
 
 		case CXBinaryOperator_Rem:
-			switch(c_result_type_id) {
-				case ID_DEFAULT_I8:
-				case ID_DEFAULT_I16:
-				case ID_DEFAULT_I32:
-				case ID_DEFAULT_I64:
-					OPCODE = SpvOpSMod;
-					break;
-
-				default:
-					/** not supported */
-					assert(0 && "no support::rem");
-					return EMIT_EXPR_FAILURE;
-			} break;
+			OPCODE = UTIL_OPBIN2_REM;
+			break;
 	}
 
 	{
@@ -581,6 +686,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 			return EMIT_EXPR_FAILURE;
 
 		VEC = get_buf_from_scale2(aclspv_wrd_t, h_cmdscale, *NEW_SCALE);
+		VEC[1] = UTIL_LITERAL_MASK_LITERAL;
 
 		dbg_prefix(a);
 		dbg_call(fprintf, (stderr, "\tNew scale 1: %u[%p]\n", VEC[1], (void*)(VEC + 1)));
@@ -589,7 +695,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 		dbg_call(fprintf, (stderr, "\tOld scale 1: %u[%p]\n"
 					, get_buf_from_scale2(aclspv_wrd_t, h_cmdscale, *get_prv_from_scale(h_cmdscale, *NEW_SCALE))[1]
 					, (void*)(get_buf_from_scale2(aclspv_wrd_t, h_cmdscale, *get_prv_from_scale(h_cmdscale, *NEW_SCALE)) + 1)
-					));
+				  ));
 
 		dbg_puts(("]== Scale Check"));
 
@@ -600,7 +706,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 			++h_ctx->m_id;
 
 		VEC[0] = 2;			/** number of operands */
-		VEC[1] = UTIL_LITERAL_LITERAL;	/** is not constant? */
+		VEC[1] = UTIL_LITERAL_MASK_LITERAL;	/** is not constant? */
 		VEC[2] = opcode_to_wrd(SpvOpSpecConstantOp, 5);
 		VEC[3] = c_result_type_id;
 		VEC[4] = c_newid;
@@ -667,46 +773,64 @@ static enum CXChildVisitResult emit_expr(
 		CXClientData rdwr_data
 		)
 {
-#define	CTX		((h_util_ctx_t)(((uptr* ae2f_restrict)rdwr_data)[0]))
-#define STCK_COUNT	((uptr* ae2f_restrict)(rdwr_data))[1]
-#define ID_REQ		((aclspv_wrd_t)(((uptr* ae2f_restrict)(rdwr_data))[2]))
-#define	IS_NOT_CONSTANT	((uptr* ae2f_restrict)(rdwr_data))[3]
-#define	TYPE_REQUIRED	(((uptr* ae2f_restrict)(rdwr_data))[4])
-#define	COUNTER_OPRND	(((uptr* ae2f_restrict)(rdwr_data))[5])
+#define	CTX			((h_util_ctx_t)(((uptr* ae2f_restrict)rdwr_data)[0]))
+#define EXPRSTCK_COUNT		(((uptr* ae2f_restrict)(rdwr_data))[1])
+#define ID_REQ			((aclspv_wrd_t)(((uptr* ae2f_restrict)(rdwr_data))[2]))
+#define	IS_NOT_CONSTANT		((uptr* ae2f_restrict)(rdwr_data))[3]
+#define	TYPE_CAST_CURRENT	(*(aclspv_wrd_t*)&(((uptr* ae2f_restrict)(rdwr_data))[4]))
+#define	NUM_CMDCOUNTERSTCK	(((uptr* ae2f_restrict)(rdwr_data))[5])
 
 	/** for stack tmp.m_v0 will be used. */
-#define	STCK		CTX->m_tmp.m_v0
+#define	EXPRSTCK	CTX->m_tmp.m_v0
 #define	CMDSTCK_SCALE	CTX->m_tmp.m_v1
-#define	LST_CMD_COUNT		(LST_SCALE_BUF[0] + 4)
+#define	CMDCOUNTERSTCK	CTX->m_tmp.m_v2
+#define	LST_CMD_HEADER		4
+#define	LST_CMD_COUNT		(LST_CMD_HEADER /** header */ + (LST_SCALE_BUF[0]))
+#define	LST_CMDBUF_COUNT	(LST_CMD_HEADER /** header */ + (LST_SCALE_BUF[0] << 1))
+
+	typedef struct {
+		u32_least	m_id_req;
+	} exprstck;
+
+	typedef struct {
+		u32_least	m_count_oprnd;
+	} cmdcounterstckelm;
+
+	char aclspv_STATICASSERT_ELMSIZE[sizeof(exprstck) == sizeof(cmdcounterstckelm) && sizeof(cmdcounterstckelm) == sizeof(u32_least)];
+
+#define	BUF_EXPRSTCK(a)	((exprstck* ae2f_restrict)(EXPRSTCK).m_p)
+#define	GETLASTELEXPRSTCK(a)	BUF_EXPRSTCK(c_stck)[EXPRSTCK_COUNT - 1]
+#define	BUF_CMDCOUNTERSTCK(a)	((cmdcounterstckelm* ae2f_restrict)(CMDCOUNTERSTCK).m_p)
+#define	GETLASTEL_CMDCOUNTERSTCK(a)	BUF_CMDCOUNTERSTCK()[NUM_CMDCOUNTERSTCK - 1]
 
 	h_scale_t LST_SCALE				= get_last_scale_from_vec(&CMDSTCK_SCALE);
 	aclspv_wrd_t* ae2f_restrict LST_SCALE_BUF	= get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *LST_SCALE);
 	aclspv_id_t ID_REQ_CURRENT			= ID_REQ;
 
-	util_literal* ae2f_restrict LITERAL 
-		= ((util_literal* ae2f_restrict)(void* ae2f_restrict)(&LST_SCALE_BUF[(LST_CMD_COUNT + 2)]));
+	util_literal* ae2f_restrict LST_LITERAL 
+		= ((util_literal* ae2f_restrict)(void* ae2f_restrict)(&LST_SCALE_BUF[(LST_CMDBUF_COUNT + 2)]));
 
-	if(STCK_COUNT) {
-		ae2f_expected_but_else(STCK.m_p) {
+	util_literal* ae2f_restrict RET_LITERAL
+		= (void*)(((uptr* ae2f_restrict)(rdwr_data)) + 6);
+	aclspv_id_t* ae2f_restrict LST_TYPE_ORIGINAL
+		= ((aclspv_id_t* ae2f_restrict)(void* ae2f_restrict)(LST_LITERAL)) - LST_SCALE_BUF[0];
+
+
+	(void)aclspv_STATICASSERT_ELMSIZE;
+
+	if(EXPRSTCK_COUNT) {
+		ae2f_expected_but_else(EXPRSTCK.m_p) {
 			CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
 			assert(0 && "stack is acting funny");
 			return CXChildVisit_Break;
 		}
 
-		ID_REQ_CURRENT = get_wrd_of_vec(&STCK)[STCK_COUNT - 1];
+		ID_REQ_CURRENT = GETLASTELEXPRSTCK(EXPRSTCK).m_id_req;
 	}
 
 	ae2f_expected_but_else(LST_SCALE_BUF) {
 		CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
 		return CXChildVisit_Break;
-	}
-
-	{
-		const CXString SPELL		= clang_getCursorSpelling(h_cur);
-		const CXString KINDSPELL	= clang_getCursorKindSpelling(h_cur.kind);
-		clang_disposeString(SPELL);
-		clang_disposeString(KINDSPELL);
-
 	}
 
 	(void)h_parent;
@@ -717,21 +841,38 @@ static enum CXChildVisitResult emit_expr(
 				, (void*)(get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE)) + 1)
 			  ));
 
+#if 1
+	dbg_prefix(i);
+	dbg_call(ae2f_NONE, (fprintf(stderr, "Operand Counter: %u[%p]\n"
+					, GETLASTEL_CMDCOUNTERSTCK().m_count_oprnd
+					, (void*)&GETLASTEL_CMDCOUNTERSTCK().m_count_oprnd
+				    )));
+#endif
+
+	dbg_prefix(i);
+	dbg_call(ae2f_NONE, (fprintf(
+					stderr
+					, "Type Original before ExprBin1: %u\n"
+					, LST_TYPE_ORIGINAL[GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd]
+				    )));
 	switch(emit_expr_bin_1(
 				h_cur
 				, CTX
 				, ID_REQ_CURRENT
-				, (e_id_default* ae2f_restrict)&TYPE_REQUIRED
-				, LITERAL + COUNTER_OPRND
-				)) {
+				, &TYPE_CAST_CURRENT
+				, LST_TYPE_ORIGINAL + GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd
+				, RET_LITERAL
+			      )) {
 		case EMIT_EXPR_FAILURE:
 			assert(0 && "bin_1 is fishy");
+			CTX->m_err = ACLSPV_COMPILE_MET_INVAL;
 			return CXChildVisit_Break;
 
 		case EMIT_EXPR_SUCCESS:
-			dbg_puts(("RT BinEx1 Success"));
+			dbg_prefix(a);
+			dbg_call(ae2f_NONE, (fprintf(stderr, "RTBinEx1 Success: TypeCastedCurrent: %u\n", TYPE_CAST_CURRENT)));
 			IS_NOT_CONSTANT = UTIL_LITERAL_RT;
-			LST_SCALE_BUF[1] = UTIL_LITERAL_RT;
+			LST_SCALE_BUF[1] = UTIL_LITERAL_MASK_RT;
 
 			ae2f_unexpected_but_if(0) {
 				ae2f_unreachable();
@@ -740,7 +881,10 @@ static enum CXChildVisitResult emit_expr(
 				dbg_call(fprintf, (stderr, "Binary expression was literal [%p]%u\n"
 							, (void*)(LST_SCALE_BUF + 1)
 							, LST_SCALE_BUF[1])
-						);
+					);
+
+				dbg_prefix(a);
+				dbg_call(ae2f_NONE, (fprintf(stderr, "\tTypeCastedCurrent: %u\n", TYPE_CAST_CURRENT)));
 			}
 
 			ae2f_unexpected_but_if(0) {
@@ -750,51 +894,80 @@ static enum CXChildVisitResult emit_expr(
 				dbg_call(fprintf, (stderr, "Binary expression was constant [%p]%u\n"
 							, (void*)(LST_SCALE_BUF + 1)
 							, LST_SCALE_BUF[1])
-						);
+					);
 
 				IS_NOT_CONSTANT &= UTIL_LITERAL_CONSTANT;
-				LST_SCALE_BUF[1] &= UTIL_LITERAL_CONSTANT;
+				LST_SCALE_BUF[1] &= UTIL_LITERAL_MASK_CONSTANT;
 			}
 
-			(void)(STCK_COUNT && --STCK_COUNT);
-			++COUNTER_OPRND;
 
-			while(LST_SCALE->m_id &&  COUNTER_OPRND == LST_SCALE_BUF[0]) {
+			LST_LITERAL[GETLASTEL_CMDCOUNTERSTCK(i).m_count_oprnd] = *RET_LITERAL;
 
-				dbg_puts(("==[ Op1 Destroy"));
-				dbg_prefix(i);
-				dbg_call(fprintf, (stderr
-							, 
-							"\tOperand counter is full: %lu\n"
-							, COUNTER_OPRND));
-				dbg_prefix(i);
-				dbg_call(fprintf, (stderr, "\tConstant evaluator previous: %u[%p]\n"
-							, get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE))[1] 
-							, (void*)(get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE)) + 1)
-						  ));
+			(void)(EXPRSTCK_COUNT && --EXPRSTCK_COUNT);
+			++GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd;
 
-				dbg_prefix(i);
+			while(LST_SCALE->m_id && GETLASTEL_CMDCOUNTERSTCK().m_count_oprnd == LST_SCALE_BUF[0]) {
+				aclspv_id_t	
+					OLD_ID0 =	LST_SCALE_BUF[UTIL_OPBINCFG_END]
+					, OLD_ID1 =	LST_SCALE_BUF[UTIL_OPBINCFG_END + 1];
 
-				dbg_call(
-						fprintf, (stderr, "\t> ...with id as %lu\n"
-							, (get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE))->m_id
-							)
+				util_literal	NEW_LITERAL_0 = LST_LITERAL[0];
+				util_literal 	NEW_LITERAL_1 = LST_LITERAL[1];
+
+				fixme_puts("Arithmetic cast should be tested on switch");
+				dbg_prefix(a);
+				dbg_call(fprintf, (stderr, "SCALEBUF[5](opcode) (%p)%u\n"
+							, (void*)(LST_SCALE_BUF + 5)
+							, LST_SCALE_BUF[5]));
+
+				LST_SCALE_BUF[UTIL_OPBINCFG_END] = CTX->m_id++;
+				LST_SCALE_BUF[UTIL_OPBINCFG_END + 1] = CTX->m_id++;
+
+				emit_expr_arithmetic_cast(
+						OLD_ID0
+						, LST_TYPE_ORIGINAL[0]
+						, (B_util_literal_t)LST_SCALE_BUF[1] 
+						, NEW_LITERAL_0
+						, LST_SCALE_BUF[UTIL_OPBINCFG_END]
+						, TYPE_CAST_CURRENT
+						, &LST_LITERAL[0]
+						, CTX
 						);
 
-				dbg_prefix(i);
-				dbg_call(fprintf, (stderr, "\tConstant evaluator current: %u[%p]\n"
-							, LST_SCALE_BUF[1]
-							, (void*)(LST_SCALE_BUF + 1)
-						  ));
+				LST_TYPE_ORIGINAL[0] = TYPE_CAST_CURRENT;
 
-				get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE))[1]
-					&= LST_SCALE_BUF[1];
+				emit_expr_arithmetic_cast(
+						OLD_ID1
+						, LST_TYPE_ORIGINAL[1]
+						, (B_util_literal_t)LST_SCALE_BUF[1] 
+						, NEW_LITERAL_1
+						, LST_SCALE_BUF[UTIL_OPBINCFG_END + 1]
+						, TYPE_CAST_CURRENT
+						, &LST_LITERAL[1]
+						, CTX
+						);
 
+				LST_TYPE_ORIGINAL[1] = TYPE_CAST_CURRENT;
 
-				dbg_puts(("]== Op1 Destroy"));
+				get_buf_from_scale2(aclspv_wrd_t
+						, &CMDSTCK_SCALE
+						, *get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE
+							))[1] &= LST_SCALE_BUF[1];
 
-				switch((enum UTIL_LITERAL_)LST_SCALE_BUF[1]) {
-					case UTIL_LITERAL_RT:
+				dbg_prefix(a);
+				dbg_call(fprintf, (stderr, "LST_SCALE_BUF[5] (%p)%u\n"
+							, (void*)(LST_SCALE_BUF + 5)
+							, LST_SCALE_BUF[5]));
+				ae2f_expected_but_else(LST_SCALE_BUF[5] = util_opbin2_to_spvop(
+							TYPE_CAST_CURRENT
+							, LST_SCALE_BUF[5]
+							))
+				{
+					err_puts(("SpvOp went undefined"));
+				}
+
+				switch((unsigned)LST_SCALE_BUF[1]) {
+					case UTIL_LITERAL_MASK_RT:
 						dbg_puts(("The result is rt(runtime)."));
 #define	XORSWAP(a, b)	(a) ^= (b); (b) ^= (a); (a) ^= (b);
 						/** 
@@ -841,22 +1014,132 @@ static enum CXChildVisitResult emit_expr(
 #undef	XORSWAP
 						break;
 
-					case UTIL_LITERAL_LITERAL:
-						dbg_puts(("The result is literal."));
-						switch(LST_SCALE_BUF[5]) {
-							default:
-								fixme_prefix(a);
-								fixme_call(fprintf, (
-											stderr
-											, "Add literal operation %u\n"
-											, LST_SCALE_BUF[5])
+					case UTIL_LITERAL_MASK_LITERAL: case UTIL_LITERAL_LITERAL:
+						{
+
+							struct util_literal_eval_ EVAL_LIT;
+
+							dbg_puts("==[ `util_literal_eval2` will be invoked.");
+
+							dbg_prefix(a);
+							dbg_call(fprintf, (stderr, "\tLST_SCALE_BUF[5] (%p)%u\n"
+										, (void*)(LST_SCALE_BUF + 5)
+										, LST_SCALE_BUF[5]));
+							dbg_prefix(a);
+							dbg_call(fprintf, (
+										stderr
+										, "\tTYPE_CAST_CURRENT %u\n"
+										, TYPE_CAST_CURRENT)
+								);
+
+
+							dbg_prefix(a);
+							dbg_call(ae2f_NONE, (fprintf(stderr, "\tTwo literal as umax: %lu %lu\n"
+											, LST_LITERAL[0].m_api_uintmax
+											, LST_LITERAL[1].m_api_uintmax
+										    )));
+
+							dbg_prefix(a);
+							dbg_call(ae2f_NONE, (fprintf(stderr, "\tTwo literal as double: %f %f\n"
+											, LST_LITERAL[0].m_dbl
+											, LST_LITERAL[1].m_dbl
+										    )));
+
+							dbg_prefix(a);
+							dbg_call(ae2f_NONE, (fprintf(stderr, "\tTwo literal as float: %f %f\n"
+											, LST_LITERAL[0].m_flt
+											, LST_LITERAL[1].m_flt
+										    )));
+
+							EVAL_LIT = util_literal_eval2(
+									LST_LITERAL[0]
+									, LST_LITERAL[1]
+									, LST_SCALE_BUF[5]
+									,(e_id_default)TYPE_CAST_CURRENT
+									);
+
+							dbg_prefix(a);
+							dbg_call(ae2f_NONE, (fprintf(stderr, "\tResult as umax: %lu\n"
+											, EVAL_LIT.m_ret.m_api_uintmax
+										    )));
+
+							dbg_prefix(a);
+							dbg_call(ae2f_NONE, (fprintf(stderr, "\tResult as double: %f\n"
+											, EVAL_LIT.m_ret.m_dbl
+										    )));
+
+							dbg_prefix(a);
+							dbg_call(ae2f_NONE, (fprintf(stderr, "\tResult as float: %f\n"
+											, EVAL_LIT.m_ret.m_flt
+										    )));
+
+							dbg_prefix(a);
+							dbg_call(fprintf, (stderr, "\tLST_SCALE_BUF[5] (%p)%u\n"
+										, (void*)(LST_SCALE_BUF + 5)
+										, LST_SCALE_BUF[5]));
+							dbg_prefix(a);
+							dbg_call(fprintf, (
+										stderr
+										, "\tTYPE_CAST_CURRENT %u\n"
+										, TYPE_CAST_CURRENT)
+								);
+							dbg_prefix(a);
+							dbg_call(fprintf, (
+										stderr
+										, "\tEVAL_LIT.m_found %d\n"
+										, EVAL_LIT.m_found)
+								);
+
+							dbg_puts("]== `util_literal_eval2` will be invoked.");
+
+							if(EVAL_LIT.m_found) 
+							{
+								const h_scale_t PRVSCALE = get_prv_from_scale(
+										&CMDSTCK_SCALE
+										, (*LST_SCALE));
+
+								aclspv_wrd_t* const ae2f_restrict PRVBUF = get_buf_from_scale2(
+										aclspv_wrd_t
+										, &CMDSTCK_SCALE
+										, *PRVSCALE
 										);
-								break;
+
+								const aclspv_wrd_t PRVIDX =
+									(NUM_CMDCOUNTERSTCK - 1 ? NUM_CMDCOUNTERSTCK - 2 : 0)
+									[BUF_CMDCOUNTERSTCK(a)].m_count_oprnd
+									;
+
+								const aclspv_wrd_t PRVNUMOPRND = PRVBUF[0];
+
+								util_literal* ae2f_restrict const PRVBUFLITERAL = 
+									(void* ae2f_restrict)
+									&PRVBUF[(PRVNUMOPRND << 1) + UTIL_OPBINCFG_END]
+									;
+
+								dbg_puts(("The result is literal."));
+								fixme_puts("Add verification for emit_expr_arithmetic_cast");
+
+								emit_expr_arithmetic_cast(
+										0
+										, (aclspv_id_t)TYPE_CAST_CURRENT
+										, UTIL_LITERAL_MASK_LITERAL
+										, EVAL_LIT.m_ret
+										, LST_SCALE_BUF[4]
+										, (aclspv_id_t)TYPE_CAST_CURRENT
+										, PRVBUFLITERAL + PRVIDX
+										, CTX
+										);
+
+								*RET_LITERAL = PRVBUFLITERAL[PRVIDX];
+
+								goto LBL_WIPE_ONE_SCALE;
+							}
+
+							LST_SCALE_BUF[1] = UTIL_LITERAL_MASK_CONSTANT;
 						}
 
-						LST_SCALE_BUF[1] = UTIL_LITERAL_CONSTANT;
 						ae2f_fallthrough;
-					case UTIL_LITERAL_CONSTANT:
+					case UTIL_LITERAL_MASK_CONSTANT: 
 						dbg_puts(("The result is constant(fallback)."));
 						break;
 					default:
@@ -876,7 +1159,7 @@ static enum CXChildVisitResult emit_expr(
 						, memcpy
 						, L_new
 						, TMPL_SECTION
-						, (size_t)count_to_sz(TMPL_COUNT + (LST_CMD_COUNT) 
+						, (size_t)count_to_sz(TMPL_COUNT + (LST_CMD_COUNT)
 							- (LST_SCALE_BUF[1] == UTIL_LITERAL_RT))
 						);
 
@@ -885,9 +1168,11 @@ static enum CXChildVisitResult emit_expr(
 					return CXChildVisit_Break;
 				}
 
-				if((UTIL_LITERAL_RT == LST_SCALE_BUF[1]) == 1) {
+				if((UTIL_LITERAL_MASK_RT == LST_SCALE_BUF[1]) == 1) {
 					dbg_puts(("(UTIL_LITERAL_RT == LST_SCALE_BUF[1]) == 1"));
 				}
+
+				dbg_puts("TMPCHECK: Is before memcpy okay?");
 
 				memcpy(
 						get_wrd_of_vec(&TMPL_SECTION) + TMPL_COUNT
@@ -899,13 +1184,28 @@ static enum CXChildVisitResult emit_expr(
 #undef		TMPL_SECTION
 #undef		TMPL_COUNT
 
+
+LBL_WIPE_ONE_SCALE:
+
 				del_scale_from_vec_last(&CMDSTCK_SCALE);
 				LST_SCALE = get_last_scale_from_vec(&CMDSTCK_SCALE);
 				LST_SCALE_BUF = get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *LST_SCALE);
 
-				COUNTER_OPRND	= 1;
-				STCK_COUNT	-= LST_SCALE_BUF[0] - 1;
-			} return CXChildVisit_Recurse;
+				(void)(NUM_CMDCOUNTERSTCK && --NUM_CMDCOUNTERSTCK);
+
+				EXPRSTCK_COUNT	-= LST_SCALE_BUF[0] - 1;
+
+				LST_LITERAL 
+					= ((util_literal* ae2f_restrict)
+							(void* ae2f_restrict)(&LST_SCALE_BUF[(LST_CMDBUF_COUNT + 2)]));
+
+				LST_TYPE_ORIGINAL
+					= ((aclspv_id_t* ae2f_restrict)(void* ae2f_restrict)(LST_LITERAL)) - LST_SCALE_BUF[0];
+
+				LST_TYPE_ORIGINAL[GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd] = TYPE_CAST_CURRENT;
+				(void)++GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd;
+			}
+			return CXChildVisit_Recurse;
 		case EMIT_EXPR_NOT_THE_CASE:
 			break;
 		default:
@@ -926,7 +1226,7 @@ static enum CXChildVisitResult emit_expr(
 					h_cur
 					, CTX
 					, ID_REQ_CURRENT
-					, (aclspv_wrd_t)TYPE_REQUIRED
+					, (aclspv_wrd_t)TYPE_CAST_CURRENT
 					, &CMDSTCK_SCALE, OPRNDS))
 		{
 			case EMIT_EXPR_FAILURE:
@@ -942,17 +1242,33 @@ static enum CXChildVisitResult emit_expr(
 							, OPRNDS[0], OPRNDS[1])
 					);
 
-				ae2f_expected_but_else(STCK_COUNT = util_emit_wrd(
-							&STCK, (aclspv_wrd_t)STCK_COUNT + 1
-							, OPRNDS[0])) {
+				_aclspv_grow_vec_with_copy(
+						_aclspv_malloc,  _aclspv_free, memcpy
+						, dest, EXPRSTCK, (size_t)(sizeof(exprstck) * (EXPRSTCK_COUNT + 2))
+						);
+
+				ae2f_expected_but_else(EXPRSTCK.m_p) {
 					CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
 					return CXChildVisit_Break;
 				}
 
-				get_wrd_of_vec(&STCK)[STCK_COUNT - 2] = OPRNDS[1];
+				EXPRSTCK_COUNT += 2;
+				BUF_EXPRSTCK(EXPRSTCK)[EXPRSTCK_COUNT - 1].m_id_req = OPRNDS[0];
+				BUF_EXPRSTCK(EXPRSTCK)[EXPRSTCK_COUNT - 2].m_id_req = OPRNDS[1];
 
+				_aclspv_grow_vec_with_copy(
+						_aclspv_malloc,  _aclspv_free, memcpy
+						, dest, CMDCOUNTERSTCK
+						, (size_t)(sizeof(cmdcounterstckelm) * (NUM_CMDCOUNTERSTCK + 5))
+						);
 
+				ae2f_expected_but_else(CMDCOUNTERSTCK.m_p) {
+					CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
+					return CXChildVisit_Break;
+				}
 
+				++NUM_CMDCOUNTERSTCK;
+				GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd = 0;
 
 				ae2f_fallthrough;
 			case EMIT_EXPR_NOT_THE_CASE:
@@ -969,28 +1285,54 @@ static enum CXChildVisitResult emit_expr(
 			  ));
 
 	CTX->m_err = ACLSPV_COMPILE_OK;
+
+	/** assert(TYPE_CAST_CURRENT); */
+	dbg_prefix(a);
+	dbg_call(ae2f_NONE, (fprintf(stderr, "Type Casted Current: %u\n", TYPE_CAST_CURRENT)));
+
 	return CXChildVisit_Recurse;
 
 #undef	CTX
-#undef	STCK_COUNT
-#undef	STCK
+#undef	EXPRSTCK_COUNT
+#undef	EXPRSTCK
 #undef	CMDSTCK_SCALE
 #undef	ID_REQ
+#undef	LST_CMD_COUNT
+#undef	LST_CMDBUF_COUNT
+#undef	BUF_EXPRSTCK
+#undef	GETLASTELEXPRSTCK
+#undef	CMDCOUNTERSTCK
+#undef	NUM_CMDCOUNTERSTCK
+#undef	GETLASTEL_CMDCOUNTERSTCK
+#undef	BUF_CMDCOUNTERSTCK
 }
 
-ae2f_inline static enum EMIT_EXPR_ emit_get_expr(const aclspv_id_t c_id_req, const aclspv_id_t c_type_req, const CXCursor c_cur, h_util_ctx_t h_ctx) {
-	uptr BUF[6];
-	aclspv_wrd_t* ae2f_restrict		SCALE_BOOT;
+ae2f_inline static enum EMIT_EXPR_ emit_get_expr(
+		const aclspv_id_t c_id_req
+		, const aclspv_id_t c_type_req
+		, const CXCursor c_cur
+		, util_literal* ae2f_restrict	wr_literal_opt
+		, h_util_ctx_t h_ctx
+		) {
+	uptr BUF[6 + (((sizeof(util_literal) + sizeof(uptr) - 1) / sizeof(uptr)))];
+	aclspv_wrd_t* ae2f_restrict SCALE_BOOT;
+	const aclspv_id_t ID_REDIRECT	= h_ctx->m_id++;
 
 	BUF[0]		= (uptr)h_ctx;					/* context. must be pointer to context. */
 	BUF[1]		= 0;						/* stack count. must be 0. */
-	BUF[2]		= c_id_req;					/* result value id requested */
-	BUF[3]		= UTIL_LITERAL_LITERAL;				/* see enum UTIL_LITERAL_ */
-	BUF[4]		= c_type_req ? c_type_req : ID_DEFAULT_I32;	/* type required */
+	BUF[2]		= ID_REDIRECT;					/* result value id requested */
+	BUF[3]		= UTIL_LITERAL_MASK_LITERAL;			/* see enum UTIL_LITERAL_MASK_ */
+	BUF[4]		= ID_DEFAULT_I32;				/* type casted */
 	BUF[5]		= 0;						/* count for operand */
 
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, h_ctx->m_tmp.m_v0, 100);
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, h_ctx->m_tmp.m_v0, 1 << 10);
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, h_ctx->m_tmp.m_v1, 1 << 10);
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, h_ctx->m_tmp.m_v2, 1 << 10);
+
 	ae2f_expected_but_else(h_ctx->m_tmp.m_v0.m_p)
+		return EMIT_EXPR_FAILURE;
+
+	ae2f_expected_but_else(h_ctx->m_tmp.m_v1.m_p)
 		return EMIT_EXPR_FAILURE;
 
 	ae2f_expected_but_else(init_scale(&h_ctx->m_tmp.m_v1, count_to_sz(2)))
@@ -1001,10 +1343,15 @@ ae2f_inline static enum EMIT_EXPR_ emit_get_expr(const aclspv_id_t c_id_req, con
 	assert(!get_last_scale_from_vec(&h_ctx->m_tmp.m_v1)->m_id);
 
 	SCALE_BOOT[0] = 0;
-	SCALE_BOOT[1] = UTIL_LITERAL_LITERAL;
+	SCALE_BOOT[1] = UTIL_LITERAL_MASK_LITERAL;
+
+	((umax* ae2f_restrict)h_ctx->m_tmp.m_v2.m_p)[0] = 0;
 
 	dbg_prefix(a);
-	dbg_call(fprintf, (stderr, "Initialising first constant sector %u[%p]\n", SCALE_BOOT[1], (void*)(SCALE_BOOT + 1)));
+	dbg_call(fprintf, (stderr
+				, "Initialising first constant sector %u[%p]\n"
+				, SCALE_BOOT[1], (void*)(SCALE_BOOT + 1))
+		);
 
 	if(emit_expr(c_cur, c_cur, BUF) == CXChildVisit_Break)
 		return EMIT_EXPR_FAILURE;
@@ -1017,26 +1364,31 @@ ae2f_inline static enum EMIT_EXPR_ emit_get_expr(const aclspv_id_t c_id_req, con
 
 
 	dbg_prefix(a);
-	dbg_call(fprintf, (stderr, "Constant flag after first emit_expr %u[%p]\n", SCALE_BOOT[1], (void*)(SCALE_BOOT + 1)));
+	dbg_call(fprintf, (stderr
+				, "Constant flag after first emit_expr %u[%p]\n"
+				, SCALE_BOOT[1], (void*)(SCALE_BOOT + 1))
+		);
 
 	clang_visitChildren(c_cur, emit_expr, BUF);
 
-	switch((enum UTIL_LITERAL_)BUF[3]) {
-		case UTIL_LITERAL_RT:
-			dbg_puts(("Result was runtime"));
-			return EMIT_EXPR_SUCCESS;
-		case UTIL_LITERAL_LITERAL:
-			dbg_puts(("Result was literal"));
-			return EMIT_EXPR_SUCCESS_LITERAL;
-		case UTIL_LITERAL_CONSTANT:
-			dbg_puts(("Result was constant"));
-			return EMIT_EXPR_SUCCESS_CONSTANT;
-		default:
-			err_puts(("Non-expected value"));
-			return EMIT_EXPR_FAILURE;
-	}
+	dbg_prefix(a);
+	dbg_call(fprintf, (stderr, "BUF[3]: %u\n", (unsigned)BUF[3]));
 
-	ae2f_unreachable();
+	dbg_prefix(a);
+	dbg_call(fprintf, (stderr, "Type returned (BUF[4]): %u\n", (unsigned)BUF[4]));
+
+	dbg_prefix(a);
+	dbg_call(fprintf, (stderr, "ID Required(aka BUF[2]): %u\n", (unsigned)BUF[2]));
+
+	return	emit_expr_arithmetic_cast(
+			ID_REDIRECT
+			, (aclspv_wrd_t)BUF[4]
+			, (aclspv_wrd_t)BUF[3]
+			, *(util_literal*ae2f_restrict)(void* ae2f_restrict)(BUF + 6)
+			, c_id_req
+			, c_type_req
+			, wr_literal_opt
+			, h_ctx);
 }
 
 #endif
