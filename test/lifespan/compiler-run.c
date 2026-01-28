@@ -13,7 +13,9 @@ sizeof(A_0)
 	+ sizeof(A_2) - 1
 	+ sizeof(A_3) - 1
 	+ sizeof(A_4) - 1
-	/* + sizeof(A_5) -1 */
+#if 1
+	+ sizeof(A_5) - 1
+#endif
 	];
 	char oclhead[
 sizeof(B_0) 
@@ -31,7 +33,9 @@ sizeof(B_0)
 		strcat(maincontent, A_2);
 		strcat(maincontent, A_3);
 		strcat(maincontent, A_4);
-		/** strcat(maincontent, A_5); */
+#if 1
+		strcat(maincontent, A_5);
+#endif
 
 		strcpy(oclhead, B_0);
 		strcat(oclhead, B_1);

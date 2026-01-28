@@ -28,6 +28,7 @@
 #include "./expr.h"
 #include "aclspv/abi.h"
 #include "aclspv/spvty.h"
+#include "util/literal.h"
 
 
 #if	!defined(NDEBUG) || !NDEBUG
@@ -207,6 +208,8 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 
 				CURSOR.m_data.m_var_simple.m_ptr_type_id = TYPE_ID;
 				CURSOR.m_data.m_var_simple.m_id = CTX->m_id++;
+				CURSOR.m_data.m_var_simple.m_is_predictable = 0;
+				CURSOR.m_data.m_var_simple.m_mask_literal = 0;
 
 				/**
 				 * TODO:
@@ -244,7 +247,7 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 										NODE->m_const_spec_id
 										, NODE->m_const_spec_type_id
 										, UTIL_LITERAL_CONSTANT
-										, CTX->m_id - 1
+										, CURSOR.m_data.m_var_simple.m_init_val
 										, CURSOR.m_data.m_var_simple.m_type_id
 										, CTX
 										))
@@ -261,19 +264,18 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 
 								case EMIT_EXPR_FAILURE:
 									goto LBL_FAIL;
-
 									ae2f_unexpected_but_if(0) {
 										ae2f_unreachable();
 										case EMIT_EXPR_SUCCESS:
 										CURSOR.m_data.m_var_simple.m_mask_literal
-											= UTIL_LITERAL_CONSTANT;
+											= UTIL_LITERAL_RT;
 									}
 
 									ae2f_unexpected_but_if(0) {
 										ae2f_unreachable();
 										case EMIT_EXPR_SUCCESS_CONSTANT:
 										CURSOR.m_data.m_var_simple.m_mask_literal 
-											= UTIL_LITERAL_RT;
+											= UTIL_LITERAL_CONSTANT;
 									}
 
 									CURSOR.m_data.m_var_simple.m_is_predictable = 1;

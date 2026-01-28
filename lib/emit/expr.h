@@ -303,8 +303,11 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast(
 					, c_old_type, c_new_type
 				    )));
 
-	unless(util_default_is_number(c_old_type) && util_default_is_number(c_new_type))
+	unless(util_default_is_number(c_old_type) && util_default_is_number(c_new_type)) {
+		assert(util_default_is_number(c_old_type));
+		assert(util_default_is_number(c_new_type));
 		return EMIT_EXPR_NOT_THE_CASE;
+	}
 
 	if(util_default_is_float(c_old_type) && util_default_is_int(c_new_type)) {
 		dbg_puts(("Cast (float -> int)"));
@@ -440,6 +443,11 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 	switch((uintmax_t)c_cur.kind) {
 		/** unknown */
 		default:
+			dbg_prefix(a);
+			dbg_call((void), (fprintf(stderr
+							, "current cursor kind is not known by bin_1 %u\n"
+							, c_cur.kind
+							)));
 			return EMIT_EXPR_NOT_THE_CASE;
 
 			/** literals */
@@ -599,16 +607,37 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 				}
 
 				dbg_puts(("Load from memory"));
-				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl = util_emitx_4(
-							&h_ctx->m_section.m_fnimpl
-							, h_ctx->m_count.m_fnimpl
-							, SpvOpLoad
-							, DECL_INFO.m_data.m_var_simple.m_type_id
-							, c_newid
-							, DECL_INFO.m_data.m_var_simple.m_id
-							)) return EMIT_EXPR_FAILURE;
 
-				return EMIT_EXPR_SUCCESS;
+				if(DECL_INFO.m_data.m_var_simple.m_type_id == *wr_type_cast)
+				{
+					ae2f_expected_but_else(h_ctx->m_count.m_fnimpl = util_emitx_4(
+								&h_ctx->m_section.m_fnimpl
+								, h_ctx->m_count.m_fnimpl
+								, SpvOpLoad
+								, DECL_INFO.m_data.m_var_simple.m_type_id
+								, c_newid
+								, DECL_INFO.m_data.m_var_simple.m_id
+								)) return EMIT_EXPR_FAILURE;
+					return EMIT_EXPR_SUCCESS;
+				} else {
+					const aclspv_id_t MID_ID = h_ctx->m_id++;
+
+					ae2f_expected_but_else(h_ctx->m_count.m_fnimpl = util_emitx_4(
+								&h_ctx->m_section.m_fnimpl
+								, h_ctx->m_count.m_fnimpl
+								, SpvOpLoad
+								, DECL_INFO.m_data.m_var_simple.m_type_id
+								, MID_ID
+								, DECL_INFO.m_data.m_var_simple.m_id
+								)) return EMIT_EXPR_FAILURE;
+
+					return emit_expr_arithmetic_cast_non_literal(
+							MID_ID, DECL_INFO.m_data.m_var_simple.m_type_id
+							, UTIL_LITERAL_MASK_RT
+							, c_newid
+							, *wr_type_fetched = *wr_type_cast
+							, h_ctx);
+				}
 #undef	DECL_INFO
 			}
 	}
@@ -636,6 +665,8 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 		assert(0 && "emit_expr_bin_2::h_ctx is null");
 		return EMIT_EXPR_FAILURE;
 	}
+
+	(void)wr_operands;
 
 	switch((umax)c_cur.kind) {
 		default:
@@ -674,36 +705,28 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 	{
 		aclspv_wrd_t* ae2f_restrict VEC;
 
-		dbg_puts(("==[ Scale Check"));
 
 		NEW_SCALE = get_last_scale_from_vec(h_cmdscale);
 		VEC = get_buf_from_scale2(aclspv_wrd_t, h_cmdscale, *NEW_SCALE);
-		dbg_prefix(a);
-		dbg_call(fprintf, (stderr, "\tNew scale 0: %u[%p]\n", VEC[1], (void*)(VEC + 1)));
 
-		NEW_SCALE = mk_scale_from_vec(h_cmdscale, count_to_sz(8) + (sizeof(util_literal) << 1));
+		NEW_SCALE = mk_scale_from_vec(
+				h_cmdscale
+				, count_to_sz(UTIL_OPBINCFG_END + 2) + (sizeof(util_opbincfg_extra) << 1)
+				);
 		ae2f_expected_but_else(NEW_SCALE)
 			return EMIT_EXPR_FAILURE;
 
 		VEC = get_buf_from_scale2(aclspv_wrd_t, h_cmdscale, *NEW_SCALE);
 		VEC[1] = UTIL_LITERAL_MASK_LITERAL;
 
-		dbg_prefix(a);
-		dbg_call(fprintf, (stderr, "\tNew scale 1: %u[%p]\n", VEC[1], (void*)(VEC + 1)));
-
-		dbg_prefix(a);
-		dbg_call(fprintf, (stderr, "\tOld scale 1: %u[%p]\n"
-					, get_buf_from_scale2(aclspv_wrd_t, h_cmdscale, *get_prv_from_scale(h_cmdscale, *NEW_SCALE))[1]
-					, (void*)(get_buf_from_scale2(aclspv_wrd_t, h_cmdscale, *get_prv_from_scale(h_cmdscale, *NEW_SCALE)) + 1)
-				  ));
-
-		dbg_puts(("]== Scale Check"));
 
 		ae2f_expected_but_else(VEC)
 			return EMIT_EXPR_FAILURE;
 
-		if(c_newid == h_ctx->m_id)
+
+		while(c_newid == h_ctx->m_id)
 			++h_ctx->m_id;
+
 
 		VEC[0] = 2;			/** number of operands */
 		VEC[1] = UTIL_LITERAL_MASK_LITERAL;	/** is not constant? */
@@ -711,18 +734,14 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 		VEC[3] = c_result_type_id;
 		VEC[4] = c_newid;
 		VEC[5] = OPCODE;
-		VEC[6] = h_ctx->m_id++;
-		VEC[7] = h_ctx->m_id++;
-
-		if(wr_operands) {
-			wr_operands[0] = VEC[6];
-			wr_operands[1] = VEC[7];
-		}
+		VEC[6] = 0;
+		VEC[7] = 0;
 	}
 
 	return EMIT_EXPR_SUCCESS_LITERAL;
 }
 
+/** when error occurs, return value will be 1 */
 ae2f_inline static aclspv_id_t emit_expr_type(const CXType type, const h_util_ctx_t CTX)
 {
 	aclspv_id_t	TYPE_ID = 0;
@@ -767,6 +786,265 @@ ae2f_inline static aclspv_id_t emit_expr_type(const CXType type, const h_util_ct
 }
 #endif
 
+
+ae2f_inline static int emit_expr_carve_one_scale(
+		uintptr_t* const ae2f_restrict	rdwr_data
+		) {
+#define CTX			((h_util_ctx_t)((rdwr_data))[0])
+#define EXPRSTCK_COUNT		(((rdwr_data))[1])
+#define ID_REQ			(*((aclspv_wrd_t* ae2f_restrict)(void* ae2f_restrict)&(((rdwr_data))[2])))
+#define	IS_NOT_CONSTANT		((rdwr_data))[3]
+#define	TYPE_CAST_CURRENT	(*(aclspv_wrd_t*)&(((rdwr_data))[4]))
+#define	NUM_CMDCOUNTERSTCK	(((rdwr_data))[5])
+
+#define	EXPRSTCK	CTX->m_tmp.m_v0
+#define	CMDSTCK_SCALE	CTX->m_tmp.m_v1
+#define	CMDCOUNTERSTCK	CTX->m_tmp.m_v2
+	h_scale_t LST_SCALE				= get_last_scale_from_vec(&CMDSTCK_SCALE);
+	aclspv_wrd_t* ae2f_restrict LST_SCALE_BUF	= get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *LST_SCALE);
+	util_literal* ae2f_restrict RET_LITERAL
+		= (void*)(((uptr* ae2f_restrict)(rdwr_data)) + 6);
+
+	aclspv_wrd_t	NUM_OPRND = LST_SCALE_BUF[0];
+	util_opbincfg_extra* ae2f_restrict LST_EXTRA = (void* ae2f_restrict)(LST_SCALE_BUF + NUM_OPRND + UTIL_OPBINCFG_END);
+	LST_SCALE_BUF[UTIL_OPBINCFG_RESID] = ID_REQ = CTX->m_id++;
+
+	typedef struct {
+		u32_least	m_id_req;
+	} exprstck;
+
+	typedef struct {
+		u32_least	m_count_oprnd;
+	} cmdcounterstckelm;
+
+	char aclspv_STATICASSERT_ELMSIZE[sizeof(exprstck) == sizeof(cmdcounterstckelm) && sizeof(cmdcounterstckelm) == sizeof(u32_least)];
+	(void)aclspv_STATICASSERT_ELMSIZE;
+
+#define	BUF_EXPRSTCK(a)	((exprstck* ae2f_restrict)(EXPRSTCK).m_p)
+#define	GETLASTELEXPRSTCK(a)	BUF_EXPRSTCK(c_stck)[EXPRSTCK_COUNT - 1]
+#define	BUF_CMDCOUNTERSTCK(a)	((cmdcounterstckelm* ae2f_restrict)(CMDCOUNTERSTCK).m_p)
+#define	GETLASTEL_CMDCOUNTERSTCK(a)	BUF_CMDCOUNTERSTCK()[NUM_CMDCOUNTERSTCK - 1]
+
+	/****************************************/
+	const h_scale_t PRVSCALE = get_prv_from_scale(
+			&CMDSTCK_SCALE
+			, (*LST_SCALE));
+
+	aclspv_wrd_t* const ae2f_restrict PRVBUF = get_buf_from_scale2(
+			aclspv_wrd_t
+			, &CMDSTCK_SCALE
+			, *PRVSCALE
+			);
+
+#define PRVIDX	\
+		((NUM_CMDCOUNTERSTCK - 1 ? NUM_CMDCOUNTERSTCK - 2 : 0)	\
+		[BUF_CMDCOUNTERSTCK(a)].m_count_oprnd)
+
+	const aclspv_wrd_t PRVNUMOPRND = PRVBUF[0];
+
+	util_opbincfg_extra* ae2f_restrict const PRVEXTRA = 
+		(void* ae2f_restrict)
+		&PRVBUF[(PRVNUMOPRND) + UTIL_OPBINCFG_END]
+		;
+
+	PRVBUF[UTIL_OPBINCFG_END + PRVIDX] = ID_REQ;
+	PRVEXTRA[PRVIDX].m_mask_literal = LST_SCALE_BUF[UTIL_OPBINCFG_MASKLITERAL];
+
+	/****************************************/
+
+	unless(LST_SCALE->m_id) {
+		PRVIDX = 0;
+	}
+
+	dbg_prefix(a);
+	dbg_call((void), (fprintf(stderr, "Carve-One[%lu]: %u\n", LST_SCALE->m_id, PRVIDX)));
+
+	while(NUM_OPRND--) {
+		util_literal OLD_LITERAL = LST_EXTRA[NUM_OPRND].m_literal;
+		aclspv_id_t OLD_ID 
+			= LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND];
+
+		LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND] = CTX->m_id++;
+
+		fixme_puts("Arithmetic cast should be tested on switch");
+		printf("ARITHMETIC CAST ON LOOP[%u]: %u %u\n"
+				, NUM_OPRND
+				, OLD_ID, LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND]
+				);
+
+		TYPE_CAST_CURRENT
+			= LST_EXTRA[NUM_OPRND].m_type_original
+			= util_default_decide_cast(TYPE_CAST_CURRENT, LST_EXTRA[NUM_OPRND].m_type_original)
+			;
+
+		emit_expr_arithmetic_cast(
+				OLD_ID
+				, LST_EXTRA[NUM_OPRND].m_type_original
+				, LST_EXTRA[NUM_OPRND].m_mask_literal
+				, OLD_LITERAL
+				, LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND]
+				, TYPE_CAST_CURRENT
+				, &LST_EXTRA[NUM_OPRND].m_literal
+				, CTX
+				);
+
+		LST_EXTRA[NUM_OPRND].m_type_original = TYPE_CAST_CURRENT;
+	}
+
+	ae2f_expected_but_else(LST_SCALE_BUF[5] = util_opbin2_to_spvop(
+				TYPE_CAST_CURRENT
+				, LST_SCALE_BUF[5]
+				))
+	{
+		err_puts(("SpvOp went undefined"));
+	}
+
+	switch((unsigned)LST_SCALE_BUF[UTIL_OPBINCFG_MASKLITERAL]) {
+
+		case UTIL_LITERAL_MASK_RT:
+#define	XORSWAP(a, b)	(a) ^= (b); (b) ^= (a); (a) ^= (b);
+			/** 
+			 * here, operation is not constant.
+			 *
+			 * current
+			 * [2] OpSpecConstant opcode (ignorance required)
+			 * [3] result type
+			 * [4] result id
+			 * [5] literal opcode (opspecconstant evaluation)
+			 * ...
+			 *
+			 *
+			 * we want
+			 * [3] opcode with operand count
+			 * [4] result type
+			 * [5] result id
+			 * */
+
+			/** 
+			 * swap [3] and [5]
+			 *
+			 * after this will
+			 * [3] literal opcode (without operand)
+			 * [4] result id
+			 * [5] result type
+			 * * */
+			XORSWAP(LST_SCALE_BUF[3], LST_SCALE_BUF[5]);
+
+			/** we have four operands (including opcode) */
+			LST_SCALE_BUF[3] |= mk_noprnds(4);
+
+			/**
+			 * swap [4] and [5].
+			 *
+			 * after this will
+			 * [3] opcode
+			 * [4] result type
+			 * [5] result id
+			 *
+			 * that matches what we want.
+			 * */
+			XORSWAP(LST_SCALE_BUF[4], LST_SCALE_BUF[5]);
+#undef	XORSWAP
+			break;
+
+		case UTIL_LITERAL_MASK_LITERAL: case UTIL_LITERAL_LITERAL:
+			{
+
+				struct util_literal_eval_ EVAL_LIT;
+
+				EVAL_LIT = util_literal_eval2(
+						LST_EXTRA[0].m_literal
+						, LST_EXTRA[1].m_literal
+						, LST_SCALE_BUF[5]
+						,(e_id_default)TYPE_CAST_CURRENT
+						);
+
+				if(EVAL_LIT.m_found) 
+				{
+					dbg_puts(("The result is literal."));
+					fixme_puts("Add verification for emit_expr_arithmetic_cast");
+
+					emit_expr_arithmetic_cast(
+							0
+							, (aclspv_id_t)TYPE_CAST_CURRENT
+							, UTIL_LITERAL_MASK_LITERAL
+							, EVAL_LIT.m_ret
+							, LST_SCALE_BUF[UTIL_OPBINCFG_RESID]
+							, (aclspv_id_t)TYPE_CAST_CURRENT
+							, &PRVEXTRA[PRVIDX].m_literal
+							, CTX
+							);
+
+					*RET_LITERAL = PRVEXTRA[PRVIDX].m_literal;
+					return 0;
+				}
+
+				LST_SCALE_BUF[1] = UTIL_LITERAL_MASK_CONSTANT;
+			}
+
+			ae2f_fallthrough;
+		case UTIL_LITERAL_MASK_CONSTANT: 
+			dbg_puts(("The result is constant(fallback)."));
+			break;
+		default:
+			err_puts(("unknown literal"));
+			ae2f_unreachable();
+	}
+
+
+#define		TMPL_SECTION	(*((LST_SCALE_BUF[1]) == UTIL_LITERAL_RT ? &CTX->m_section.m_fnimpl	: &CTX->m_section.m_types))
+#define		TMPL_COUNT	(*((LST_SCALE_BUF[1]) == UTIL_LITERAL_RT ? &CTX->m_count.m_fnimpl	: &CTX->m_count.m_types))
+
+	dbg_puts("vec_with_copy");
+	_aclspv_grow_vec_with_copy(
+			_aclspv_malloc
+			, _aclspv_free
+			, memcpy
+			, L_new
+			, TMPL_SECTION
+			, (size_t)count_to_sz(TMPL_COUNT + (LST_SCALE_BUF[0] + UTIL_OPBINCFG_RESID)
+				- (LST_SCALE_BUF[1] == UTIL_LITERAL_RT))
+			);
+
+	ae2f_expected_but_else(TMPL_SECTION.m_p) {
+		CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
+		return 1;
+	}
+
+	dbg_puts("TMPCHECK: Is before memcpy okay?");
+
+#define        LST_CMD_COUNT           (UTIL_OPBINCFG_RESID /** header */ + (LST_SCALE_BUF[0]))
+	memcpy(
+			get_wrd_of_vec(&TMPL_SECTION) + TMPL_COUNT
+			, LST_SCALE_BUF + 2 + (LST_SCALE_BUF[1] == UTIL_LITERAL_RT)
+			, (size_t)count_to_sz(LST_CMD_COUNT - (LST_SCALE_BUF[1] == UTIL_LITERAL_RT))
+	      );
+
+	TMPL_COUNT += LST_CMD_COUNT - (LST_SCALE_BUF[1] == UTIL_LITERAL_RT);
+
+#undef		LST_CMD_COUNT
+#undef		TMPL_SECTION
+#undef		TMPL_COUNT
+
+#undef	EXPRSTCK_COUNT
+#undef	ID_REQ
+#undef	IS_NOT_CONSTANT
+#undef	TYPE_CAST_CURRENT
+#undef	NUM_CMDCOUNTERSTCK
+#undef	CMDSTCK_SCALE
+#undef	BUF_EXPRSTCK
+#undef	GETLASTELEXPRSTCK
+#undef	BUF_CMDCOUNTERSTCK
+#undef	GETLASTEL_CMDCOUNTERSTCK
+
+#undef	EXPRSTCK	/** CTX->m_tmp.m_v0 */
+#undef	CMDSTCK_SCALE	/** CTX->m_tmp.m_v1 */
+#undef	CMDCOUNTERSTCK	/** CTX->m_tmp.m_v2 */
+#undef	CTX
+
+	return 0;
+}
+
 static enum CXChildVisitResult emit_expr(
 		CXCursor h_cur,
 		CXCursor h_parent,
@@ -775,7 +1053,7 @@ static enum CXChildVisitResult emit_expr(
 {
 #define	CTX			((h_util_ctx_t)(((uptr* ae2f_restrict)rdwr_data)[0]))
 #define EXPRSTCK_COUNT		(((uptr* ae2f_restrict)(rdwr_data))[1])
-#define ID_REQ			((aclspv_wrd_t)(((uptr* ae2f_restrict)(rdwr_data))[2]))
+#define ID_REQ			(*((aclspv_wrd_t* ae2f_restrict)(void* ae2f_restrict)&(((uptr* ae2f_restrict)(rdwr_data))[2])))
 #define	IS_NOT_CONSTANT		((uptr* ae2f_restrict)(rdwr_data))[3]
 #define	TYPE_CAST_CURRENT	(*(aclspv_wrd_t*)&(((uptr* ae2f_restrict)(rdwr_data))[4]))
 #define	NUM_CMDCOUNTERSTCK	(((uptr* ae2f_restrict)(rdwr_data))[5])
@@ -784,9 +1062,6 @@ static enum CXChildVisitResult emit_expr(
 #define	EXPRSTCK	CTX->m_tmp.m_v0
 #define	CMDSTCK_SCALE	CTX->m_tmp.m_v1
 #define	CMDCOUNTERSTCK	CTX->m_tmp.m_v2
-#define	LST_CMD_HEADER		4
-#define	LST_CMD_COUNT		(LST_CMD_HEADER /** header */ + (LST_SCALE_BUF[0]))
-#define	LST_CMDBUF_COUNT	(LST_CMD_HEADER /** header */ + (LST_SCALE_BUF[0] << 1))
 
 	typedef struct {
 		u32_least	m_id_req;
@@ -805,19 +1080,15 @@ static enum CXChildVisitResult emit_expr(
 
 	h_scale_t LST_SCALE				= get_last_scale_from_vec(&CMDSTCK_SCALE);
 	aclspv_wrd_t* ae2f_restrict LST_SCALE_BUF	= get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *LST_SCALE);
-	aclspv_id_t ID_REQ_CURRENT			= ID_REQ;
-
-	util_literal* ae2f_restrict LST_LITERAL 
-		= ((util_literal* ae2f_restrict)(void* ae2f_restrict)(&LST_SCALE_BUF[(LST_CMDBUF_COUNT + 2)]));
-
 	util_literal* ae2f_restrict RET_LITERAL
 		= (void*)(((uptr* ae2f_restrict)(rdwr_data)) + 6);
-	aclspv_id_t* ae2f_restrict LST_TYPE_ORIGINAL
-		= ((aclspv_id_t* ae2f_restrict)(void* ae2f_restrict)(LST_LITERAL)) - LST_SCALE_BUF[0];
 
+	util_opbincfg_extra* ae2f_restrict	LST_EXTRA
+		= (void* ae2f_restrict)(&LST_SCALE_BUF[(UTIL_OPBINCFG_END + LST_SCALE_BUF[0])]);
 
 	(void)aclspv_STATICASSERT_ELMSIZE;
 
+#if 1
 	if(EXPRSTCK_COUNT) {
 		ae2f_expected_but_else(EXPRSTCK.m_p) {
 			CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
@@ -825,8 +1096,10 @@ static enum CXChildVisitResult emit_expr(
 			return CXChildVisit_Break;
 		}
 
-		ID_REQ_CURRENT = GETLASTELEXPRSTCK(EXPRSTCK).m_id_req;
 	}
+#else
+	(void)EXPRSTCK_COUNT;
+#endif
 
 	ae2f_expected_but_else(LST_SCALE_BUF) {
 		CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
@@ -835,32 +1108,31 @@ static enum CXChildVisitResult emit_expr(
 
 	(void)h_parent;
 
-	dbg_prefix(i);
-	dbg_call(fprintf, (stderr, "Checking evaluator 0: %u[%p]\n"
-				, get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE))[1] 
-				, (void*)(get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE)) + 1)
-			  ));
-
 #if 1
 	dbg_prefix(i);
-	dbg_call(ae2f_NONE, (fprintf(stderr, "Operand Counter: %u[%p]\n"
+	dbg_call(ae2f_NONE, (fprintf(stderr, "Operand Counter: %u/%u[%lu]\n"
 					, GETLASTEL_CMDCOUNTERSTCK().m_count_oprnd
-					, (void*)&GETLASTEL_CMDCOUNTERSTCK().m_count_oprnd
+					, LST_SCALE_BUF[0]
+					, LST_SCALE->m_id
 				    )));
 #endif
+	ID_REQ = CTX->m_id++;
+	LST_EXTRA[GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd].m_mask_literal = UTIL_LITERAL_MASK_LITERAL;
 
-	dbg_prefix(i);
-	dbg_call(ae2f_NONE, (fprintf(
-					stderr
-					, "Type Original before ExprBin1: %u\n"
-					, LST_TYPE_ORIGINAL[GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd]
-				    )));
+	/** Recurse filter */
+	switch((uintmax_t)h_cur.kind) {
+		default:
+			break;
+		case CXCursor_UnexposedExpr:
+			return CXChildVisit_Recurse;
+	}
+
 	switch(emit_expr_bin_1(
 				h_cur
 				, CTX
-				, ID_REQ_CURRENT
+				, ID_REQ
 				, &TYPE_CAST_CURRENT
-				, LST_TYPE_ORIGINAL + GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd
+				, &LST_EXTRA[GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd].m_type_original
 				, RET_LITERAL
 			      )) {
 		case EMIT_EXPR_FAILURE:
@@ -869,344 +1141,54 @@ static enum CXChildVisitResult emit_expr(
 			return CXChildVisit_Break;
 
 		case EMIT_EXPR_SUCCESS:
-			dbg_prefix(a);
-			dbg_call(ae2f_NONE, (fprintf(stderr, "RTBinEx1 Success: TypeCastedCurrent: %u\n", TYPE_CAST_CURRENT)));
 			IS_NOT_CONSTANT = UTIL_LITERAL_RT;
 			LST_SCALE_BUF[1] = UTIL_LITERAL_MASK_RT;
+			LST_EXTRA[GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd].m_mask_literal = 0;
 
 			ae2f_unexpected_but_if(0) {
 				ae2f_unreachable();
 				case EMIT_EXPR_SUCCESS_LITERAL:
-				dbg_prefix(a);
-				dbg_call(fprintf, (stderr, "Binary expression was literal [%p]%u\n"
-							, (void*)(LST_SCALE_BUF + 1)
-							, LST_SCALE_BUF[1])
-					);
-
-				dbg_prefix(a);
-				dbg_call(ae2f_NONE, (fprintf(stderr, "\tTypeCastedCurrent: %u\n", TYPE_CAST_CURRENT)));
 			}
 
 			ae2f_unexpected_but_if(0) {
 				ae2f_unreachable();
 				case EMIT_EXPR_SUCCESS_CONSTANT:
-				dbg_prefix(a);
-				dbg_call(fprintf, (stderr, "Binary expression was constant [%p]%u\n"
-							, (void*)(LST_SCALE_BUF + 1)
-							, LST_SCALE_BUF[1])
-					);
 
-				IS_NOT_CONSTANT &= UTIL_LITERAL_CONSTANT;
+				IS_NOT_CONSTANT &= UTIL_LITERAL_MASK_CONSTANT;
 				LST_SCALE_BUF[1] &= UTIL_LITERAL_MASK_CONSTANT;
+				LST_EXTRA[GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd].m_mask_literal &= UTIL_LITERAL_MASK_CONSTANT;
 			}
 
 
-			LST_LITERAL[GETLASTEL_CMDCOUNTERSTCK(i).m_count_oprnd] = *RET_LITERAL;
+			LST_EXTRA[GETLASTEL_CMDCOUNTERSTCK(i).m_count_oprnd].m_literal = *RET_LITERAL;
+			LST_SCALE_BUF[UTIL_OPBINCFG_END + GETLASTEL_CMDCOUNTERSTCK(i).m_count_oprnd] = ID_REQ;
 
 			(void)(EXPRSTCK_COUNT && --EXPRSTCK_COUNT);
-			++GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd;
+			(void)(LST_SCALE->m_id && ++GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd);
 
-			while(LST_SCALE->m_id && GETLASTEL_CMDCOUNTERSTCK().m_count_oprnd == LST_SCALE_BUF[0]) {
-				aclspv_id_t	
-					OLD_ID0 =	LST_SCALE_BUF[UTIL_OPBINCFG_END]
-					, OLD_ID1 =	LST_SCALE_BUF[UTIL_OPBINCFG_END + 1];
-
-				util_literal	NEW_LITERAL_0 = LST_LITERAL[0];
-				util_literal 	NEW_LITERAL_1 = LST_LITERAL[1];
-
-				fixme_puts("Arithmetic cast should be tested on switch");
-				dbg_prefix(a);
-				dbg_call(fprintf, (stderr, "SCALEBUF[5](opcode) (%p)%u\n"
-							, (void*)(LST_SCALE_BUF + 5)
-							, LST_SCALE_BUF[5]));
-
-				LST_SCALE_BUF[UTIL_OPBINCFG_END] = CTX->m_id++;
-				LST_SCALE_BUF[UTIL_OPBINCFG_END + 1] = CTX->m_id++;
-
-				emit_expr_arithmetic_cast(
-						OLD_ID0
-						, LST_TYPE_ORIGINAL[0]
-						, (B_util_literal_t)LST_SCALE_BUF[1] 
-						, NEW_LITERAL_0
-						, LST_SCALE_BUF[UTIL_OPBINCFG_END]
-						, TYPE_CAST_CURRENT
-						, &LST_LITERAL[0]
-						, CTX
-						);
-
-				LST_TYPE_ORIGINAL[0] = TYPE_CAST_CURRENT;
-
-				emit_expr_arithmetic_cast(
-						OLD_ID1
-						, LST_TYPE_ORIGINAL[1]
-						, (B_util_literal_t)LST_SCALE_BUF[1] 
-						, NEW_LITERAL_1
-						, LST_SCALE_BUF[UTIL_OPBINCFG_END + 1]
-						, TYPE_CAST_CURRENT
-						, &LST_LITERAL[1]
-						, CTX
-						);
-
-				LST_TYPE_ORIGINAL[1] = TYPE_CAST_CURRENT;
-
-				get_buf_from_scale2(aclspv_wrd_t
-						, &CMDSTCK_SCALE
-						, *get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE
-							))[1] &= LST_SCALE_BUF[1];
-
-				dbg_prefix(a);
-				dbg_call(fprintf, (stderr, "LST_SCALE_BUF[5] (%p)%u\n"
-							, (void*)(LST_SCALE_BUF + 5)
-							, LST_SCALE_BUF[5]));
-				ae2f_expected_but_else(LST_SCALE_BUF[5] = util_opbin2_to_spvop(
-							TYPE_CAST_CURRENT
-							, LST_SCALE_BUF[5]
-							))
-				{
-					err_puts(("SpvOp went undefined"));
-				}
-
-				switch((unsigned)LST_SCALE_BUF[1]) {
-					case UTIL_LITERAL_MASK_RT:
-						dbg_puts(("The result is rt(runtime)."));
-#define	XORSWAP(a, b)	(a) ^= (b); (b) ^= (a); (a) ^= (b);
-						/** 
-						 * here, operation is not constant.
-						 *
-						 * current
-						 * [2] OpSpecConstant opcode (ignorance required)
-						 * [3] result type
-						 * [4] result id
-						 * [5] literal opcode (opspecconstant evaluation)
-						 * ...
-						 *
-						 *
-						 * we want
-						 * [3] opcode with operand count
-						 * [4] result type
-						 * [5] result id
-						 * */
-
-						/** 
-						 * swap [3] and [5]
-						 *
-						 * after this will
-						 * [3] literal opcode (without operand)
-						 * [4] result id
-						 * [5] result type
-						 * * */
-						XORSWAP(LST_SCALE_BUF[3], LST_SCALE_BUF[5]);
-
-						/** we have four operands (including opcode) */
-						LST_SCALE_BUF[3] |= mk_noprnds(4);
-
-						/**
-						 * swap [4] and [5].
-						 *
-						 * after this will
-						 * [3] opcode
-						 * [4] result type
-						 * [5] result id
-						 *
-						 * that matches what we want.
-						 * */
-						XORSWAP(LST_SCALE_BUF[4], LST_SCALE_BUF[5]);
-#undef	XORSWAP
-						break;
-
-					case UTIL_LITERAL_MASK_LITERAL: case UTIL_LITERAL_LITERAL:
-						{
-
-							struct util_literal_eval_ EVAL_LIT;
-
-							dbg_puts("==[ `util_literal_eval2` will be invoked.");
-
-							dbg_prefix(a);
-							dbg_call(fprintf, (stderr, "\tLST_SCALE_BUF[5] (%p)%u\n"
-										, (void*)(LST_SCALE_BUF + 5)
-										, LST_SCALE_BUF[5]));
-							dbg_prefix(a);
-							dbg_call(fprintf, (
-										stderr
-										, "\tTYPE_CAST_CURRENT %u\n"
-										, TYPE_CAST_CURRENT)
-								);
-
-
-							dbg_prefix(a);
-							dbg_call(ae2f_NONE, (fprintf(stderr, "\tTwo literal as umax: %lu %lu\n"
-											, LST_LITERAL[0].m_api_uintmax
-											, LST_LITERAL[1].m_api_uintmax
-										    )));
-
-							dbg_prefix(a);
-							dbg_call(ae2f_NONE, (fprintf(stderr, "\tTwo literal as double: %f %f\n"
-											, LST_LITERAL[0].m_dbl
-											, LST_LITERAL[1].m_dbl
-										    )));
-
-							dbg_prefix(a);
-							dbg_call(ae2f_NONE, (fprintf(stderr, "\tTwo literal as float: %f %f\n"
-											, LST_LITERAL[0].m_flt
-											, LST_LITERAL[1].m_flt
-										    )));
-
-							EVAL_LIT = util_literal_eval2(
-									LST_LITERAL[0]
-									, LST_LITERAL[1]
-									, LST_SCALE_BUF[5]
-									,(e_id_default)TYPE_CAST_CURRENT
-									);
-
-							dbg_prefix(a);
-							dbg_call(ae2f_NONE, (fprintf(stderr, "\tResult as umax: %lu\n"
-											, EVAL_LIT.m_ret.m_api_uintmax
-										    )));
-
-							dbg_prefix(a);
-							dbg_call(ae2f_NONE, (fprintf(stderr, "\tResult as double: %f\n"
-											, EVAL_LIT.m_ret.m_dbl
-										    )));
-
-							dbg_prefix(a);
-							dbg_call(ae2f_NONE, (fprintf(stderr, "\tResult as float: %f\n"
-											, EVAL_LIT.m_ret.m_flt
-										    )));
-
-							dbg_prefix(a);
-							dbg_call(fprintf, (stderr, "\tLST_SCALE_BUF[5] (%p)%u\n"
-										, (void*)(LST_SCALE_BUF + 5)
-										, LST_SCALE_BUF[5]));
-							dbg_prefix(a);
-							dbg_call(fprintf, (
-										stderr
-										, "\tTYPE_CAST_CURRENT %u\n"
-										, TYPE_CAST_CURRENT)
-								);
-							dbg_prefix(a);
-							dbg_call(fprintf, (
-										stderr
-										, "\tEVAL_LIT.m_found %d\n"
-										, EVAL_LIT.m_found)
-								);
-
-							dbg_puts("]== `util_literal_eval2` will be invoked.");
-
-							if(EVAL_LIT.m_found) 
-							{
-								const h_scale_t PRVSCALE = get_prv_from_scale(
-										&CMDSTCK_SCALE
-										, (*LST_SCALE));
-
-								aclspv_wrd_t* const ae2f_restrict PRVBUF = get_buf_from_scale2(
-										aclspv_wrd_t
-										, &CMDSTCK_SCALE
-										, *PRVSCALE
-										);
-
-								const aclspv_wrd_t PRVIDX =
-									(NUM_CMDCOUNTERSTCK - 1 ? NUM_CMDCOUNTERSTCK - 2 : 0)
-									[BUF_CMDCOUNTERSTCK(a)].m_count_oprnd
-									;
-
-								const aclspv_wrd_t PRVNUMOPRND = PRVBUF[0];
-
-								util_literal* ae2f_restrict const PRVBUFLITERAL = 
-									(void* ae2f_restrict)
-									&PRVBUF[(PRVNUMOPRND << 1) + UTIL_OPBINCFG_END]
-									;
-
-								dbg_puts(("The result is literal."));
-								fixme_puts("Add verification for emit_expr_arithmetic_cast");
-
-								emit_expr_arithmetic_cast(
-										0
-										, (aclspv_id_t)TYPE_CAST_CURRENT
-										, UTIL_LITERAL_MASK_LITERAL
-										, EVAL_LIT.m_ret
-										, LST_SCALE_BUF[4]
-										, (aclspv_id_t)TYPE_CAST_CURRENT
-										, PRVBUFLITERAL + PRVIDX
-										, CTX
-										);
-
-								*RET_LITERAL = PRVBUFLITERAL[PRVIDX];
-
-								goto LBL_WIPE_ONE_SCALE;
-							}
-
-							LST_SCALE_BUF[1] = UTIL_LITERAL_MASK_CONSTANT;
-						}
-
-						ae2f_fallthrough;
-					case UTIL_LITERAL_MASK_CONSTANT: 
-						dbg_puts(("The result is constant(fallback)."));
-						break;
-					default:
-						err_puts(("unknown literal"));
-						ae2f_unreachable();
-				}
-
-#define		TMPL_SECTION	(*((IS_NOT_CONSTANT) == UTIL_LITERAL_RT ? &CTX->m_section.m_fnimpl	: &CTX->m_section.m_types))
-#define		TMPL_COUNT	(*((IS_NOT_CONSTANT) == UTIL_LITERAL_RT ? &CTX->m_count.m_fnimpl	: &CTX->m_count.m_types))
-
-				dbg_prefix(a);
-				dbg_call(fprintf, (stderr, "IS_NOT_CONSTANT: %lu\n", IS_NOT_CONSTANT));
-
-				_aclspv_grow_vec_with_copy(
-						_aclspv_malloc
-						, _aclspv_free
-						, memcpy
-						, L_new
-						, TMPL_SECTION
-						, (size_t)count_to_sz(TMPL_COUNT + (LST_CMD_COUNT)
-							- (LST_SCALE_BUF[1] == UTIL_LITERAL_RT))
-						);
-
-				ae2f_expected_but_else(TMPL_SECTION.m_p) {
-					CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
+			while(LST_SCALE->m_id && GETLASTEL_CMDCOUNTERSTCK().m_count_oprnd >= LST_SCALE_BUF[0]) {
+				--GETLASTEL_CMDCOUNTERSTCK().m_count_oprnd;
+				ae2f_unexpected_but_if(emit_expr_carve_one_scale(rdwr_data))
 					return CXChildVisit_Break;
-				}
-
-				if((UTIL_LITERAL_MASK_RT == LST_SCALE_BUF[1]) == 1) {
-					dbg_puts(("(UTIL_LITERAL_RT == LST_SCALE_BUF[1]) == 1"));
-				}
-
-				dbg_puts("TMPCHECK: Is before memcpy okay?");
-
-				memcpy(
-						get_wrd_of_vec(&TMPL_SECTION) + TMPL_COUNT
-						, LST_SCALE_BUF + 2 + (LST_SCALE_BUF[1] == UTIL_LITERAL_RT)
-						, (size_t)count_to_sz(LST_CMD_COUNT - (LST_SCALE_BUF[1] == UTIL_LITERAL_RT))
-				      );
-
-				TMPL_COUNT += LST_CMD_COUNT - (LST_SCALE_BUF[1] == UTIL_LITERAL_RT);
-#undef		TMPL_SECTION
-#undef		TMPL_COUNT
-
-
-LBL_WIPE_ONE_SCALE:
 
 				del_scale_from_vec_last(&CMDSTCK_SCALE);
-				LST_SCALE = get_last_scale_from_vec(&CMDSTCK_SCALE);
-				LST_SCALE_BUF = get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *LST_SCALE);
-
 				(void)(NUM_CMDCOUNTERSTCK && --NUM_CMDCOUNTERSTCK);
 
-				EXPRSTCK_COUNT	-= LST_SCALE_BUF[0] - 1;
+				LST_SCALE		= get_last_scale_from_vec(&CMDSTCK_SCALE);
+				LST_SCALE_BUF		= get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *LST_SCALE);
+				RET_LITERAL
+					= (void*)(((uptr* ae2f_restrict)(rdwr_data)) + 6);
 
-				LST_LITERAL 
-					= ((util_literal* ae2f_restrict)
-							(void* ae2f_restrict)(&LST_SCALE_BUF[(LST_CMDBUF_COUNT + 2)]));
-
-				LST_TYPE_ORIGINAL
-					= ((aclspv_id_t* ae2f_restrict)(void* ae2f_restrict)(LST_LITERAL)) - LST_SCALE_BUF[0];
-
-				LST_TYPE_ORIGINAL[GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd] = TYPE_CAST_CURRENT;
-				(void)++GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd;
+				LST_EXTRA
+					= (void* ae2f_restrict)(&LST_SCALE_BUF[(UTIL_OPBINCFG_END + LST_SCALE_BUF[0])]);
+#if 1
+				(void)(LST_SCALE->m_id && ++GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd);
+#endif
 			}
+
 			return CXChildVisit_Recurse;
 		case EMIT_EXPR_NOT_THE_CASE:
+			dbg_puts("Operator 1: not the case");
 			break;
 		default:
 			assert(0);
@@ -1219,63 +1201,55 @@ LBL_WIPE_ONE_SCALE:
 				, (void*)(get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *get_prv_from_scale(&CMDSTCK_SCALE, *LST_SCALE)) + 1)
 			  ));
 
-
+	switch(emit_expr_bin_2(
+				h_cur
+				, CTX
+				, 0
+				, (aclspv_wrd_t)TYPE_CAST_CURRENT
+				, &CMDSTCK_SCALE, 0))
 	{
-		aclspv_wrd_t	OPRNDS[2];
-		switch(emit_expr_bin_2(
-					h_cur
-					, CTX
-					, ID_REQ_CURRENT
-					, (aclspv_wrd_t)TYPE_CAST_CURRENT
-					, &CMDSTCK_SCALE, OPRNDS))
-		{
-			case EMIT_EXPR_FAILURE:
-				assert(0 && "FAILURE_expr_bin2");
-				return CXChildVisit_Break;
+		case EMIT_EXPR_FAILURE:
+			assert(0 && "FAILURE_expr_bin2");
+			return CXChildVisit_Break;
 
-			case EMIT_EXPR_SUCCESS:
-			case EMIT_EXPR_SUCCESS_CONSTANT:
-			case EMIT_EXPR_SUCCESS_LITERAL:
-				dbg_prefix();
-				dbg_call(fprintf, (stderr
-							, "Operands %u %u\n"
-							, OPRNDS[0], OPRNDS[1])
+		case EMIT_EXPR_SUCCESS:
+		case EMIT_EXPR_SUCCESS_CONSTANT:
+		case EMIT_EXPR_SUCCESS_LITERAL:
+			_aclspv_grow_vec_with_copy(
+					_aclspv_malloc,  _aclspv_free, memcpy
+					, dest, EXPRSTCK, (size_t)(sizeof(exprstck) * (EXPRSTCK_COUNT + 2))
 					);
 
-				_aclspv_grow_vec_with_copy(
-						_aclspv_malloc,  _aclspv_free, memcpy
-						, dest, EXPRSTCK, (size_t)(sizeof(exprstck) * (EXPRSTCK_COUNT + 2))
-						);
+			ae2f_expected_but_else(EXPRSTCK.m_p) {
+				CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
+				return CXChildVisit_Break;
+			}
 
-				ae2f_expected_but_else(EXPRSTCK.m_p) {
-					CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
-					return CXChildVisit_Break;
-				}
+			EXPRSTCK_COUNT += 2;
 
-				EXPRSTCK_COUNT += 2;
-				BUF_EXPRSTCK(EXPRSTCK)[EXPRSTCK_COUNT - 1].m_id_req = OPRNDS[0];
-				BUF_EXPRSTCK(EXPRSTCK)[EXPRSTCK_COUNT - 2].m_id_req = OPRNDS[1];
+			_aclspv_grow_vec_with_copy(
+					_aclspv_malloc,  _aclspv_free, memcpy
+					, dest, CMDCOUNTERSTCK
+					, (size_t)(sizeof(cmdcounterstckelm) * (NUM_CMDCOUNTERSTCK + 5))
+					);
 
-				_aclspv_grow_vec_with_copy(
-						_aclspv_malloc,  _aclspv_free, memcpy
-						, dest, CMDCOUNTERSTCK
-						, (size_t)(sizeof(cmdcounterstckelm) * (NUM_CMDCOUNTERSTCK + 5))
-						);
+			ae2f_expected_but_else(CMDCOUNTERSTCK.m_p) {
+				CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
+				return CXChildVisit_Break;
+			}
 
-				ae2f_expected_but_else(CMDCOUNTERSTCK.m_p) {
-					CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
-					return CXChildVisit_Break;
-				}
+#if 0
+			++GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd;
+#endif
+			++NUM_CMDCOUNTERSTCK;
+			GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd = 0;
 
-				++NUM_CMDCOUNTERSTCK;
-				GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd = 0;
-
-				ae2f_fallthrough;
-			case EMIT_EXPR_NOT_THE_CASE:
-				break;
-			default:
-				ae2f_unreachable();
-		}
+			break;
+		case EMIT_EXPR_NOT_THE_CASE:
+			dbg_puts("Evaluator two: not the case");
+			break;
+		default:
+			ae2f_unreachable();
 	}
 
 	dbg_prefix(i);
@@ -1316,11 +1290,10 @@ ae2f_inline static enum EMIT_EXPR_ emit_get_expr(
 		) {
 	uptr BUF[6 + (((sizeof(util_literal) + sizeof(uptr) - 1) / sizeof(uptr)))];
 	aclspv_wrd_t* ae2f_restrict SCALE_BOOT;
-	const aclspv_id_t ID_REDIRECT	= h_ctx->m_id++;
 
 	BUF[0]		= (uptr)h_ctx;					/* context. must be pointer to context. */
 	BUF[1]		= 0;						/* stack count. must be 0. */
-	BUF[2]		= ID_REDIRECT;					/* result value id requested */
+	BUF[2]		= 0;						/* result value id */
 	BUF[3]		= UTIL_LITERAL_MASK_LITERAL;			/* see enum UTIL_LITERAL_MASK_ */
 	BUF[4]		= ID_DEFAULT_I32;				/* type casted */
 	BUF[5]		= 0;						/* count for operand */
@@ -1335,7 +1308,10 @@ ae2f_inline static enum EMIT_EXPR_ emit_get_expr(
 	ae2f_expected_but_else(h_ctx->m_tmp.m_v1.m_p)
 		return EMIT_EXPR_FAILURE;
 
-	ae2f_expected_but_else(init_scale(&h_ctx->m_tmp.m_v1, count_to_sz(2)))
+	ae2f_expected_but_else(init_scale(&h_ctx->m_tmp.m_v1
+				, count_to_sz(UTIL_OPBINCFG_END) + sizeof(aclspv_wrd_t)
+				+ sizeof(util_opbincfg_extra)
+				))
 		return EMIT_EXPR_FAILURE;
 
 	SCALE_BOOT = get_buf_from_scale2(aclspv_wrd_t, &h_ctx->m_tmp.m_v1, *get_last_scale_from_vec(&h_ctx->m_tmp.m_v1));
@@ -1381,7 +1357,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_get_expr(
 	dbg_call(fprintf, (stderr, "ID Required(aka BUF[2]): %u\n", (unsigned)BUF[2]));
 
 	return	emit_expr_arithmetic_cast(
-			ID_REDIRECT
+			(aclspv_wrdcount_t)BUF[2]
 			, (aclspv_wrd_t)BUF[4]
 			, (aclspv_wrd_t)BUF[3]
 			, *(util_literal*ae2f_restrict)(void* ae2f_restrict)(BUF + 6)
