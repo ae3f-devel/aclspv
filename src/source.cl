@@ -56,7 +56,7 @@ __attribute__((annotate("aclspv_execmodel(0)")))
 __kernel void N_KERNEL_0(__constant uintptr_t* consti32, __attribute__((annotate("aclspv_storage_class(3)"))) __global const uint* u32out) {
 	int a0 = 3;
 	int a1 
-#if 1
+#if 0
 		= 1
 #else
 		__attribute__((annotate("aclspv_specid(0)")))

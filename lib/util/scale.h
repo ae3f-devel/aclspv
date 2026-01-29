@@ -155,6 +155,7 @@ ae2f_retnew ae2f_inline static x_scale* del_scale_from_vec_last(x_aclspv_vec* ae
 	lst_prv	= get_prv_from_scale(h_alloc, *lst);
 	assert(lst_prv);
 	lst_prv->m_nxt = 0;
+
 	return		lst_prv;
 }
 

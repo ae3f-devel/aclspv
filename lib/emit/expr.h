@@ -333,7 +333,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast(
 
 	if(util_default_is_int(c_old_type) && util_default_is_float(c_new_type)) {
 		dbg_prefix(a);
-		dbg_call(ae2f_NONE, (fprintf(stderr, "Cast (int -> float): %ld\n", c_old_literal.m_api_intmax)));
+		dbg_call((void), (fprintf(stderr, "Cast (int -> float): %ld\n", c_old_literal.m_api_intmax)));
 		switch(util_default_bit_width(c_new_type)) {
 			case 64:
 				RESULT.m_dbl = (double)c_old_literal.m_api_intmax;
@@ -711,7 +711,9 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 
 		NEW_SCALE = mk_scale_from_vec(
 				h_cmdscale
-				, count_to_sz(UTIL_OPBINCFG_END + 2) + (sizeof(util_opbincfg_extra) << 1)
+				, 
+				count_to_sz(UTIL_OPBINCFG_END + 2)
+				+ (sizeof(util_opbincfg_extra) << 1)
 				);
 		ae2f_expected_but_else(NEW_SCALE)
 			return EMIT_EXPR_FAILURE;
@@ -719,14 +721,8 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_2(
 		VEC = get_buf_from_scale2(aclspv_wrd_t, h_cmdscale, *NEW_SCALE);
 		VEC[1] = UTIL_LITERAL_MASK_LITERAL;
 
-
 		ae2f_expected_but_else(VEC)
 			return EMIT_EXPR_FAILURE;
-
-
-		while(c_newid == h_ctx->m_id)
-			++h_ctx->m_id;
-
 
 		VEC[0] = 2;			/** number of operands */
 		VEC[1] = UTIL_LITERAL_MASK_LITERAL;	/** is not constant? */
@@ -806,8 +802,9 @@ ae2f_inline static int emit_expr_carve_one_scale(
 		= (void*)(((uptr* ae2f_restrict)(rdwr_data)) + 6);
 
 	aclspv_wrd_t	NUM_OPRND = LST_SCALE_BUF[0];
-	util_opbincfg_extra* ae2f_restrict LST_EXTRA = (void* ae2f_restrict)(LST_SCALE_BUF + NUM_OPRND + UTIL_OPBINCFG_END);
-	LST_SCALE_BUF[UTIL_OPBINCFG_RESID] = ID_REQ = CTX->m_id++;
+	util_opbincfg_extra* ae2f_restrict LST_EXTRA 
+		= (void* ae2f_restrict)(LST_SCALE_BUF + NUM_OPRND + UTIL_OPBINCFG_END);
+
 
 	typedef struct {
 		u32_least	m_id_req;
@@ -818,7 +815,6 @@ ae2f_inline static int emit_expr_carve_one_scale(
 	} cmdcounterstckelm;
 
 	char aclspv_STATICASSERT_ELMSIZE[sizeof(exprstck) == sizeof(cmdcounterstckelm) && sizeof(cmdcounterstckelm) == sizeof(u32_least)];
-	(void)aclspv_STATICASSERT_ELMSIZE;
 
 #define	BUF_EXPRSTCK(a)	((exprstck* ae2f_restrict)(EXPRSTCK).m_p)
 #define	GETLASTELEXPRSTCK(a)	BUF_EXPRSTCK(c_stck)[EXPRSTCK_COUNT - 1]
@@ -837,7 +833,7 @@ ae2f_inline static int emit_expr_carve_one_scale(
 			);
 
 #define PRVIDX	\
-		((NUM_CMDCOUNTERSTCK - 1 ? NUM_CMDCOUNTERSTCK - 2 : 0)	\
+		((NUM_CMDCOUNTERSTCK - 2)	\
 		[BUF_CMDCOUNTERSTCK(a)].m_count_oprnd)
 
 	const aclspv_wrd_t PRVNUMOPRND = PRVBUF[0];
@@ -847,17 +843,30 @@ ae2f_inline static int emit_expr_carve_one_scale(
 		&PRVBUF[(PRVNUMOPRND) + UTIL_OPBINCFG_END]
 		;
 
-	PRVBUF[UTIL_OPBINCFG_END + PRVIDX] = ID_REQ;
-	PRVEXTRA[PRVIDX].m_mask_literal = LST_SCALE_BUF[UTIL_OPBINCFG_MASKLITERAL];
-
 	/****************************************/
 
+#if 0
 	unless(LST_SCALE->m_id) {
 		PRVIDX = 0;
 	}
+#endif
+
+	assert(PRVIDX < PRVBUF[0]);
+
+	PRVBUF[UTIL_OPBINCFG_END + PRVIDX] = ID_REQ;
+	PRVBUF[UTIL_OPBINCFG_MASKLITERAL] &= PRVEXTRA[PRVIDX].m_mask_literal = LST_SCALE_BUF[UTIL_OPBINCFG_MASKLITERAL];
+	LST_SCALE_BUF[UTIL_OPBINCFG_RESID] = ID_REQ = CTX->m_id++;
+
+	(void)aclspv_STATICASSERT_ELMSIZE;
 
 	dbg_prefix(a);
-	dbg_call((void), (fprintf(stderr, "Carve-One[%lu]: %u\n", LST_SCALE->m_id, PRVIDX)));
+	dbg_call((void), (fprintf(stderr, "Carve-One[%lu, [%p]%lu]: %u\n"
+					,* (size_t*)CMDSTCK_SCALE.m_p
+					, (void*)&LST_SCALE->m_id
+					, LST_SCALE->m_id
+					, PRVIDX
+					)));
+
 
 	while(NUM_OPRND--) {
 		util_literal OLD_LITERAL = LST_EXTRA[NUM_OPRND].m_literal;
@@ -1016,8 +1025,8 @@ ae2f_inline static int emit_expr_carve_one_scale(
 #define        LST_CMD_COUNT           (UTIL_OPBINCFG_RESID /** header */ + (LST_SCALE_BUF[0]))
 	memcpy(
 			get_wrd_of_vec(&TMPL_SECTION) + TMPL_COUNT
-			, LST_SCALE_BUF + 2 + (LST_SCALE_BUF[1] == UTIL_LITERAL_RT)
-			, (size_t)count_to_sz(LST_CMD_COUNT - (LST_SCALE_BUF[1] == UTIL_LITERAL_RT))
+			, LST_SCALE_BUF + UTIL_OPBINCFG_SPECCONSTANTOP + (!LST_SCALE_BUF[1])
+			, (size_t)count_to_sz(LST_CMD_COUNT - (!LST_SCALE_BUF[1]))
 	      );
 
 	TMPL_COUNT += LST_CMD_COUNT - (LST_SCALE_BUF[1] == UTIL_LITERAL_RT);
@@ -1148,6 +1157,7 @@ static enum CXChildVisitResult emit_expr(
 			ae2f_unexpected_but_if(0) {
 				ae2f_unreachable();
 				case EMIT_EXPR_SUCCESS_LITERAL:
+				;
 			}
 
 			ae2f_unexpected_but_if(0) {
@@ -1167,7 +1177,20 @@ static enum CXChildVisitResult emit_expr(
 			(void)(LST_SCALE->m_id && ++GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd);
 
 			while(LST_SCALE->m_id && GETLASTEL_CMDCOUNTERSTCK().m_count_oprnd >= LST_SCALE_BUF[0]) {
-				--GETLASTEL_CMDCOUNTERSTCK().m_count_oprnd;
+				GETLASTEL_CMDCOUNTERSTCK().m_count_oprnd = LST_SCALE_BUF[0] - 1;
+				LST_SCALE		= get_last_scale_from_vec(&CMDSTCK_SCALE);
+				LST_SCALE_BUF		= get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *LST_SCALE);
+
+				LST_EXTRA
+					= (void* ae2f_restrict)(&LST_SCALE_BUF[(UTIL_OPBINCFG_END + LST_SCALE_BUF[0])]);
+				dbg_prefix(a);
+				dbg_call((void), (fprintf(
+								stderr
+								, "Last scale ID[%lu]: [%p]%lu\n"
+								, *((size_t*)CMDSTCK_SCALE.m_p)
+								, (void*)&LST_SCALE->m_id
+								, LST_SCALE->m_id
+							 )));
 				ae2f_unexpected_but_if(emit_expr_carve_one_scale(rdwr_data))
 					return CXChildVisit_Break;
 
@@ -1176,8 +1199,6 @@ static enum CXChildVisitResult emit_expr(
 
 				LST_SCALE		= get_last_scale_from_vec(&CMDSTCK_SCALE);
 				LST_SCALE_BUF		= get_buf_from_scale2(aclspv_wrd_t, &CMDSTCK_SCALE, *LST_SCALE);
-				RET_LITERAL
-					= (void*)(((uptr* ae2f_restrict)(rdwr_data)) + 6);
 
 				LST_EXTRA
 					= (void* ae2f_restrict)(&LST_SCALE_BUF[(UTIL_OPBINCFG_END + LST_SCALE_BUF[0])]);
@@ -1318,7 +1339,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_get_expr(
 	assert(SCALE_BOOT);
 	assert(!get_last_scale_from_vec(&h_ctx->m_tmp.m_v1)->m_id);
 
-	SCALE_BOOT[0] = 0;
+	SCALE_BOOT[0] = 1;
 	SCALE_BOOT[1] = UTIL_LITERAL_MASK_LITERAL;
 
 	((umax* ae2f_restrict)h_ctx->m_tmp.m_v2.m_p)[0] = 0;
