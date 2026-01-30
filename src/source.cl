@@ -64,7 +64,7 @@ __kernel void N_KERNEL_0(__constant uintptr_t* consti32, __attribute__((annotate
 			;
 	int a2 = a0 + a1;
 #if 1
-	int a = a0 + a1 + a2 + 123;
+	int a = a0 + a1 + a2 + 12;
 #endif
 
 

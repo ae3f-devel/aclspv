@@ -3,6 +3,7 @@
 #ifndef	lib_emit_expr_h
 #define	lib_emit_expr_h
 
+#include "aclspv/abi.h"
 #include "aclspv/spvty.h"
 #include "util/id.h"
 #include "util/op.h"
@@ -73,28 +74,20 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 	if(util_default_is_int(c_old_type) && util_default_is_int(c_new_type)) {
 		if(c_flag_literal & UTIL_LITERAL_CONSTANT) {
 			if(c_old_type == c_new_type) {
-				aclspv_wrd_t	NEGATE_1 = h_ctx->m_id++;
+				aclspv_id_t ID_1 = util_mk_constant_val_id(1, h_ctx);
+				ae2f_expected_but_else(ID_1)	return EMIT_EXPR_FAILURE;
 
 				ae2f_expected_but_else(h_ctx->m_count.m_types
-						= util_emitx_5(
-							&h_ctx->m_section.m_types
-							, h_ctx->m_count.m_types
-							, SpvOpSpecConstantOp
-							, c_new_type
-							, NEGATE_1
-							, SpvOpSNegate
-							, c_old_id))
-					return EMIT_EXPR_FAILURE;
-
-				ae2f_expected_but_else(h_ctx->m_count.m_types
-						= util_emitx_5(
+						= util_emitx_7(
 							&h_ctx->m_section.m_types
 							, h_ctx->m_count.m_types
 							, SpvOpSpecConstantOp
 							, c_new_type
 							, c_new_id
-							, SpvOpSNegate
-							, NEGATE_1))
+							, SpvOpSelect
+							, ID_1
+							, c_old_id
+							, ID_1))
 					return EMIT_EXPR_FAILURE;
 
 				return EMIT_EXPR_SUCCESS_CONSTANT;
@@ -114,26 +107,18 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 			return EMIT_EXPR_SUCCESS_CONSTANT;
 		} else {
 			if(c_new_type == c_old_type) {
-				aclspv_wrd_t	NEGATE_1 = h_ctx->m_id++;
-				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
-						= util_emitx_4(
-							&h_ctx->m_section.m_fnimpl
-							, h_ctx->m_count.m_fnimpl
-							, SpvOpSNegate
-							, c_new_type
-							, NEGATE_1
-							, c_old_id
-							)
-						) return EMIT_EXPR_FAILURE;
+				aclspv_id_t ID_0 = util_mk_constant_val_id(0, h_ctx);
+				ae2f_expected_but_else(ID_0)	return EMIT_EXPR_FAILURE;
 
 				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
-						= util_emitx_4(
+						= util_emitx_5(
 							&h_ctx->m_section.m_fnimpl
 							, h_ctx->m_count.m_fnimpl
-							, SpvOpSNegate
+							, SpvOpIAdd
 							, c_new_type
 							, c_new_id
-							, NEGATE_1
+							, c_old_id
+							, ID_0
 							)
 						) return EMIT_EXPR_FAILURE;
 
@@ -157,28 +142,23 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 	if (util_default_is_float(c_old_type) && util_default_is_float(c_new_type)) {
 		if(c_flag_literal & UTIL_LITERAL_CONSTANT) {
 			if(c_old_type == c_new_type) {
-				aclspv_wrd_t	NEGATE_1 = h_ctx->m_id++;
+
+				aclspv_id_t ID_0 = util_mk_constant_val_f32_id(0, h_ctx);
+				aclspv_id_t ID_1 = util_mk_constant_val_id(1, h_ctx);
+				ae2f_expected_but_else(ID_0)	return EMIT_EXPR_FAILURE;
+				ae2f_expected_but_else(ID_1)	return EMIT_EXPR_FAILURE;
 
 				ae2f_expected_but_else(h_ctx->m_count.m_types
-						= util_emitx_5(
-							&h_ctx->m_section.m_types
-							, h_ctx->m_count.m_types
-							, SpvOpSpecConstantOp
-							, c_new_type
-							, NEGATE_1
-							, SpvOpFNegate
-							, c_old_id))
-					return EMIT_EXPR_FAILURE;
-
-				ae2f_expected_but_else(h_ctx->m_count.m_types
-						= util_emitx_5(
+						= util_emitx_7(
 							&h_ctx->m_section.m_types
 							, h_ctx->m_count.m_types
 							, SpvOpSpecConstantOp
 							, c_new_type
 							, c_new_id
-							, SpvOpFNegate
-							, NEGATE_1))
+							, SpvOpSelect
+							, ID_1
+							, c_old_id
+							, ID_0))
 					return EMIT_EXPR_FAILURE;
 
 				return EMIT_EXPR_SUCCESS_CONSTANT;
@@ -198,28 +178,21 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 			return EMIT_EXPR_SUCCESS_CONSTANT;
 		} else {
 			if(c_new_type == c_old_type) {
-				aclspv_wrd_t	NEGATE_1 = h_ctx->m_id++;
+				aclspv_id_t ID_0 = util_mk_constant_val_f32_id(0, h_ctx);
+				ae2f_expected_but_else(ID_0)	return EMIT_EXPR_FAILURE;
+
 				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
-						= util_emitx_4(
+						= util_emitx_5(
 							&h_ctx->m_section.m_fnimpl
 							, h_ctx->m_count.m_fnimpl
-							, SpvOpFNegate
+							, SpvOpFAdd
 							, c_new_type
-							, NEGATE_1
+							, c_new_id
 							, c_old_id
+							, ID_0
 							)
 						) return EMIT_EXPR_FAILURE;
 
-				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
-						= util_emitx_4(
-							&h_ctx->m_section.m_fnimpl
-							, h_ctx->m_count.m_fnimpl
-							, SpvOpFNegate
-							, c_new_type
-							, c_new_id
-							, NEGATE_1
-							)
-						) return EMIT_EXPR_FAILURE;
 				return EMIT_EXPR_SUCCESS;
 			}
 
@@ -289,12 +262,13 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast(
 	assert(c_new_id);
 	assert(h_ctx);
 
-	unless(c_flag_literal & UTIL_LITERAL_LITERAL) 
+	unless(c_flag_literal & UTIL_LITERAL_LITERAL) {
 		return emit_expr_arithmetic_cast_non_literal(
 				c_old_id, c_old_type
 				, c_flag_literal, c_new_id
 				, c_new_type, h_ctx
 				);
+	}
 
 	dbg_prefix(a);
 	dbg_call(ae2f_NONE, (fprintf(
@@ -430,12 +404,13 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast(
 ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 		const CXCursor			c_cur,
 		const h_util_ctx_t		h_ctx,
-		const aclspv_id_t		c_newid,
-		e_id_default* ae2f_restrict	wr_type_cast,
-		e_id_default* ae2f_restrict	wr_type_fetched,
+		aclspv_id_t* ae2f_restrict const	wr_newid,
+		e_id_default* ae2f_restrict const	wr_type_cast,
+		e_id_default* ae2f_restrict const	wr_type_fetched,
 		util_literal* ae2f_restrict const	rwr_literal_opt
 		) {
 	emit_expr_literal EVRES;
+	assert(wr_newid);
 
 	ae2f_expected_but_else(h_ctx)
 		return EMIT_EXPR_FAILURE;
@@ -466,10 +441,8 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 				switch((uintmax_t)clang_EvalResult_getKind(EVAL)) {
 					case CXEval_Int:
 						dbg_puts(("Literal: uintmax"));
-						EVRES.m_api_uintmax = clang_EvalResult_getAsUnsigned(EVAL);
+						EVRES.m_api_intmax = clang_EvalResult_getAsLongLong(EVAL);
 						clang_EvalResult_dispose(EVAL);
-
-
 
 						dbg_prefix(i);
 						dbg_call(fprintf, (stderr
@@ -478,12 +451,12 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 								  )
 							);
 
-						*wr_type_fetched = *wr_type_cast  =  util_default_decide_cast(
-								*wr_type_cast
-								, 
+						*wr_type_fetched = (EVRES.m_api_uintmax <= 0xFFFFFFFF 
+									? ID_DEFAULT_I32 : ID_DEFAULT_I64);
 
-								(EVRES.m_api_uintmax <= 0xFFFFFFFF 
-									? ID_DEFAULT_I32 : ID_DEFAULT_I64)
+						*wr_type_cast  =  util_default_decide_cast(
+								*wr_type_cast
+								, *wr_type_fetched
 								);
 
 						assert(*wr_type_cast);
@@ -508,15 +481,49 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 							return EMIT_EXPR_FAILURE;
 						}
 
-						return emit_expr_arithmetic_cast(
-								1
-								, (EVRES.m_api_uintmax <= 0xFFFFFFFF 
-									? ID_DEFAULT_I32 : ID_DEFAULT_I64)
-								, UTIL_LITERAL_MASK_LITERAL
-								, EVRES
-								, c_newid, *wr_type_cast
-								, rwr_literal_opt
-								, h_ctx);
+						ae2f_expected_but_else(util_mk_default_id(
+									*wr_type_fetched
+									, h_ctx)) {
+							err_prefix(a);
+							err_call(fprintf, (stderr
+										, "Default id fetch has failed. %u\n"
+										, *wr_type_cast
+									  )
+								);
+							return EMIT_EXPR_FAILURE;
+						}
+
+						*rwr_literal_opt = EVRES;
+#if 1
+						switch(util_default_bit_width(*wr_type_fetched)) {
+							case 32:
+								ae2f_expected_but_else(*wr_newid = util_mk_constant_val_id(
+										(aclspv_wrd_t)EVRES.m_u64
+										, h_ctx
+										))
+									return EMIT_EXPR_FAILURE;
+
+								return EMIT_EXPR_SUCCESS_LITERAL;
+
+							case 64:
+								*wr_newid = h_ctx->m_id++;
+								ae2f_expected_but_else(util_emitx_5(
+											&h_ctx->m_section.m_types
+											, h_ctx->m_count.m_types
+											, SpvOpConstant
+											, ID_DEFAULT_I64
+											, *wr_newid
+											, EVRES.m_u64 & 0xFFFFFFFF
+											, (aclspv_wrd_t)((EVRES.m_u64 >> 32) & 0xFFFFFFFF)
+											))
+									return EMIT_EXPR_FAILURE;
+
+								return EMIT_EXPR_SUCCESS_LITERAL;
+							default:
+								assert(0);
+								ae2f_unreachable();
+						}
+#endif
 
 					case CXEval_Float:
 						dbg_puts(("Literal: double (float casted)"));
@@ -526,7 +533,8 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 
 						clang_EvalResult_dispose(EVAL);
 
-						*wr_type_fetched = *wr_type_cast = util_default_decide_cast(
+						*wr_type_fetched = ID_DEFAULT_F32;
+						*wr_type_cast = util_default_decide_cast(
 								*wr_type_cast
 								, ID_DEFAULT_F32
 								);
@@ -542,6 +550,18 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 									, h_ctx))
 							return EMIT_EXPR_FAILURE;
 
+						*rwr_literal_opt = EVRES;
+
+						ae2f_expected_but_else(*wr_newid = util_mk_constant_val_f32_id(
+									(float)EVRES.m_dbl
+									, h_ctx
+									))
+							return EMIT_EXPR_FAILURE;
+
+						return EMIT_EXPR_SUCCESS_LITERAL;
+
+
+#if 0
 						return emit_expr_arithmetic_cast(
 								1, ID_DEFAULT_F64
 								, UTIL_LITERAL_MASK_LITERAL
@@ -550,6 +570,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 								, *wr_type_cast
 								, rwr_literal_opt 
 								, h_ctx);
+#endif
 					default:
 						assert(0 && "unknown evaluation");
 						return EMIT_EXPR_FAILURE;
@@ -583,6 +604,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 						);
 
 				if(DECL_INFO.m_data.m_var_simple.m_mask_literal & UTIL_LITERAL_LITERAL) {
+#if 0 
 					dbg_puts(("Variable is literal"));
 					return emit_expr_arithmetic_cast(
 							1, DECL_INFO.m_data.m_var_simple.m_type_id
@@ -592,11 +614,20 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 							, *wr_type_fetched = *wr_type_cast
 							, rwr_literal_opt
 							, h_ctx);
+#endif
+					*rwr_literal_opt = DECL_INFO.m_data.m_var_simple.m_literal;
+					*wr_newid = DECL_INFO.m_data.m_var_simple.m_init_val;
+					return EMIT_EXPR_SUCCESS_LITERAL;
 				}
 
 				if(DECL_INFO.m_data.m_var_simple.m_is_predictable) {
 					dbg_puts(("Variable is predictable"));
+					*wr_newid = DECL_INFO.m_data.m_var_simple.m_init_val;
+					return DECL_INFO.m_data.m_var_simple.m_mask_literal & UTIL_LITERAL_CONSTANT
+						? EMIT_EXPR_SUCCESS_CONSTANT
+						: EMIT_EXPR_SUCCESS;
 
+#if 0
 					return emit_expr_arithmetic_cast_non_literal(
 							DECL_INFO.m_data.m_var_simple.m_init_val
 							, DECL_INFO.m_data.m_var_simple.m_type_id
@@ -604,21 +635,24 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 							, c_newid
 							, *wr_type_fetched = *wr_type_cast
 							, h_ctx);
+#endif
 				}
 
 				dbg_puts(("Load from memory"));
-
+				*wr_newid = h_ctx->m_id++;
+				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl = util_emitx_4(
+							&h_ctx->m_section.m_fnimpl
+							, h_ctx->m_count.m_fnimpl
+							, SpvOpLoad
+							, DECL_INFO.m_data.m_var_simple.m_type_id
+							, *wr_newid
+							, DECL_INFO.m_data.m_var_simple.m_id
+							)) return EMIT_EXPR_FAILURE;
+				return EMIT_EXPR_SUCCESS;
+#if 0
 				if(DECL_INFO.m_data.m_var_simple.m_type_id == *wr_type_cast)
 				{
-					ae2f_expected_but_else(h_ctx->m_count.m_fnimpl = util_emitx_4(
-								&h_ctx->m_section.m_fnimpl
-								, h_ctx->m_count.m_fnimpl
-								, SpvOpLoad
-								, DECL_INFO.m_data.m_var_simple.m_type_id
-								, c_newid
-								, DECL_INFO.m_data.m_var_simple.m_id
-								)) return EMIT_EXPR_FAILURE;
-					return EMIT_EXPR_SUCCESS;
+
 				} else {
 					const aclspv_id_t MID_ID = h_ctx->m_id++;
 
@@ -638,6 +672,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 							, *wr_type_fetched = *wr_type_cast
 							, h_ctx);
 				}
+#endif
 #undef	DECL_INFO
 			}
 	}
@@ -833,8 +868,8 @@ ae2f_inline static int emit_expr_carve_one_scale(
 			);
 
 #define PRVIDX	\
-		((NUM_CMDCOUNTERSTCK - 2)	\
-		[BUF_CMDCOUNTERSTCK(a)].m_count_oprnd)
+	((NUM_CMDCOUNTERSTCK - 2)	\
+	 [BUF_CMDCOUNTERSTCK(a)].m_count_oprnd)
 
 	const aclspv_wrd_t PRVNUMOPRND = PRVBUF[0];
 
@@ -845,17 +880,14 @@ ae2f_inline static int emit_expr_carve_one_scale(
 
 	/****************************************/
 
-#if 0
-	unless(LST_SCALE->m_id) {
-		PRVIDX = 0;
-	}
-#endif
 
 	assert(PRVIDX < PRVBUF[0]);
 
+
+	LST_SCALE_BUF[UTIL_OPBINCFG_RESID] = ID_REQ = CTX->m_id++;
 	PRVBUF[UTIL_OPBINCFG_END + PRVIDX] = ID_REQ;
 	PRVBUF[UTIL_OPBINCFG_MASKLITERAL] &= PRVEXTRA[PRVIDX].m_mask_literal = LST_SCALE_BUF[UTIL_OPBINCFG_MASKLITERAL];
-	LST_SCALE_BUF[UTIL_OPBINCFG_RESID] = ID_REQ = CTX->m_id++;
+	PRVEXTRA[PRVIDX].m_type_original = LST_SCALE_BUF[UTIL_OPBINCFG_RESTYID];
 
 	(void)aclspv_STATICASSERT_ELMSIZE;
 
@@ -865,43 +897,40 @@ ae2f_inline static int emit_expr_carve_one_scale(
 					, (void*)&LST_SCALE->m_id
 					, LST_SCALE->m_id
 					, PRVIDX
-					)));
+				 )));
 
 
 	while(NUM_OPRND--) {
-		util_literal OLD_LITERAL = LST_EXTRA[NUM_OPRND].m_literal;
-		aclspv_id_t OLD_ID 
-			= LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND];
+		if(LST_SCALE_BUF[UTIL_OPBINCFG_RESTYID] != LST_EXTRA[NUM_OPRND].m_type_original) {
+			util_literal OLD_LITERAL = LST_EXTRA[NUM_OPRND].m_literal;
+			aclspv_id_t OLD_ID 
+				= LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND];
+			LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND] = CTX->m_id++;
 
-		LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND] = CTX->m_id++;
+			fixme_puts("Arithmetic cast should be tested on switch");
+			printf("ARITHMETIC CAST ON LOOP[%u]: %u %u\n"
+					, NUM_OPRND
+					, OLD_ID, LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND]
+			      );
+			emit_expr_arithmetic_cast(
+					OLD_ID
+					, LST_EXTRA[NUM_OPRND].m_type_original
+					, LST_EXTRA[NUM_OPRND].m_mask_literal
+					, OLD_LITERAL
+					, LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND]
+					, LST_SCALE_BUF[UTIL_OPBINCFG_RESTYID]
+					, &LST_EXTRA[NUM_OPRND].m_literal
+					, CTX
+					);
+		}
 
-		fixme_puts("Arithmetic cast should be tested on switch");
-		printf("ARITHMETIC CAST ON LOOP[%u]: %u %u\n"
-				, NUM_OPRND
-				, OLD_ID, LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND]
-				);
-
-		TYPE_CAST_CURRENT
-			= LST_EXTRA[NUM_OPRND].m_type_original
-			= util_default_decide_cast(TYPE_CAST_CURRENT, LST_EXTRA[NUM_OPRND].m_type_original)
-			;
-
-		emit_expr_arithmetic_cast(
-				OLD_ID
-				, LST_EXTRA[NUM_OPRND].m_type_original
-				, LST_EXTRA[NUM_OPRND].m_mask_literal
-				, OLD_LITERAL
-				, LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND]
-				, TYPE_CAST_CURRENT
-				, &LST_EXTRA[NUM_OPRND].m_literal
-				, CTX
-				);
-
+#if 0
 		LST_EXTRA[NUM_OPRND].m_type_original = TYPE_CAST_CURRENT;
+#endif
 	}
 
 	ae2f_expected_but_else(LST_SCALE_BUF[5] = util_opbin2_to_spvop(
-				TYPE_CAST_CURRENT
+				UTIL_OPBINCFG_RESTYID[LST_SCALE_BUF]
 				, LST_SCALE_BUF[5]
 				))
 	{
@@ -1139,8 +1168,8 @@ static enum CXChildVisitResult emit_expr(
 	switch(emit_expr_bin_1(
 				h_cur
 				, CTX
-				, ID_REQ
-				, &TYPE_CAST_CURRENT
+				, &ID_REQ
+				, &LST_SCALE_BUF[UTIL_OPBINCFG_RESTYID]
 				, &LST_EXTRA[GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd].m_type_original
 				, RET_LITERAL
 			      )) {
@@ -1153,6 +1182,10 @@ static enum CXChildVisitResult emit_expr(
 			IS_NOT_CONSTANT = UTIL_LITERAL_RT;
 			LST_SCALE_BUF[1] = UTIL_LITERAL_MASK_RT;
 			LST_EXTRA[GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd].m_mask_literal = 0;
+			TYPE_CAST_CURRENT = util_default_decide_cast(
+					TYPE_CAST_CURRENT
+					, LST_SCALE_BUF[UTIL_OPBINCFG_RESTYID]
+					);
 
 			ae2f_unexpected_but_if(0) {
 				ae2f_unreachable();
@@ -1167,10 +1200,10 @@ static enum CXChildVisitResult emit_expr(
 				IS_NOT_CONSTANT &= UTIL_LITERAL_MASK_CONSTANT;
 				LST_SCALE_BUF[1] &= UTIL_LITERAL_MASK_CONSTANT;
 				LST_EXTRA[GETLASTEL_CMDCOUNTERSTCK(a).m_count_oprnd].m_mask_literal &= UTIL_LITERAL_MASK_CONSTANT;
+				LST_EXTRA[GETLASTEL_CMDCOUNTERSTCK(i).m_count_oprnd].m_literal = *RET_LITERAL;
 			}
 
 
-			LST_EXTRA[GETLASTEL_CMDCOUNTERSTCK(i).m_count_oprnd].m_literal = *RET_LITERAL;
 			LST_SCALE_BUF[UTIL_OPBINCFG_END + GETLASTEL_CMDCOUNTERSTCK(i).m_count_oprnd] = ID_REQ;
 
 			(void)(EXPRSTCK_COUNT && --EXPRSTCK_COUNT);
@@ -1226,8 +1259,9 @@ static enum CXChildVisitResult emit_expr(
 				h_cur
 				, CTX
 				, 0
-				, (aclspv_wrd_t)TYPE_CAST_CURRENT
-				, &CMDSTCK_SCALE, 0))
+				, 0
+				, &CMDSTCK_SCALE
+				, 0))
 	{
 		case EMIT_EXPR_FAILURE:
 			assert(0 && "FAILURE_expr_bin2");

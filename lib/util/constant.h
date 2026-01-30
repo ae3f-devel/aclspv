@@ -25,6 +25,7 @@ ae2f_inline static aclspv_id_t util_mk_default_id(
 typedef struct {
 	aclspv_wrdcount_t	m_key;
 	aclspv_id_t		m_const_val_id;
+	aclspv_id_t		m_const_val_f32_id;
 	aclspv_id_t		m_const_spec_id;
 	aclspv_id_t		m_const_spec_type_id;
 
@@ -181,6 +182,41 @@ ae2f_inline static aclspv_id_t	util_mk_constant_val_id(const aclspv_wrd_t c_val,
 	C->m_const_val_id = h_ctx->m_id++;
 
 	return C->m_const_val_id;
+}
+
+ae2f_inline static aclspv_id_t	util_mk_constant_val_f32_id(const float c_val, h_util_ctx_t h_ctx)
+{
+	union {
+		float		m_flt;
+		u32_least	m_u32;
+	} FLT_U32;
+
+	util_constant* ae2f_restrict C;
+
+	FLT_U32.m_flt = c_val;
+	C = util_mk_constant_node(FLT_U32.m_u32, h_ctx);
+
+	ae2f_expected_but_else(C) return 0;
+	ae2f_expected_but_else(C->m_key == FLT_U32.m_u32) {
+		assert(0 && "key does not match");
+		return 0;
+	}
+
+	if(C->m_const_val_f32_id) return C->m_const_val_f32_id;
+
+
+	ae2f_expected_but_else(util_mk_default_id(ID_DEFAULT_F32, h_ctx))
+		return 0;
+
+	/** OpConstant */
+	ae2f_expected_but_else((h_ctx->m_count.m_types = emit_opcode(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, SpvOpConstant, 3))) return 0;
+	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, ID_DEFAULT_F32))) return 0;
+	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, h_ctx->m_id))) return 0;
+	ae2f_expected_but_else((h_ctx->m_count.m_types = util_emit_wrd(&h_ctx->m_section.m_types, h_ctx->m_count.m_types, FLT_U32.m_u32))) return 0;  
+
+	C->m_const_val_f32_id = h_ctx->m_id++;
+
+	return C->m_const_val_f32_id;
 }
 
 ae2f_inline static aclspv_id_t	util_mk_constant_spec_id(const aclspv_wrd_t c_key, const aclspv_wrd_t c_val, h_util_ctx_t h_ctx)
