@@ -53,47 +53,63 @@ ae2f_inline static ae2f_ccconst struct util_literal_eval_	util_literal_eval2(
 	return RET;
 #endif
 
+
+
 	switch((uintmax_t)c_type) {
+#define	EXPR_TWO(L_oper, L_mem, c_case)					\
+		case	c_case:						\
+									\
+		RET.m_ret.L_mem = c_oprndA.L_mem L_oper c_oprndB.L_mem;	\
+		RET.m_found = 1;					\
+
 		case ID_DEFAULT_I8:
 		case ID_DEFAULT_I16:
 		case ID_DEFAULT_I32:
 		case ID_DEFAULT_I64:
-		/** FIXME: in arithmetic sign matters */
-		switch((uintmax_t)c_opcode) {
-			case SpvOpIAdd:
-				RET.m_ret.m_api_uintmax
-					= c_oprndA.m_api_uintmax + c_oprndB.m_api_uintmax;
-				RET.m_found = 1;
+			/** FIXME: in arithmetic sign matters */
+			switch((uintmax_t)c_opcode) {
+				EXPR_TWO(+, m_api_intmax, SpvOpIAdd) {}
 				return RET;
-			default:
+
+				EXPR_TWO(-, m_api_intmax, SpvOpISub) {}
+				return RET;
+
+				EXPR_TWO(*, m_api_intmax, SpvOpIMul) {}
+				return RET;
+				EXPR_TWO(/, m_api_intmax, SpvOpSDiv) {}
+				return RET;
+				EXPR_TWO(%, m_api_intmax, SpvOpSRem) {}
+				return RET;
+
+				default:
 				RET.m_found = 0;
 				return RET;
-		}
+			}
 
 		case ID_DEFAULT_F32:
-		switch((uintmax_t)c_opcode) {
-			case SpvOpFAdd:
-				RET.m_ret.m_flt
-					= c_oprndA.m_flt + c_oprndB.m_flt;
-				RET.m_found = 1;
-				return RET;
-			default:
-				RET.m_found = 0;
-				return RET;
-		}
+			switch((uintmax_t)c_opcode) {
+				case SpvOpFAdd:
+					RET.m_ret.m_flt
+						= c_oprndA.m_flt + c_oprndB.m_flt;
+					RET.m_found = 1;
+					return RET;
+				default:
+					RET.m_found = 0;
+					return RET;
+			}
 
 
 		case ID_DEFAULT_F64:
-		switch((uintmax_t)c_opcode) {
-			case SpvOpFAdd:
-				RET.m_ret.m_dbl
-					= c_oprndA.m_dbl + c_oprndB.m_dbl;
-				RET.m_found = 1;
-				return RET;
-			default:
-				RET.m_found = 0;
-				return RET;
-		}
+			switch((uintmax_t)c_opcode) {
+				case SpvOpFAdd:
+					RET.m_ret.m_dbl
+						= c_oprndA.m_dbl + c_oprndB.m_dbl;
+					RET.m_found = 1;
+					return RET;
+				default:
+					RET.m_found = 0;
+					return RET;
+			}
 			break;
 
 		default:
@@ -101,6 +117,8 @@ ae2f_inline static ae2f_ccconst struct util_literal_eval_	util_literal_eval2(
 	}
 
 	RET.m_found = 0;
+
+#undef	EXPR_TWO
 	return RET;
 }
 

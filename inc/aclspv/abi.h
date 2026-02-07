@@ -6,7 +6,7 @@
 #define aclspv_abi_h
 
 #include <ae2f/cc.h>
-#include <ae2f/Call.auto.h>
+#include <ae2f/.Call.h>
 
 /**
  * @def ACLSPV_ABI_IMPL	

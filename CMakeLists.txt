@@ -18,7 +18,7 @@ endif()
 if(NOT aclspv_RELOADED)
 	set(_aclspv_RELOADED OFF)
 else()
-	set(_aclspv_RELOADED ON)
+	set(_aclspv_RELOADED OFF)
 endif()
 
 option(aclspv_RELOADED "aclspv has been reloaded" ${aclspv_N_RELOAD_ALWAYS})
@@ -87,20 +87,24 @@ ae2f_Macro_Lib_V2(
 	inc ${_aclspv_RELOADED} 
 	)
 
+ae2f_FileRaw_init(1 100)
+ae2f_FileRaw_Run_One2(
+	${PROJECT_SOURCE_DIR}/src/source.cl 
+	${PROJECT_SOURCE_DIR}/test/lifespan/source.auto.h
+	"A"
+	)
 
-if(NOT ${_aclspv_RELOADED})
-	ae2f_FileRaw_init(1 100)
-	ae2f_FileRaw_Run_One(
-		${PROJECT_SOURCE_DIR}/src/source.cl 
-		${PROJECT_SOURCE_DIR}/test/lifespan/source.auto.h
-		)
+ae2f_FileRaw_Run_One2(
+	${PROJECT_SOURCE_DIR}/src/ocl.h
+	${PROJECT_SOURCE_DIR}/test/lifespan/ocl.auto.h
+	"B"
+	)
 
-	ae2f_FileRaw_Run_One2(
-		${PROJECT_SOURCE_DIR}/src/ocl.h
-		${PROJECT_SOURCE_DIR}/test/lifespan/ocl.auto.h
-		"B"
-		)
-endif()
+add_library(
+	ae3f-aclspv-auto	INTERFACE
+	${PROJECT_SOURCE_DIR}/test/lifespan/source.auto.h
+	${PROJECT_SOURCE_DIR}/test/lifespan/ocl.auto.h
+	)
 
 target_link_libraries(${ae3f__aclspvCore__TENT} INTERFACE
 	ae2f::Core ae2f::Preproc
