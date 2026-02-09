@@ -61,21 +61,32 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 		const aclspv_id_t	c_old_id,
 		const aclspv_id_t	c_old_type,
 		const B_util_literal_t	c_flag_literal,
-		aclspv_id_t		c_new_id,
-		aclspv_id_t		c_new_type,
-		const h_util_ctx_t	h_ctx
+		aclspv_id_t* ae2f_restrict		r_newid,
+		aclspv_id_t				c_new_type,
+		const h_util_ctx_t			h_ctx
 		)
 {
 	assert(c_old_type);	assert(c_new_type);
-	assert(c_old_id);	assert(c_new_id);
+	assert(c_old_id);	assert(r_newid);
 	assert(h_ctx);
 
 	dbg_puts(("Arithmetic cast: non-literal"));
+
+	if(c_old_type == c_new_type) {
+		*r_newid = c_old_id;
+
+		return c_flag_literal & UTIL_LITERAL_CONSTANT
+			? EMIT_EXPR_SUCCESS_CONSTANT
+			: EMIT_EXPR_SUCCESS;
+	}
+
+#if 0 
 	if(util_default_is_int(c_old_type) && util_default_is_int(c_new_type)) {
 		if(c_flag_literal & UTIL_LITERAL_CONSTANT) {
 			if(c_old_type == c_new_type) {
 				aclspv_id_t ID_1 = util_mk_constant_val_id(1, h_ctx);
 				ae2f_expected_but_else(ID_1)	return EMIT_EXPR_FAILURE;
+				*r_newid = h_ctx->m_id;
 
 				ae2f_expected_but_else(h_ctx->m_count.m_types
 						= util_emitx_7(
@@ -83,7 +94,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 							, h_ctx->m_count.m_types
 							, SpvOpSpecConstantOp
 							, c_new_type
-							, c_new_id
+							, h_ctx->m_id++
 							, SpvOpSelect
 							, ID_1
 							, c_old_id
@@ -93,13 +104,15 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 				return EMIT_EXPR_SUCCESS_CONSTANT;
 			}
 
+
+			*r_newid = h_ctx->m_id;
 			ae2f_expected_but_else(h_ctx->m_count.m_types
 					= util_emitx_5(
 						&h_ctx->m_section.m_types
 						, h_ctx->m_count.m_types
 						, SpvOpSpecConstantOp
 						, c_new_type
-						, c_new_id
+						, h_ctx->m_id++
 						, SpvOpSConvert
 						, c_old_id))
 				return EMIT_EXPR_FAILURE;
@@ -110,13 +123,15 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 				aclspv_id_t ID_0 = util_mk_constant_val_id(0, h_ctx);
 				ae2f_expected_but_else(ID_0)	return EMIT_EXPR_FAILURE;
 
+
+				*r_newid = h_ctx->m_id;
 				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
 						= util_emitx_5(
 							&h_ctx->m_section.m_fnimpl
 							, h_ctx->m_count.m_fnimpl
 							, SpvOpIAdd
 							, c_new_type
-							, c_new_id
+							, h_ctx->m_id++
 							, c_old_id
 							, ID_0
 							)
@@ -125,19 +140,21 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 				return EMIT_EXPR_SUCCESS;
 			}
 
+			*r_newid = h_ctx->m_id;
 			ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
 					= util_emitx_4(
 						&h_ctx->m_section.m_fnimpl
 						, h_ctx->m_count.m_fnimpl
 						, SpvOpSConvert
 						, c_new_type
-						, c_new_id
+						, h_ctx->m_id++
 						, c_old_id
 						)
 					) return EMIT_EXPR_FAILURE;
 			return EMIT_EXPR_SUCCESS;
 		}
 	}
+#endif
 
 	if (util_default_is_float(c_old_type) && util_default_is_float(c_new_type)) {
 		if(c_flag_literal & UTIL_LITERAL_CONSTANT) {
@@ -148,13 +165,15 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 				ae2f_expected_but_else(ID_0)	return EMIT_EXPR_FAILURE;
 				ae2f_expected_but_else(ID_1)	return EMIT_EXPR_FAILURE;
 
+
+				*r_newid = h_ctx->m_id;
 				ae2f_expected_but_else(h_ctx->m_count.m_types
 						= util_emitx_7(
 							&h_ctx->m_section.m_types
 							, h_ctx->m_count.m_types
 							, SpvOpSpecConstantOp
 							, c_new_type
-							, c_new_id
+							, h_ctx->m_id++ 
 							, SpvOpSelect
 							, ID_1
 							, c_old_id
@@ -164,13 +183,14 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 				return EMIT_EXPR_SUCCESS_CONSTANT;
 			}
 
+			*r_newid = h_ctx->m_id;
 			ae2f_expected_but_else(h_ctx->m_count.m_types
 					= util_emitx_5(
 						&h_ctx->m_section.m_types
 						, h_ctx->m_count.m_types
 						, SpvOpSpecConstantOp
 						, c_new_type
-						, c_new_id
+						, h_ctx->m_id++
 						, SpvOpFConvert
 						, c_old_id))
 				return EMIT_EXPR_FAILURE;
@@ -181,13 +201,14 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 				aclspv_id_t ID_0 = util_mk_constant_val_f32_id(0, h_ctx);
 				ae2f_expected_but_else(ID_0)	return EMIT_EXPR_FAILURE;
 
+				*r_newid = h_ctx->m_id;
 				ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
 						= util_emitx_5(
 							&h_ctx->m_section.m_fnimpl
 							, h_ctx->m_count.m_fnimpl
 							, SpvOpFAdd
 							, c_new_type
-							, c_new_id
+							, h_ctx->m_id++
 							, c_old_id
 							, ID_0
 							)
@@ -196,13 +217,15 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 				return EMIT_EXPR_SUCCESS;
 			}
 
+
+			*r_newid = h_ctx->m_id;
 			ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
 					= util_emitx_4(
 						&h_ctx->m_section.m_fnimpl
 						, h_ctx->m_count.m_fnimpl
 						, SpvOpFConvert
 						, c_new_type
-						, c_new_id
+						, h_ctx->m_id++
 						, c_old_id
 						)
 					) return EMIT_EXPR_FAILURE;
@@ -212,13 +235,15 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 
 	/** TWO ARE DIFFERENT */
 	if(util_default_is_float(c_new_type)) {
+
+		*r_newid = h_ctx->m_id;
 		ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
 				= util_emitx_4(
 					&h_ctx->m_section.m_fnimpl
 					, h_ctx->m_count.m_fnimpl
 					, SpvOpConvertSToF 
 					, c_new_type
-					, c_new_id
+					, h_ctx->m_id++
 					, c_old_id
 					)
 				) return EMIT_EXPR_FAILURE;
@@ -227,13 +252,15 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast_non_literal(
 	}
 
 	if(util_default_is_int(c_new_type)) {
+
+		*r_newid = h_ctx->m_id;
 		ae2f_expected_but_else(h_ctx->m_count.m_fnimpl
 				= util_emitx_4(
 					&h_ctx->m_section.m_fnimpl
 					, h_ctx->m_count.m_fnimpl
 					, SpvOpConvertFToS
 					, c_new_type
-					, c_new_id
+					, h_ctx->m_id++
 					, c_old_id
 					)
 				) return EMIT_EXPR_FAILURE;
@@ -251,7 +278,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast(
 		const B_util_literal_t	c_flag_literal,
 		const emit_expr_literal	c_old_literal,
 
-		aclspv_id_t		c_new_id,
+		aclspv_id_t* ae2f_restrict	r_newid,
 		aclspv_id_t		c_new_type,
 		emit_expr_literal* ae2f_restrict wr_new_literal_opt,
 		const h_util_ctx_t	h_ctx
@@ -259,13 +286,13 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast(
 {
 	emit_expr_literal	RESULT = c_old_literal;
 	assert(c_old_type);	assert(c_new_type);
-	assert(c_new_id);
+	assert(r_newid);
 	assert(h_ctx);
 
 	unless(c_flag_literal & UTIL_LITERAL_LITERAL) {
 		return emit_expr_arithmetic_cast_non_literal(
 				c_old_id, c_old_type
-				, c_flag_literal, c_new_id
+				, c_flag_literal, r_newid
 				, c_new_type, h_ctx
 				);
 	}
@@ -340,8 +367,49 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast(
 		}
 	}
 
+
 	if(wr_new_literal_opt) *wr_new_literal_opt = RESULT;
 
+	switch(c_new_type) {
+		aclspv_id_t	ID_RET;
+
+		case ID_DEFAULT_I32:
+			ae2f_expected_but_else(ID_RET = util_mk_constant_val_id(
+					(aclspv_wrd_t)RESULT.m_api_uintmax
+					, h_ctx)) return EMIT_EXPR_FAILURE;
+
+			*r_newid = ID_RET;
+			return EMIT_EXPR_SUCCESS_LITERAL;
+
+		case ID_DEFAULT_I64:
+			ae2f_expected_but_else(ID_RET = util_mk_constant_val64_id(
+					RESULT.m_api_uintmax
+					, h_ctx)) return EMIT_EXPR_FAILURE;
+
+			*r_newid = ID_RET;
+			return EMIT_EXPR_SUCCESS_LITERAL;
+		case ID_DEFAULT_F32:
+			ae2f_expected_but_else(ID_RET = util_mk_constant_val_f32_id(
+					RESULT.m_flt
+					, h_ctx)) return EMIT_EXPR_FAILURE;
+
+			*r_newid = ID_RET;
+			return EMIT_EXPR_SUCCESS_LITERAL;
+		case ID_DEFAULT_F64:
+			ae2f_expected_but_else(ID_RET = util_mk_constant_val_f64_id(
+					RESULT.m_dbl
+					, h_ctx)) return EMIT_EXPR_FAILURE;
+			*r_newid = ID_RET;
+			return EMIT_EXPR_SUCCESS_LITERAL;
+
+		default:
+			fixme_puts("Type not found");
+			return EMIT_EXPR_FAILURE;
+	}
+
+	ae2f_unreachable();
+
+#if 0
 	if(util_default_bit_width(c_new_type) == 64) {
 		dbg_call(fprintf, (
 					stderr
@@ -391,6 +459,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_arithmetic_cast(
 		return EMIT_EXPR_FAILURE;
 
 	return EMIT_EXPR_SUCCESS_LITERAL;
+#endif
 }
 
 /** 
@@ -509,16 +578,10 @@ ae2f_inline static enum EMIT_EXPR_ emit_expr_bin_1(
 
 							case 64:
 								dbg_puts("I64");
-								*wr_newid = h_ctx->m_id++;
-								ae2f_expected_but_else(util_emitx_5(
-											&h_ctx->m_section.m_types
-											, h_ctx->m_count.m_types
-											, SpvOpConstant
-											, ID_DEFAULT_I64
-											, *wr_newid
-											, EVRES.m_u64 & 0xFFFFFFFF
-											, (aclspv_wrd_t)((EVRES.m_u64 >> 32) & 0xFFFFFFFF)
-											))
+								ae2f_expected_but_else(*wr_newid = util_mk_constant_val64_id(
+										(aclspv_wrd_t)EVRES.m_u64
+										, h_ctx
+										))
 									return EMIT_EXPR_FAILURE;
 
 								return EMIT_EXPR_SUCCESS_LITERAL;
@@ -864,7 +927,7 @@ ae2f_inline static int emit_expr_carve_one_scale(
 					, LST_EXTRA[NUM_OPRND].m_type_original
 					, LST_EXTRA[NUM_OPRND].m_mask_literal
 					, OLD_LITERAL
-					, LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND]
+					, &LST_SCALE_BUF[UTIL_OPBINCFG_END + NUM_OPRND]
 					, LST_SCALE_BUF[UTIL_OPBINCFG_RESTYID]
 					, &LST_EXTRA[NUM_OPRND].m_literal
 					, CTX
@@ -960,23 +1023,6 @@ ae2f_inline static int emit_expr_carve_one_scale(
 				if(EVAL_LIT.m_found)
 				{
 					dbg_puts(("The result is literal."));
-					fixme_puts("Add verification for emit_expr_arithmetic_cast");
-
-#if 0
-					emit_expr_arithmetic_cast(
-							0
-							, LST_SCALE_BUF[UTIL_OPBINCFG_RESTYID]
-							, UTIL_LITERAL_MASK_LITERAL
-							, EVAL_LIT.m_ret
-							, LST_SCALE_BUF[UTIL_OPBINCFG_RESID]
-						, LST_SCALE_BUF[UTIL_OPBINCFG_RESTYID]
-							, &PRVEXTRA[PRVIDX].m_literal
-							, CTX
-							);
-
-					*RET_LITERAL = PRVEXTRA[PRVIDX].m_literal;
-					return 0;
-#endif
 
 					*RET_LITERAL = PRVEXTRA[PRVIDX].m_literal = EVAL_LIT.m_ret;
 					PRVEXTRA[PRVIDX].m_mask_literal = 3;
@@ -1299,7 +1345,7 @@ static enum CXChildVisitResult emit_expr(
 }
 
 ae2f_inline static enum EMIT_EXPR_ emit_get_expr(
-		const aclspv_id_t c_id_req
+		aclspv_id_t* ae2f_restrict const ret_id
 		, const aclspv_id_t c_type_req
 		, const CXCursor c_cur
 		, util_literal* ae2f_restrict	wr_literal_opt
@@ -1388,7 +1434,7 @@ ae2f_inline static enum EMIT_EXPR_ emit_get_expr(
 			, (aclspv_wrd_t)BUF[4]
 			, (aclspv_wrd_t)BUF[3]
 			, *(util_literal*ae2f_restrict)(void* ae2f_restrict)(BUF + 6)
-			, c_id_req
+			, ret_id
 			, c_type_req
 			, wr_literal_opt
 			, h_ctx);

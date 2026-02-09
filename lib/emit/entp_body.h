@@ -237,8 +237,6 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 #endif
 
 						if(NODE && NODE->m_const_spec_id) {
-							CURSOR.m_data.m_var_simple.m_init_val = CTX->m_id++;
-
 							dbg_prefix(a);
 							dbg_call(fprintf, (stderr, "Spec ID definition spotted.: %u\n"
 										, NODE->m_const_spec_id));
@@ -247,7 +245,7 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 										NODE->m_const_spec_id
 										, NODE->m_const_spec_type_id
 										, UTIL_LITERAL_CONSTANT
-										, CURSOR.m_data.m_var_simple.m_init_val
+										, &CURSOR.m_data.m_var_simple.m_init_val
 										, CURSOR.m_data.m_var_simple.m_type_id
 										, CTX
 										))
@@ -290,9 +288,8 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 					unless(clang_Cursor_isNull(VAR_INIT)) {
 						dbg_puts(("Variable has constructor."));
 
-						CURSOR.m_data.m_var_simple.m_init_val		= CTX->m_id++;
 						switch(emit_get_expr(
-									CURSOR.m_data.m_var_simple.m_init_val
+									&CURSOR.m_data.m_var_simple.m_init_val
 									, CURSOR.m_data.m_var_simple.m_type_id
 									, VAR_INIT
 									, &CURSOR.m_data.m_var_simple.m_literal
@@ -444,6 +441,8 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 						, h_cur
 						);
 
+				aclspv_id_t	CONDVALID = CTX->m_id++;
+
 				ae2f_expected_but_else(EXPR_IDX != CTX->m_num_cursor + 1)
 					goto LBL_FAIL;
 
@@ -451,7 +450,7 @@ static enum CXChildVisitResult emit_entp_body(CXCursor h_cur, CXCursor h_parent,
 					++CTX->m_num_cursor;
 
 				unless(emit_get_expr(
-							CTX->m_id++
+							&CONDVALID
 							, 0
 							, h_cur
 							, 0
