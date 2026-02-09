@@ -35,7 +35,7 @@ typedef struct {
 	util_literal	m_literal;
 } util_opbincfg_extra;
 
-ae2f_inline static ae2f_ccconst enum SpvOp_ util_opbin2_to_spvop(const e_id_default c_id, const enum UTIL_OPBIN2_ c_op2) {
+static ae2f_ccconst enum SpvOp_ util_opbin2_to_spvop(const e_id_default c_id, const enum UTIL_OPBIN2_ c_op2) {
 	switch(c_op2) {
 		case UTIL_OPBIN2_NONE:
 		default:

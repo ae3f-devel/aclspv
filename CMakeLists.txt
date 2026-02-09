@@ -114,7 +114,7 @@ target_link_libraries(${ae3f__aclspvCore__TENT} INTERFACE
 	SPIRV-Headers::SPIRV-Headers
 	)
 
-file(GLOB aclspv-src ${PROJECT_SOURCE_DIR}/lib/*)
+file(GLOB_RECURSE aclspv-src ${PROJECT_SOURCE_DIR}/lib/*)
 file(GLOB aclspv-src-build ${PROJECT_SOURCE_DIR}/lib/build/*.tar.c)
 
 ae2f_CoreLibTentConfigCustom(
