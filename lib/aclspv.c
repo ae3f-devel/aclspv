@@ -42,11 +42,11 @@ aclspv_compile(
 		enum CXErrorCode* ae2f_restrict				rwr_cxerr_opt
 	      ) 
 {
-	const CXIndex	CXIDX =	clang_createIndex(0, 0);
-	CXTranslationUnit	CXTU = ae2f_NIL;
+	const CXIndex CXIDX		= clang_createIndex(0, 0);
+	CXTranslationUnit	CXTU	= ae2f_NIL;
 	CXCursor		CXROOTCUR;
 
-	enum CXErrorCode	CXERR = CXError_Success;
+	enum CXErrorCode	CXERR	= CXError_Success;
 	x_aclspv_ctx	CTX;
 
 	unsigned	CXTU_IDX_ERR;
@@ -59,7 +59,8 @@ aclspv_compile(
 	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_type_uniques		, (1 << 30));
 	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_scale_vars			, (1 << 30));
 	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_cursors			, (1 << 30));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_constant_cache		, (1 << 30));
+
+	/** FIXME: constant_cache */
 
 	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_capability	, (1 << 30));
 	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_entp		, (1 << 30));
