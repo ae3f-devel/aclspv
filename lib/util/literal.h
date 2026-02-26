@@ -35,8 +35,8 @@ typedef union {
 #include "./log.h"
 
 struct util_literal_eval_ {
-	int		m_found;
 	util_literal	m_ret;
+	int		m_found;
 };
 
 ae2f_inline static ae2f_ccconst struct util_literal_eval_	util_literal_eval2(
@@ -47,13 +47,6 @@ ae2f_inline static ae2f_ccconst struct util_literal_eval_	util_literal_eval2(
 		)
 {
 	struct util_literal_eval_ RET;
-
-#if 0
-	RET.m_found = 0;
-	return RET;
-#endif
-
-
 
 	switch((uintmax_t)c_type) {
 #define	EXPR_TWO(L_oper, L_mem, c_case)					\

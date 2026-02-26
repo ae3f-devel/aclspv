@@ -1,4 +1,10 @@
-/** @file conf.h @brief bootstrap the compiler state machine */
+/** 
+ * @file conf.h 
+ * @brief bootstrap the compiler state machine 
+ * */
+
+#ifndef	aclspv_impl_conf_h
+#define aclspv_impl_conf_h
 
 #include <util/emitx.h>
 #include <util/id.h>
@@ -35,13 +41,12 @@ ae2f_inline static e_aclspv_compile_t impl_conf(
 	h_ctx->m_count.m_fndef		= 0;
 
 	/*** Shader Capability **/
-
 	ae2f_expected_but_else(wrd_caps_count = util_emitx_2(
 				&wrd_caps
 				, wrd_caps_count
 				, SpvOpCapability
 				, SpvCapabilityShader))
-		return ACLSPV_COMPILE_ALLOC_FAILED;
+		return ACLSPV_COMPILE_ALLOC_FAILED_CFG;
 
 
 	h_ctx->m_is_for_gl = 1;
@@ -52,7 +57,7 @@ ae2f_inline static e_aclspv_compile_t impl_conf(
 					, wrd_caps_count
 					, SpvOpCapability
 					, SpvCapabilityAddresses))
-			return ACLSPV_COMPILE_ALLOC_FAILED;
+			return ACLSPV_COMPILE_ALLOC_FAILED_CFG;
 	}
 
 	unless(h_ctx->m_is_for_gl) {
@@ -61,23 +66,23 @@ ae2f_inline static e_aclspv_compile_t impl_conf(
 					, wrd_caps_count
 					, SpvOpCapability
 					, SpvCapabilityVulkanMemoryModel))
-			return ACLSPV_COMPILE_ALLOC_FAILED;
+			return ACLSPV_COMPILE_ALLOC_FAILED_CFG;
 
 		POS = wrd_ext_count;
 		unless(wrd_ext_count = emit_opcode(&wrd_ext, wrd_ext_count, SpvOpExtension, 0))
-			return ACLSPV_COMPILE_ALLOC_FAILED;
+			return ACLSPV_COMPILE_ALLOC_FAILED_CFG;
 		unless(wrd_ext_count = util_emit_str(&wrd_ext, wrd_ext_count
 					, "SPV_KHR_vulkan_memory_model"))
-			return ACLSPV_COMPILE_ALLOC_FAILED;
+			return ACLSPV_COMPILE_ALLOC_FAILED_CFG;
 		set_oprnd_count_for_opcode(get_wrd_of_vec(&wrd_ext)[POS], (aclspv_wrd_t)(wrd_ext_count - POS - 1));
 	}
 
 	/*** Extension Default **/
 	POS = wrd_ext_count;
 	unless(wrd_ext_count = emit_opcode(&wrd_ext, wrd_ext_count, SpvOpExtension, 0))
-		return ACLSPV_COMPILE_ALLOC_FAILED;
+		return ACLSPV_COMPILE_ALLOC_FAILED_CFG;
 	unless(wrd_ext_count = util_emit_str(&wrd_ext, wrd_ext_count, "SPV_KHR_storage_buffer_storage_class"))
-		return ACLSPV_COMPILE_ALLOC_FAILED;
+		return ACLSPV_COMPILE_ALLOC_FAILED_CFG;
 	set_oprnd_count_for_opcode(get_wrd_of_vec(&wrd_ext)[POS], (aclspv_wrd_t)(wrd_ext_count - POS - 1));
 
 	/*** Memory Model **/
@@ -88,7 +93,10 @@ ae2f_inline static e_aclspv_compile_t impl_conf(
 				? SpvAddressingModelLogical
 				: h_ctx->m_is_buffer_64 ? SpvAddressingModelPhysical64 : SpvAddressingModelPhysical32 
 				, h_ctx->m_is_for_gl ? SpvMemoryModelGLSL450 : SpvMemoryModelVulkan))
-		return ACLSPV_COMPILE_ALLOC_FAILED;
+		return ACLSPV_COMPILE_ALLOC_FAILED_CFG;
 
 	return ACLSPV_COMPILE_OK;
 }
+
+
+#endif

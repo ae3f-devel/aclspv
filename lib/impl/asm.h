@@ -1,4 +1,10 @@
-/** @file asm.h @brief finalise the emission */
+/** 
+ * @file asm.h 
+ * @brief finalise the emission 
+ * */
+
+#ifndef	aclspv_impl_asm_h
+#define	aclspv_impl_asm_h
 
 #include <spirv/unified1/spirv.h>
 #include <aclspv.h>
@@ -151,3 +157,5 @@ ae2f_inline static ae2f_noexcept e_aclspv_compile_t impl_asm(
 
 	return ACLSPV_COMPILE_OK;
 }
+
+#endif

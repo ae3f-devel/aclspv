@@ -17,6 +17,9 @@
 #include "./util/entp.h"
 #include "./util/fn.h"
 #include "./util/iddef.h"
+#include "./util/cursor.h"
+#include "./util/scale.h"
+#include "./util/cxtp.h"
 
 #include "./emit/count_fn.h"
 #include "./emit/decl_glob_obj.h"
@@ -53,6 +56,8 @@ aclspv_compile(
 	assert(rwr_output);
 
 	memset(&CTX, 0, sizeof(CTX));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_type_uniques, (1 << 30));
+
 	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_capability, (1 << 30));
 	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_entp, (1 << 30));
 	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_ext, (1 << 30));
@@ -142,14 +147,27 @@ aclspv_compile(
 	clang_visitChildren(CXROOTCUR, emit_iter_entry_point, &CTX);
 
 	CTX.m_tmp.m_w0 = 0;
-	clang_visitChildren(CXROOTCUR, emit_decl_glob_obj, &CTX);
+	clang_visitChildren(CXROOTCUR, aclemit_decl_glob_obj, &CTX);
+
 
 	{
 		aclspv_wrdcount_t	IDX = CTX.m_fnlist.m_num_entp;
-		const aclspv_wrd_t	ANCHOR = CTX.m_tmp.m_w3;
+		const aclspv_wrd_t	ANCHOR	= CTX.m_tmp.m_w3;
+		const aclspv_id_t	VOID	= aclid_mk_default_id(ID_DEFAULT_VOID, &CTX);
 
-		util_mk_default_id(ID_DEFAULT_VOID, &CTX);
-		util_mk_default_id(ID_DEFAULT_FN_VOID, &CTX);
+		const aclspv_id_t	ID_DEFAULT_FN_VOID = aclutil_mk_cxtp_fn_no_prm(
+				VOID
+				, &CTX
+				);
+
+		ae2f_expected_but_else(VOID)
+			goto LBL_CLEANUP;
+
+		ae2f_expected_but_else(ID_DEFAULT_FN_VOID) {
+			goto LBL_CLEANUP;
+		}
+
+
 
 
 		while((IDX--)) {
@@ -202,7 +220,7 @@ aclspv_compile(
 
 			while(IDX--) {
 				const util_bind* ae2f_restrict const BUFFER = get_buf_from_scale(&CTX.m_scale_vars, FNSCALE[0]);
-				const aclspv_wrd_t CURSOR_IDX = util_mk_cursor_base(
+				const aclspv_wrd_t CURSOR_IDX = aclutil_mk_cursor_base(
 						CTX.m_num_cursor
 						, &CTX.m_cursors
 						, BUFFER[IDX].m_unified.m_cursor
@@ -227,7 +245,7 @@ aclspv_compile(
 
 			CTX.m_has_function_ret	= 0;
 			clang_visitChildren(((util_entp_t* ae2f_restrict)CTX.m_fnlist.m_entp.m_p)[IDX].m_fn
-					, emit_entp_body
+					, aclemit_entp_body
 					, &CTX);
 			ae2f_unexpected_but_if(STATE_VAL) goto LBL_CLEANUP;
 
@@ -283,6 +301,7 @@ aclspv_compile(
 
 	if(ae2f_expected_not(STATE_VAL = impl_asm(&CTX)))
 		goto LBL_CLEANUP;
+
 
 LBL_CLEANUP:
 	clang_disposeTranslationUnit(CXTU);

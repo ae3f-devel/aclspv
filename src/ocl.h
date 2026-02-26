@@ -22,4 +22,6 @@ typedef	u64 uptr;typedef i64 iptr;
 #else
 typedef	u32 uptr;typedef i32 iptr;
 #endif
+#define	aclattr(a)	__attribute__((annotate(a)))
+#define	aclvec(t, u)	typedef t[u] aclattr("aclspv_vec") t##u
 #endif

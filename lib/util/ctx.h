@@ -79,9 +79,9 @@ typedef struct a_aclspv_ctx {
 	/** 
 	 * @brief
 	 * cache for complex types which needs to be stored somewhere
-	 * for its use see util/type_unique.h
+	 * for its use see util/cxtp.h
 	 *
-	 * [util_type_unique]
+	 * [aclutil_cxtp]
 	 * */
 	x_aclspv_vec		m_type_uniques;
 

@@ -41,42 +41,47 @@ static ae2f_ccconst enum SpvOp_ util_opbin2_to_spvop(const e_id_default c_id, co
 		default:
 			return 0;
 
+
 		case UTIL_OPBIN2_ADD:
-			if(util_default_is_int(c_id))
+			if(aclid_is_int(c_id))
 				return SpvOpIAdd;
-			else if(util_default_is_float(c_id))
+			else if(aclid_is_float(c_id))
 				return SpvOpFAdd;
 			else return 0;
+
 		case UTIL_OPBIN2_DIV:
-			if(util_default_is_signed(c_id))
+			if(aclid_is_signed(c_id))
 				return SpvOpSDiv;
-			else if (util_default_is_unsigned(c_id))
+			else if (aclid_is_unsigned(c_id))
 				return SpvOpUDiv;
-			else if(util_default_is_float(c_id))
+			else if(aclid_is_float(c_id))
 				return SpvOpFDiv;
 			else return 0;
+
 		case UTIL_OPBIN2_MUL:
-			if(util_default_is_signed(c_id))
+			if(aclid_is_signed(c_id))
 				return SpvOpIMul;
-			else if (util_default_is_unsigned(c_id))
+			else if (aclid_is_unsigned(c_id))
 				return SpvOpIMul;
-			else if(util_default_is_float(c_id))
+			else if(aclid_is_float(c_id))
 				return SpvOpFMul;
 			else return 0;
+
 		case UTIL_OPBIN2_REM:
-			if(util_default_is_signed(c_id))
+			if(aclid_is_signed(c_id))
 				return SpvOpSRem;
-			else if (util_default_is_unsigned(c_id))
+			else if (aclid_is_unsigned(c_id))
 				return SpvOpUMod;
-			else if(util_default_is_float(c_id))
+			else if(aclid_is_float(c_id))
 				return SpvOpFMod;
 			else return 0;
+
 		case UTIL_OPBIN2_SUB:
-			if(util_default_is_signed(c_id))
+			if(aclid_is_signed(c_id))
 				return SpvOpISub;
-			else if (util_default_is_unsigned(c_id))
+			else if (aclid_is_unsigned(c_id))
 				return SpvOpISub;
-			else if(util_default_is_float(c_id))
+			else if(aclid_is_float(c_id))
 				return SpvOpFSub;
 			else return 0;
 	}

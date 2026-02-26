@@ -61,7 +61,7 @@ ae2f_MAC((L_new, L_m_ptr, L_m_ptr_elm, )) util_mk_constant_ptr_tmpl(
 {
 	(ret) = 0;
 	do {
-		util_constant* ae2f_restrict const L_new = util_mk_constant_node(c_key, h_ctx);
+		util_constant* ae2f_restrict const L_new = aclutil_mk_constant_node(c_key, h_ctx);
 		ae2f_expected_but_else(L_new) break;
 
 		if(L_new->L_m_ptr) {

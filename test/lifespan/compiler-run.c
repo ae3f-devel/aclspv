@@ -25,6 +25,8 @@ sizeof(B_0)
 	int main(void) {
 		struct CXUnsavedFile	files[2];
 		const char* ARG[] = { "main.cl" };
+		enum ACLSPV_COMPILE_	RET;
+
 		aclspv_wrd_t* spirv0;
 		aclspv_wrdcount_t spirv_count;
 
@@ -44,15 +46,25 @@ sizeof(B_0)
 		files[0].Filename = "main.cl";
 		files[0].Length = sizeof(maincontent) - 1;
 
+		puts("main.cl::::::::::::::::::");
+		puts(files[0].Contents);
+		puts("main.cl::::::::::::::::::");
+
 		files[1].Contents = oclhead;
 		files[1].Filename = "./opencl-c-base.h";
 		files[1].Length = sizeof(oclhead) - 1;
 
-		aclspv_compile(
+		puts("opencl-c-base.h::::::::::::::::::");
+		puts(files[1].Contents);
+		puts("opencl-c-base.h::::::::::::::::::");
+
+		RET = aclspv_compile(
 				files, 2
 				, ARG, 1
 				, &spirv_count, &spirv0, ae2f_NIL
 			      );
+
+		printf("aclspv_compile: %u\n", RET);
 
 		assert(spirv0);
 

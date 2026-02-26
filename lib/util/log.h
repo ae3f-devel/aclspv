@@ -1,3 +1,6 @@
+#ifndef	aclutil_log_h
+#define	aclutil_log_h
+
 #if defined(NDEBUG) && NDEBUG
 #define	DBG 0
 
@@ -58,3 +61,5 @@
 	err_call(fputs, (a, stderr)); \
 	err_call(fputc, ('\n', stderr)); \
 }
+
+#endif

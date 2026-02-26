@@ -1,3 +1,6 @@
+#ifndef	aclemit_count_fn_h
+#define	aclemit_count_fn_h
+
 /** @file count_fn.h */
 
 #include "util/entp.h"
@@ -208,3 +211,5 @@ static enum CXChildVisitResult emit_count_fn(CXCursor h_cur, CXCursor h_parent, 
 	return CXChildVisit_Continue;
 #undef	CTX
 }
+
+#endif

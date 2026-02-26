@@ -15,7 +15,7 @@
 static enum CXChildVisitResult	attr_location(CXCursor h_cur, CXCursor h_parent, CXClientData ae2f_restrict wr_location) {
 	CXString TEXT;
 	enum CXChildVisitResult RES = CXChildVisit_Break;
-	char* NEEDLE;
+	const char* NEEDLE;
 	unsigned LOCATION;
 
 	unless(h_cur.kind == CXCursor_AnnotateAttr) return CXChildVisit_Recurse;

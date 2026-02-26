@@ -66,4 +66,6 @@ typedef	aclspv_wrd_t	aclspv_wrdcount_t;
  * */
 typedef	aclspv_wrd_t	aclspv_id_t;
 
+typedef aclspv_wrd_t	aclspv_bool_t;
+
 #endif

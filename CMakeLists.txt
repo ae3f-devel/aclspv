@@ -71,7 +71,10 @@ else()
 	set(LLVM_INCLUDE_EXAMPLES OFF)
 	set(LLVM_INCLUDE_BENCHMARKS OFF)
 	set(LLVM_INSTALL_UTILS OFF)
-	add_subdirectory(${ae2f_CoreScript_Wh}/llvm/llvm ${ae2f_BinRoot}/${ae2f_submod}/llvm)
+	add_subdirectory(
+		${ae2f_CoreScript_Wh}/llvm/llvm 
+		${ae2f_BinRoot}/${ae2f_submod}/llvm
+		)
 endif()
 
 file(GLOB aclspv-inc ${PROJECT_SOURCE_DIR}/inc/*)

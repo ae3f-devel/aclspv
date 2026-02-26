@@ -24,7 +24,7 @@ typedef enum EMIT_EXPR_ {
 
 typedef util_literal emit_expr_literal;
 
-ACLSPV_ABI_DECL enum EMIT_EXPR_ aclspv_expr_arithmetic_cast_non_literal(
+ACLSPV_ABI_DECL enum EMIT_EXPR_ aclexpr_arithmetic_cast_non_literal(
 		const aclspv_id_t	c_old_id,
 		const aclspv_id_t	c_old_type,
 		const B_util_literal_t	c_flag_literal,
@@ -33,7 +33,7 @@ ACLSPV_ABI_DECL enum EMIT_EXPR_ aclspv_expr_arithmetic_cast_non_literal(
 		const h_util_ctx_t			h_ctx
 		);
 
-ACLSPV_ABI_DECL enum EMIT_EXPR_ aclspv_expr_arithmetic_cast(
+ACLSPV_ABI_DECL enum EMIT_EXPR_ aclexpr_arithmetic_cast(
 		const aclspv_id_t	c_old_id,
 		const aclspv_id_t	c_old_type,
 		const B_util_literal_t	c_flag_literal,
