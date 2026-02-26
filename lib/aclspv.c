@@ -56,20 +56,24 @@ aclspv_compile(
 	assert(rwr_output);
 
 	memset(&CTX, 0, sizeof(CTX));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_type_uniques, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_type_uniques		, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_scale_vars			, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_cursors			, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_constant_cache		, (1 << 30));
 
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_capability, (1 << 30));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_entp, (1 << 30));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_ext, (1 << 30));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_vars, (1 << 30));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_decorate, (1 << 30));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_execmode, (1 << 30));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_memmodel, (1 << 30));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_fndef, (1 << 30));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_types, (1 << 30));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_scale_vars, (1 << 30));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_tmp.m_v0, (1 << 30));
-	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_tmp.m_v1, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_capability	, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_entp		, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_ext		, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_vars		, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_decorate		, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_execmode		, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_memmodel		, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_fndef		, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_section.m_types		, (1 << 30));
+
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_tmp.m_v0			, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_tmp.m_v1			, (1 << 30));
+	_aclspv_grow_vec(_aclspv_malloc, _aclspv_free, CTX.m_tmp.m_v2			, (1 << 30));
 
 	init_scale(&CTX.m_scale_vars, 0);
 
