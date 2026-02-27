@@ -31,7 +31,7 @@
 
 #include <spirv/unified1/spirv.h>
 
-ACLSPV_ABI_IMPL enum CXChildVisitResult	aclemit_decl_glob_obj_visit_attr_set(CXCursor h_cur, CXCursor h_parent, CXClientData ae2f_restrict h_data) {
+static enum CXChildVisitResult	__attr_set(CXCursor h_cur, CXCursor h_parent, CXClientData ae2f_restrict h_data) {
 	CXString TEXT;
 	enum CXChildVisitResult RES = CXChildVisit_Break;
 	const char* NEEDLE;
@@ -171,15 +171,11 @@ LBL_ABRT_NALLOC:
 
 	PARAM_TY_NAME	= clang_getTypeSpelling(PARAM_TY);
 
+	/** FIXME: we are making them attributes */
 	if(PARAM_TY.kind == CXType_ConstantArray)
 		INFO->m_unified.m_storage_class = SpvStorageClassWorkgroup;
-	else if(strstr(PARAM_TY_NAME.data, "global")) {
-		INFO->m_unified.m_storage_class = SpvStorageClassStorageBuffer;
-	} else if (strstr(PARAM_TY_NAME.data, "constant")) {
-		INFO->m_unified.m_storage_class = SpvStorageClassUniform;
-	} 
 
-	/** ATTRIBUTE HARD CODED? */
+	/** Attriburte: storage class */
 	clang_visitChildren(
 			h_cur
 			, attr_storage_class
@@ -199,14 +195,17 @@ LBL_ABRT_NALLOC:
 				ae2f_unreachable();
 				case SpvStorageClassUniform:
 				INFO->m_unified.m_var_type_id = aclutil_mk_constant_ptr_uniform_id(1, CTX);
-				ae2f_expected_but_else(INFO->m_unified.m_var_type_id) 
+				ae2f_expected_but_else(INFO->m_unified.m_var_type_id)  {
+					CTX->m_err = ACLSPV_COMPILE_ALLOC_FAILED;
 					return CXChildVisit_Break;
+				}
 			}
+
 			ae2f_fallthrough;
 
 		case SpvStorageClassStorageBuffer:
 			clang_visitChildren(h_cur
-					, aclemit_decl_glob_obj_visit_attr_set
+					, __attr_set
 					, &INFO->m_bindable.m_set
 					);
 
@@ -409,7 +408,10 @@ LBL_ABRT_NALLOC:
 				}
 			}
 
+			INFO->m_io.m_location = 0xFFFFFFFF;
 			clang_visitChildren(h_cur, attr_location, &INFO->m_io.m_location);
+			if(INFO->m_io.m_location == 0xFFFFFFFF)
+				INFO->m_io.m_location = 0;
 #define		THIS_ENTP	((util_entp_t* ae2f_restrict)CTX->m_fnlist.m_entp.m_p)[CTX->m_tmp.m_w0]
 			/** TODO: this will now uintvec4. make this flexible some day */
 			assert(IO_ARG_IDX < THIS_ENTP.m_io.m_num);
@@ -558,7 +560,6 @@ ACLSPV_ABI_IMPL enum CXChildVisitResult aclemit_decl_glob_obj(CXCursor h_cur, CX
 
 			CTX->m_err = ACLSPV_COMPILE_OK;
 #undef	EMIT_POS
-#endif
 			if(0) {
 				ae2f_unreachable();
 LBL_DBG_STR_DISPOSE_FAIL:
@@ -567,6 +568,8 @@ LBL_DBG_STR_DISPOSE_FAIL:
 				free(NAME);
 				return CXChildVisit_Break;
 			}
+#endif
+
 
 
 #if 1 

@@ -5,6 +5,9 @@
  * macros will be defined in opencl-base.h
  **/
 
+
+typedef short short4[4] vector();
+
 struct STRUCTURE {
 	int aa;
 	struct {
@@ -52,8 +55,7 @@ __kernel void KERNEL_0(
 }
 
 
-__attribute__((annotate("aclspv_execmodel(0)")))
-__kernel void N_KERNEL_0(__constant uintptr_t* consti32, __attribute__((annotate("aclspv_storage_class(3)"))) __global const uint* u32out) {
+kernel_raw(0) void N_KERNEL_0(__constant uintptr_t* consti32, storage_class(3) const uint* u32out) {
 	int a0 = 3.2;
 	int a1 
 #if 0
@@ -81,12 +83,17 @@ kernel void do_none(void)
     struct { char a; int b; } C;
 }
 
+
+
+
 #if 0
 kernel void do_add_sub(__global short4 *add_out, __global short4 *sub_out,
                        __global short4 *x, __global short4 *y)
 {
     size_t g = get_global_id(0);
+
     add_out[g] = x[g] + y[g];
     sub_out[g] = x[g] - y[g];
 }
+
 #endif

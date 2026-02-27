@@ -25,7 +25,7 @@ static enum CXChildVisitResult	attr_specid(CXCursor h_cur, CXCursor h_parent, CX
 		return CXChildVisit_Recurse;
 	}
 
-
+	SPECID = 0;
 	sscanf(NEEDLE, "aclspv_specid ( %u )", &SPECID);
 
 	*((aclspv_wrd_t* ae2f_restrict)wr_specid) = (aclspv_wrd_t)SPECID;

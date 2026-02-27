@@ -100,6 +100,10 @@ aclspv_location(location)
 > Specifies the location of `input` or `output`  
 - When not specified, every input our output's location will be 0.
 
+aclspv_glcmagic  
+> Specifies that user wants the input automatically on GLCompute.
+- Provided aclspv_execmodel is not GLCompute(5), this attribute will be ignored.
+
 # Restriction
 > Some statements / extensions may not be planned to be supported for now.
 - `VK_KHR_relaxed_block_layout` behaviour (free alignment)

@@ -23,5 +23,13 @@ typedef	u64 uptr;typedef i64 iptr;
 typedef	u32 uptr;typedef i32 iptr;
 #endif
 #define	aclattr(a)	__attribute__((annotate(a)))
-#define	aclvec(t, u)	typedef t[u] aclattr("aclspv_vec") t##u
+#define	vector(a)	aclattr("aclspv_vec")
+#define	kernel_raw(a)	aclattr("aclspv_execmodel( " #a " )")
+#define	kernel	kernel_raw(5)			kernel
+#define	__kernel	kernel
+#define	storage_class(a)	aclattr("aclspv_storage_class( " #a " )")
+#define	global		storage_class(12)	global
+#define	__global	global
+#define	constant	storage_class(2)	constant
+#define	__constant	constant
 #endif

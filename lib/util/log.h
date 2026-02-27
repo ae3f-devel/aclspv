@@ -5,6 +5,7 @@
 #define	DBG 0
 
 #define	dbg_call(a, b)
+#define	fixme_call	dbg_call
 
 #else
 #define DBG 1

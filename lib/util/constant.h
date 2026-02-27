@@ -24,44 +24,6 @@ typedef struct {
 	aclspv_id_t		m_const_val_f64_id;
 	aclspv_id_t		m_const_spec_id;
 	e_id_default		m_const_spec_type;
-
-	/** array type id */
-	aclspv_id_t		m_arr8_id;
-	aclspv_id_t		m_arr16_id;
-	aclspv_id_t		m_arr32_id;
-	aclspv_id_t		m_arrspec32_id;
-
-	aclspv_id_t		m_vec32_id;
-
-	/** u32_vec4_id */
-	aclspv_id_t		m_arr128_id;
-
-	/** struct type id (for storage) */
-	aclspv_id_t		m_struct_id;
-	aclspv_id_t		m_struct128_id;
-
-	/** struct type id (for private, workgroup) */
-	aclspv_id_t		m_structpriv_id;
-	aclspv_id_t		m_structprivspec_id;
-	aclspv_id_t		m_structpriv128_id;
-
-	/** push constant pointer id */
-	aclspv_id_t		m_ptr_psh;
-
-	/** storage buffer pointer id */
-	aclspv_id_t		m_ptr_storage;
-	aclspv_id_t		m_ptr_func;
-
-	/** uniform pointer id */
-	aclspv_id_t		m_ptr_uniform;
-	aclspv_id_t		m_ptr_uniformconst;
-
-	/** workgroup pointer id */
-	aclspv_id_t		m_ptr_work;
-	aclspv_id_t		m_ptr_workspec;
-
-	/** normal pointer id */
-	aclspv_id_t		m_ptr;
 } util_constant;
 
 typedef util_constant* ae2f_restrict p_util_constant_t;
@@ -94,7 +56,9 @@ ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_spec_id(
 
 ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_spec64_id(
 		const aclspv_wrd_t c_key, 
-		const u64_least c_val, h_util_ctx_t h_ctx);
+		const u64_least c_val,
+		h_util_ctx_t h_ctx
+		);
 
 ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_spec_id_f64(
 		const aclspv_wrd_t c_key, 
@@ -111,19 +75,19 @@ ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_vec32_id(
 		h_util_ctx_t h_ctx);
 
 
-ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_arr8_id(const aclspv_wrd_t c_arrcount, h_util_ctx_t h_ctx);
+ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_arr8_id(const u64_least c_arrcount, h_util_ctx_t h_ctx);
 
-ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_arr16_id(const aclspv_wrd_t c_arrcount, h_util_ctx_t h_ctx);
+ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_arr16_id(const u64_least c_arrcount, h_util_ctx_t h_ctx);
 
-ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_arr32_id(const aclspv_wrd_t c_arrcount, h_util_ctx_t h_ctx);
+ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_arr32_id(const u64_least c_arrcount, h_util_ctx_t h_ctx);
 
-ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_arr128_id(const aclspv_wrd_t c_arrcount, h_util_ctx_t h_ctx);
+ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_arr128_id(const u64_least c_arrcount, h_util_ctx_t h_ctx);
 
-ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_struct_id(const aclspv_wrd_t c_wrdcount, h_util_ctx_t h_ctx);
+ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_struct_id(const aclspv_wrd_t c_arrcount, h_util_ctx_t h_ctx);
 
 ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_struct128_id(const aclspv_wrd_t c_veccount, h_util_ctx_t h_ctx);
 
-ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_structprivspec_id(const aclspv_wrd_t c_key, const aclspv_wrd_t c_wrdcount, h_util_ctx_t h_ctx);
+ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_structprivspec_id(const aclspv_wrd_t c_key, const u64_least c_wrdcount, h_util_ctx_t h_ctx);
 
 
 ACLSPV_ABI_DECL aclspv_id_t	aclutil_mk_constant_structpriv_id(const aclspv_wrd_t c_wrdcount, h_util_ctx_t h_ctx);

@@ -17,9 +17,11 @@ sizeof(A_0)
 	+ sizeof(A_5) - 1
 #endif
 	];
+
 	char oclhead[
 sizeof(B_0) 
 	+ sizeof(B_1) - 1
+	+ sizeof(B_2) - 1
 	];
 #if 1
 	int main(void) {
@@ -41,6 +43,7 @@ sizeof(B_0)
 
 		strcpy(oclhead, B_0);
 		strcat(oclhead, B_1);
+		strcat(oclhead, B_2);
 
 		files[0].Contents = maincontent;
 		files[0].Filename = "main.cl";

@@ -13,8 +13,25 @@ enum ACLUTIL_CXTYPE_ {
 	ACLUTIL_CXTYPE_FUNC_NOPRM,
 	ACLUTIL_CXTYPE_VECTOR,
 	ACLUTIL_CXTYPE_ARRAY,
-	ACLUTIL_CXTYPE_PTR
+	ACLUTIL_CXTYPE_PTR,
+	ACLUTIL_CXTYPE_STRUCT_SINGLE
 };
+
+enum ACLSPV_CXTP_STRUCT_DECORATION_FIELD0 {
+	ACLSPV_CXTP_STRUCT_DECORATION_FIELD0_BLOCK = 1
+};
+
+/** @see enum ACLSPV_CXTP_STRUCT_DECORATION_FIELD0 */
+typedef aclspv_wrd_t B_aclspv_cxtp_struct_decoration_field0_t;
+
+
+typedef struct {
+	B_aclspv_cxtp_struct_decoration_field0_t	m_field0;
+} aclspv_cxtp_struct_decoration;
+
+typedef struct {
+	aclspv_wrdcount_t	m_offset;
+} aclspv_cxtp_struct_memdecoration;
 
 typedef struct {
 	aclspv_id_t		m_type_id;
@@ -24,6 +41,7 @@ typedef struct {
 		struct {
 			aclspv_id_t	m_type;
 			aclspv_id_t	m_num_id;
+			aclspv_id_t	m_decorate_stride;
 		} m_arr;
 
 		struct {
@@ -44,6 +62,12 @@ typedef struct {
 		struct {
 			aclspv_id_t	m_ret_id;
 		} m_fn_no_proto;
+
+		struct {
+			aclspv_id_t				m_mem_id;
+			aclspv_cxtp_struct_decoration		m_decoration;
+			aclspv_cxtp_struct_memdecoration	m_mem_decoration;
+		} m_struct_single;
 	} m_info;	/** must be plain old buffer (pob) */
 } aclutil_cxtp;
 
@@ -57,6 +81,14 @@ ae2f_extern aclspv_id_t aclutil_mk_cxtp_by_cursor(
 ae2f_extern aclspv_id_t aclutil_mk_cxtp_arr(
 		const aclspv_id_t	c_type_elm,
 		const aclspv_id_t	c_num_arr,
+		const h_aclspv_ctx_t	h_ctx
+		);
+
+/** array with stride */
+ae2f_extern aclspv_id_t aclutil_mk_cxtp_arr2(
+		const aclspv_id_t	c_type_elm,
+		const aclspv_id_t	c_num_arr,
+		const aclspv_wrdcount_t	c_decorate_stride,
 		const h_aclspv_ctx_t	h_ctx
 		);
 
@@ -80,6 +112,14 @@ ae2f_extern aclspv_id_t aclutil_mk_cxtp_fn_no_prm(
 ae2f_extern aclspv_id_t aclutil_mk_cxtp_fn_with_prm(
 		const CXCursor		c_cursor_compound,
 		const CXType		c_type_compound,
+		const h_aclspv_ctx_t	h_ctx
+		);
+
+ae2f_extern aclspv_id_t aclutil_mk_cxtp_struct_single(
+		const aclspv_id_t	c_type_member,
+		const B_aclspv_cxtp_struct_decoration_field0_t	
+					c_decorate_field0,
+		const aclspv_wrd_t	c_memdecorate_offset,
 		const h_aclspv_ctx_t	h_ctx
 		);
 

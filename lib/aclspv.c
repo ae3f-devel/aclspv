@@ -92,29 +92,29 @@ aclspv_compile(
 			);
 
 	CXTU_IDX_ERR = clang_getNumDiagnostics(CXTU);
-	while(ae2f_expected(CXTU_IDX_ERR--)) {
+	while(CXTU_IDX_ERR--) {
 		const CXDiagnostic DIAG = clang_getDiagnostic(CXTU, CXTU_IDX_ERR);
 		enum CXDiagnosticSeverity SEVERITY = clang_getDiagnosticSeverity(DIAG);
 
 		CXString TXT = clang_formatDiagnostic(DIAG, clang_defaultDiagnosticDisplayOptions());
 
-		puts(TXT.data);
+		dbg_puts(TXT.data);
 
 		switch(SEVERITY) {
 			case CXDiagnostic_Note:
-				puts("NOTE");
+				dbg_puts("NOTE");
 				break;
 			case CXDiagnostic_Error:
-				puts("_ERR");
+				dbg_puts("_ERR");
 				break;
 			case CXDiagnostic_Warning:
-				puts("WARN");
+				dbg_puts("WARN");
 				break;
 			case CXDiagnostic_Ignored:
-				puts("IGNR");
+				dbg_puts("IGNR");
 				break;
 			case CXDiagnostic_Fatal:
-				puts("FTAL");
+				dbg_puts("FTAL");
 				break;
 			default:
 				assert(0);
@@ -139,7 +139,7 @@ aclspv_compile(
 
 	CXROOTCUR = clang_getTranslationUnitCursor(CXTU);
 
-	clang_visitChildren(CXROOTCUR, emit_count_fn, &CTX);
+	clang_visitChildren(CXROOTCUR, aclemit_count_fn, &CTX);
 	if(ae2f_expected_not(STATE_VAL = CTX.m_err))
 		goto LBL_CLEANUP;
 
@@ -149,8 +149,7 @@ aclspv_compile(
 	CTX.m_tmp.m_w3 = CTX.m_id; /** anchor */
 	CTX.m_id += CTX.m_fnlist.m_num_entp + CTX.m_fnlist.m_num_fn;
 
-	clang_visitChildren(CXROOTCUR, emit_iter_entry_point, &CTX);
-
+	clang_visitChildren(CXROOTCUR, aclemit_iter_entry_point, &CTX);
 	CTX.m_tmp.m_w0 = 0;
 	clang_visitChildren(CXROOTCUR, aclemit_decl_glob_obj, &CTX);
 
@@ -161,7 +160,7 @@ aclspv_compile(
 		const aclspv_id_t	VOID	= aclid_mk_default_id(ID_DEFAULT_VOID, &CTX);
 
 		const aclspv_id_t	ID_DEFAULT_FN_VOID = aclutil_mk_cxtp_fn_no_prm(
-				VOID
+				ID_DEFAULT_VOID
 				, &CTX
 				);
 
@@ -169,10 +168,9 @@ aclspv_compile(
 			goto LBL_CLEANUP;
 
 		ae2f_expected_but_else(ID_DEFAULT_FN_VOID) {
+			assert(0);
 			goto LBL_CLEANUP;
 		}
-
-
 
 
 		while((IDX--)) {
@@ -300,13 +298,13 @@ aclspv_compile(
 	}
 
 
+
 	if(ae2f_expected_not(STATE_VAL = CTX.m_err))
 		goto LBL_CLEANUP;
 
 
 	if(ae2f_expected_not(STATE_VAL = impl_asm(&CTX)))
 		goto LBL_CLEANUP;
-
 
 LBL_CLEANUP:
 	clang_disposeTranslationUnit(CXTU);

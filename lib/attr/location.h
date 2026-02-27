@@ -12,11 +12,17 @@
 #include <stdio.h>
 #include <string.h>
 
+/** 
+ * @param aclspv_wrd_t* ae2f_restrict wr_location
+ * */
 static enum CXChildVisitResult	attr_location(CXCursor h_cur, CXCursor h_parent, CXClientData ae2f_restrict wr_location) {
 	CXString TEXT;
 	enum CXChildVisitResult RES = CXChildVisit_Break;
 	const char* NEEDLE;
 	unsigned LOCATION;
+
+	if(*((aclspv_wrd_t* ae2f_restrict)wr_location) != 0xFFFFFFFF)
+		return CXChildVisit_Break;
 
 	unless(h_cur.kind == CXCursor_AnnotateAttr) return CXChildVisit_Recurse;
 	TEXT = clang_getCursorSpelling(h_cur);
